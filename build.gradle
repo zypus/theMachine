@@ -82,6 +82,7 @@ project(":core") {
         compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
         compile "gov.nist.math:jama:$jamaVersion"
         compile "org.reflections:reflections:$reflectionsVersion"
+        compile fileTree(dir: '../libs', include: '*.jar')
     }
 }
 
