@@ -6,7 +6,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 
 /**
- * TODO Add description
+ * The IteratingSystem allows for all Entities to be updated one by one by a system that extends this class
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 14/02/15

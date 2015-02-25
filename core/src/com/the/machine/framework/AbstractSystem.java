@@ -7,7 +7,7 @@ import com.the.machine.framework.events.Event;
 import lombok.Data;
 
 /**
- * TODO Add description
+ * All Systems extend this AbstractSystem class
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 11/02/15
