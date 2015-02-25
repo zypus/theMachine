@@ -6,13 +6,10 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
-import com.the.machine.framework.components.CameraComponent;
-import com.the.machine.framework.components.LayerComponent;
-import com.the.machine.framework.components.NameComponent;
-import com.the.machine.framework.components.SpriteRenderComponent;
-import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.*;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
+import com.the.machine.framework.systems.MovementSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
@@ -29,6 +26,7 @@ public class SubEntityTestScene
 	public void createScene(World world) {
         // The systems which act in this scene
 		world.addSystem(new CameraRenderSystem(), AssetLoadingFinishedEvent.class);
+        world.addSystem(new MovementSystem());
 
 		/*
 		 * Create the entities
@@ -74,6 +72,10 @@ public class SubEntityTestScene
 										 .setZRotation(0)
 										 .setScale(1f));
 		badlogicImageEntity.add(new NameComponent().setName("Badlogic1"));
+        badlogicImageEntity.add(new DirectionComponent().setDirection(new Vector3(
+                (float) 0.1,
+                (float) 0.05,
+                (float) 0)));
 		world.addEntity(badlogicImageEntity);
 
 		Entity badlogicImageEntity2 = new Entity();
@@ -87,7 +89,6 @@ public class SubEntityTestScene
 										 .setScale(1f));
 		badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
 		EntityUtilities.relate(badlogicImageEntity, badlogicImageEntity2);
-
         world.addEntity(badlogicImageEntity2);
 	}
 }
