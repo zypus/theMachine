@@ -15,6 +15,8 @@ public class TheMachine extends ApplicationAdapter {
 		world = new World();
 		world.create();
 		world.buildScene(new SubEntityTestScene());
+//		world.updateActiveScene();
+//		world.saveActiveScene();
 //		world.loadScene("Unnamed Scene");
 	}
 

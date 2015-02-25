@@ -254,9 +254,6 @@ public class CameraRenderSystem
 								decalMap.put(entity.getId(), sprite);
 								spriteRenderComponent.addObserver(this);
 							}
-							transforms.get(entity).setX((float) (Math.sin(world.getT())));
-							transforms.get(entity).setZ((float) (Math.cos(world.getT())));
-							transforms.get(entity).notifyObservers();
 							TransformComponent spriteTransform = EntityUtilities.computeAbsoluteTransform(entity);
 							sprite.setPosition(spriteTransform.getPosition());
 							sprite.setRotation(spriteTransform.getRotation());
