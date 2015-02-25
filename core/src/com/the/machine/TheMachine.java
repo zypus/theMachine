@@ -3,6 +3,7 @@ package com.the.machine;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.engine.World;
+import com.the.machine.scenes.SubEntityTestScene;
 
 public class TheMachine extends ApplicationAdapter {
 
