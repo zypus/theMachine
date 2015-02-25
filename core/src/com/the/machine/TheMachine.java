@@ -13,8 +13,8 @@ public class TheMachine extends ApplicationAdapter {
 		Asset.initialize();
 		world = new World();
 		world.create();
-//		world.buildScene(new SubEntityTestScene());
-		world.loadScene("Unnamed Scene");
+		world.buildScene(new SubEntityTestScene());
+//		world.loadScene("Unnamed Scene");
 	}
 
 	@Override
