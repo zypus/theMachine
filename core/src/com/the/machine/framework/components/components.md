@@ -15,5 +15,5 @@
     * **NameComponent** -> Sets a name for a component e.g. "Main Camera", "Guard #1"
     * **TransformComponent** -> Sets the position, rotation and scale for an Entity
   * **ParentComponent**
-  * **SubEntityComponent**
+  * **SubEntityComponent** 
   * **WorldTreeComponent** -> Makes the Entity visible in the WorldTree
