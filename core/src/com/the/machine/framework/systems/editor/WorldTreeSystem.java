@@ -16,7 +16,7 @@ import com.the.machine.framework.components.canvasElements.CanvasElementComponen
 import com.the.machine.framework.components.canvasElements.TreeComponent;
 import com.the.machine.framework.components.canvasElements.TreeNodeComponent;
 import com.the.machine.framework.engine.World;
-import com.the.machine.framework.utility.EntityBuilder;
+import com.the.machine.framework.utility.EntityUtilities;
 
 /**
  * TODO Add description
@@ -33,7 +33,7 @@ public class WorldTreeSystem extends IteratingSystem {
 	private transient ComponentMapper<IgnoredComponent> ignored = ComponentMapper.getFor(IgnoredComponent.class);
 	private transient ComponentMapper<NameComponent> names = ComponentMapper.getFor(NameComponent.class);
 
-	private ImmutableArray<Entity> worlds;
+	transient private ImmutableArray<Entity> worlds;
 
 	public WorldTreeSystem() {
 		super(Family.all(TreeComponent.class, CanvasElementComponent.class, WorldTreeComponent.class)
@@ -70,10 +70,13 @@ public class WorldTreeSystem extends IteratingSystem {
 
 	private void digDown(Entity parent, Entity treeNode) {
 		if (!ignored.has(parent)) {
-			Entity node = EntityBuilder.makeLabel((names.has(parent)) ? names.get(parent).getName() :"Entity " + parent.getId())
+			Entity node = EntityUtilities.makeLabel((names.has(parent))
+													? names.get(parent)
+														   .getName()
+													: "Entity " + parent.getId())
 									   .add(new TreeNodeComponent())
 									   .add(new IgnoredComponent());
-			EntityBuilder.relate(treeNode, node);
+			EntityUtilities.relate(treeNode, node);
 			world.addEntity(node);
 			if (subs.has(parent)) {
 				for (Entity child : subs.get(parent)) {

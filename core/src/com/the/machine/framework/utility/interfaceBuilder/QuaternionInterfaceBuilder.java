@@ -11,7 +11,7 @@ import com.the.machine.framework.components.canvasElements.CanvasElementComponen
 import com.the.machine.framework.components.canvasElements.TableCellComponent;
 import com.the.machine.framework.components.canvasElements.TableComponent;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
-import com.the.machine.framework.utility.EntityBuilder;
+import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Enums;
 import com.the.machine.framework.utility.InterfaceBuilder;
 import com.the.machine.framework.utility.Interfacer;
@@ -36,25 +36,25 @@ public class QuaternionInterfaceBuilder
 		table.add(new DimensionComponent());
 		SubEntityComponent entities = new SubEntityComponent();
 		table.add(entities);
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeLabel("x"))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeLabel("x"))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeTextField(new TextFieldComponent().setText("" + quaternion.getPitch())
-																									 .setTextFieldListeners(new QuaternionListener(quaternion, "x"))
-																									 .setTextFieldFilter(new FloatFilter())))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeTextField(new TextFieldComponent().setText("" + quaternion.getPitch())
+																										 .setTextFieldListeners(new QuaternionListener(quaternion, "x"))
+																										 .setTextFieldFilter(new FloatFilter())))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))
 															   .setWidth(new Value.Fixed(60))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeLabel("y"))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeLabel("y"))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeTextField(new TextFieldComponent().setText("" + quaternion.getYaw())
-																									 .setTextFieldListeners(new QuaternionListener(quaternion, "y"))
-																									 .setTextFieldFilter(new FloatFilter())))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeTextField(new TextFieldComponent().setText("" + quaternion.getYaw())
+																										 .setTextFieldListeners(new QuaternionListener(quaternion, "y"))
+																										 .setTextFieldFilter(new FloatFilter())))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))
 															   .setWidth(new Value.Fixed(60))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeLabel("z"))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeLabel("z"))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeTextField(new TextFieldComponent().setText("" + quaternion.getRoll())
-																									 .setTextFieldListeners(new QuaternionListener(quaternion, "z"))
-																									 .setTextFieldFilter(new FloatFilter())))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeTextField(new TextFieldComponent().setText("" + quaternion.getRoll())
+																										 .setTextFieldListeners(new QuaternionListener(quaternion, "z"))
+																										 .setTextFieldFilter(new FloatFilter())))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))
 															   .setWidth(new Value.Fixed(60))));
 		return table;

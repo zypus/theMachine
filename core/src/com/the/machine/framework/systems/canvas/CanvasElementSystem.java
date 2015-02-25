@@ -43,25 +43,25 @@ import com.the.machine.framework.utility.Enums;
  */
 public class CanvasElementSystem extends IteratingSystem {
 
-	private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
-	private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
-	private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
-	private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
-	private ComponentMapper<SubEntityComponent> subs = ComponentMapper.getFor(SubEntityComponent.class);
-	private ComponentMapper<DisabledComponent> disabled = ComponentMapper.getFor(DisabledComponent.class);
-	private ComponentMapper<TableCellComponent> tableCells = ComponentMapper.getFor(TableCellComponent.class);
-	private ComponentMapper<TreeNodeComponent> treeNodes = ComponentMapper.getFor(TreeNodeComponent.class);
-	private ComponentMapper<SkinComponent>     skins    = ComponentMapper.getFor(SkinComponent.class);
+	transient private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
+	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
+	transient private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
+	transient private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
+	transient private ComponentMapper<SubEntityComponent> subs = ComponentMapper.getFor(SubEntityComponent.class);
+	transient private ComponentMapper<DisabledComponent> disabled = ComponentMapper.getFor(DisabledComponent.class);
+	transient private ComponentMapper<TableCellComponent> tableCells = ComponentMapper.getFor(TableCellComponent.class);
+	transient private ComponentMapper<TreeNodeComponent> treeNodes = ComponentMapper.getFor(TreeNodeComponent.class);
+	transient private ComponentMapper<SkinComponent>     skins    = ComponentMapper.getFor(SkinComponent.class);
 
-	private final Asset<Skin> defaultSkin = Asset.fetch("uiskin.json", Skin.class);
+	transient private final Asset<Skin> defaultSkin = Asset.fetch("uiskin.json", Skin.class);
 
 	// element component types
-	private ComponentMapper<TableComponent>     tables      = ComponentMapper.getFor(TableComponent.class);
-	private ComponentMapper<ButtonComponent>    buttons     = ComponentMapper.getFor(ButtonComponent.class);
-	private ComponentMapper<LabelComponent>     labels      = ComponentMapper.getFor(LabelComponent.class);
-	private ComponentMapper<TextFieldComponent> textFields  = ComponentMapper.getFor(TextFieldComponent.class);
-	private ComponentMapper<SelectBoxComponent> selectBoxes = ComponentMapper.getFor(SelectBoxComponent.class);
-	private ComponentMapper<TreeComponent>      trees       = ComponentMapper.getFor(TreeComponent.class);
+	transient private ComponentMapper<TableComponent>     tables      = ComponentMapper.getFor(TableComponent.class);
+	transient private ComponentMapper<ButtonComponent>    buttons     = ComponentMapper.getFor(ButtonComponent.class);
+	transient private ComponentMapper<LabelComponent>     labels      = ComponentMapper.getFor(LabelComponent.class);
+	transient private ComponentMapper<TextFieldComponent> textFields  = ComponentMapper.getFor(TextFieldComponent.class);
+	transient private ComponentMapper<SelectBoxComponent> selectBoxes = ComponentMapper.getFor(SelectBoxComponent.class);
+	transient private ComponentMapper<TreeComponent>      trees       = ComponentMapper.getFor(TreeComponent.class);
 
 	public CanvasElementSystem() {
 		super(Family.all(CanvasElementComponent.class, TransformComponent.class, DimensionComponent.class)
@@ -287,10 +287,12 @@ public class CanvasElementSystem extends IteratingSystem {
 		if (elementComponent.getUnwrappedActor() != null && type != elementComponent.getUnwrappedActor().getClass()) {
 			if (elementComponent.isAdded() && parents.has(entity)) {
 				Entity parent = parents.get(entity)
-									   .getParent();
-				canvasElements.get(parent)
-							  .getGroup()
-							  .removeActor(elementComponent.getUnwrappedActor());
+									   .getParent().get();
+				if (parent != null) {
+					canvasElements.get(parent)
+								  .getGroup()
+								  .removeActor(elementComponent.getUnwrappedActor());
+				}
 			}
 			elementComponent.setActor(null);
 			elementComponent.setAdded(false);

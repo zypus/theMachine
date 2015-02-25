@@ -18,7 +18,7 @@ import java.util.Vector;
  */
 public abstract class ObservableComponent
 		extends Component implements Observable {
-	@Getter @Setter protected WeakReference<Entity>
+	transient @Getter @Setter protected WeakReference<Entity>
 	owner=null;
 
 	private boolean          changed = false;

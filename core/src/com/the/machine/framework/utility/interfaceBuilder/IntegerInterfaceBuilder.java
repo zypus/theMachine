@@ -5,7 +5,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
 import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
-import com.the.machine.framework.utility.EntityBuilder;
+import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.InterfaceBuilder;
 import com.the.machine.framework.utility.Interfacer;
 import lombok.Setter;
@@ -25,7 +25,7 @@ public class IntegerInterfaceBuilder implements InterfaceBuilder {
 		IntegerHandler handler = new IntegerHandler(integer);
 		TextFieldComponent textFieldComponent = new TextFieldComponent().setText(integer.toString()).setTextFieldListeners(handler).setTextFieldFilter(new IntegerFilter());
 		handler.setTextFieldComponent(textFieldComponent);
-		Entity intEntity = EntityBuilder.makeTextField(textFieldComponent);
+		Entity intEntity = EntityUtilities.makeTextField(textFieldComponent);
 		if (owner instanceof Observable) {
 			((Observable) owner).addObserver(handler);
 			handler.setObservable((Observable) owner);

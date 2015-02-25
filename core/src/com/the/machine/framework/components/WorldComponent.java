@@ -13,5 +13,5 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class WorldComponent extends AbstractComponent {
-	private World world;
+	transient private World world = null;
 }

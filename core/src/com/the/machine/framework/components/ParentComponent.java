@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.lang.ref.WeakReference;
+
 /**
  * TODO Add description
  *
@@ -17,16 +19,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class ParentComponent extends Component {
-	private Entity parent;
+	private WeakReference<Entity>
+	parent;
 	private int index;
 
 	public <T extends Component> T askForNext(Class<T> type, ComponentMapper<T> componentMapper, ComponentMapper<ParentComponent> parents) {
-		if (componentMapper.has(parent)) {
-			return componentMapper.get(parent);
+		Entity parentRef = parent.get();
+		if (parentRef != null && componentMapper.has(parentRef)) {
+			return componentMapper.get(parentRef);
 		} else {
-			if (parents.has(parent)) {
-				return parents.get(parent)
-									 .askForNext(type, componentMapper, parents);
+			if (parentRef != null && parents.has(parentRef)) {
+				return parents.get(parentRef)
+							  .askForNext(type, componentMapper, parents);
 			} else {
 				return null;
 			}
@@ -35,11 +39,12 @@ public class ParentComponent extends Component {
 
 	public <T extends Component> T askForTopmost(Class<T> type, ComponentMapper<T> componentMapper, ComponentMapper<ParentComponent> parents) {
 		T topMost = null;
-		if (componentMapper.has(parent)) {
-			topMost =  componentMapper.get(parent);
+		Entity parentRef = parent.get();
+		if (parentRef != null && componentMapper.has(parentRef)) {
+			topMost =  componentMapper.get(parentRef);
 		}
-		if (parents.has(parent)) {
-			T moreTopMost = parents.get(parent)
+		if (parentRef != null && parents.has(parentRef)) {
+			T moreTopMost = parents.get(parentRef)
 								 .askForTopmost(type, componentMapper, parents);
 			if (moreTopMost != null) {
 				return moreTopMost;

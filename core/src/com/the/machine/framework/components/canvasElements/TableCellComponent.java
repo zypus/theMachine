@@ -17,8 +17,8 @@ import lombok.experimental.Accessors;
 @Getter
 @Accessors(chain = true)
 public class TableCellComponent extends AbstractComponent {
-	@Setter private Cell                      cell                = null;
-	@Setter private boolean                   added               = false;
+	transient @Setter private Cell                      cell                = null;
+	transient @Setter private boolean                   added               = false;
 	private         Value                     minWidth            = Value.minWidth;
 	private         Value                     prefWidth           = Value.prefWidth;
 	private         Value                     maxWidth            = Value.maxWidth;

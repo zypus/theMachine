@@ -13,8 +13,8 @@ import com.badlogic.ashley.utils.ImmutableArray;
  */
 public abstract class IteratingSystem
 		extends AbstractSystem {
-	protected Family                 family;
-	private ImmutableArray<Entity> entities;
+	transient protected Family                 family;
+	transient private ImmutableArray<Entity> entities;
 
 	/**
 	 * Instantiates a system that will iterate over the entities described by the Family.

@@ -9,6 +9,8 @@ import com.the.machine.framework.components.canvasElements.CanvasElementComponen
 import com.the.machine.framework.components.canvasElements.TableCellComponent;
 import com.the.machine.framework.components.canvasElements.TableComponent;
 
+import java.lang.ref.WeakReference;
+
 /**
  * TODO Add description
  *
@@ -26,9 +28,10 @@ public class TableBoxer implements Boxer {
 		SubEntityComponent subEntityComponent = new SubEntityComponent();
 		for (int i = 0; i < entities.length; i++) {
 			Entity entity = entities[i];
-			entity.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT).setFillX(1)
+			entity.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+											   .setFillX(1)
 											   .setRowEnd(true));
-			entity.add(new ParentComponent(box, i));
+			entity.add(new ParentComponent(new WeakReference<>(box), i));
 			subEntityComponent.add(entity);
 		}
 		box.add(subEntityComponent);

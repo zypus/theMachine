@@ -13,11 +13,11 @@ import lombok.Data;
  */
 @Data
 public class CanvasElementComponent extends AbstractComponent {
-	private Actor   actor = null;
-	private boolean group = false;
-	private boolean added = false;
-	private Actor unwrappedActor = null;
-	private boolean enableTransform = false;
+	transient private Actor   actor = null;
+	transient private boolean group = false;
+	transient private boolean added = false;
+	transient private Actor unwrappedActor = null;
+	transient private boolean enableTransform = false;
 
 	public Group getGroup() {
 		if (group) {

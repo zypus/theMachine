@@ -29,6 +29,7 @@ import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
+import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
 
 import java.util.Comparator;
@@ -61,14 +62,17 @@ public class CameraRenderSystem
 	private transient Array<Entity>          sortedCameras;
 	private transient Comparator<Entity>     cameraComparator;
 
-	@Getter private Map<String, Integer> sortingLayers;
-
 	private transient ShapeRenderer shapeRenderer;
 
 	private transient Map<Long, Decal> decalMap = new HashMap<>();
 
 	@Override
 	public boolean isRenderSystem() {
+		return true;
+	}
+
+	@Override
+	public boolean isStable() {
 		return true;
 	}
 
@@ -82,9 +86,6 @@ public class CameraRenderSystem
 		sortedCameras = new Array<>(false, 16);
 		cameras = new ImmutableArray<>(sortedCameras);
 		cameraComparator = new CameraComparator(this);
-		sortingLayers = new HashMap<>();
-		sortingLayers.put("UI", 2);
-		sortingLayers.put("Default", 1);
 	}
 
 	@Override
@@ -100,6 +101,10 @@ public class CameraRenderSystem
 		}
 		engine.addEntityListener(cameraFamily, this);
 		shapeRenderer = new ShapeRenderer();
+		world.getSortingLayers()
+			 .put("UI", 2);
+		world.getSortingLayers()
+			 .put("Default", 1);
 	}
 
 	@Override
@@ -111,6 +116,7 @@ public class CameraRenderSystem
 
 	@Override
 	public void entityAdded(Entity entity) {
+		super.entityAdded(entity);
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponets.has(entity)) {
 				cameraComponets.get(entity)
@@ -125,6 +131,7 @@ public class CameraRenderSystem
 
 	@Override
 	public void entityRemoved(Entity entity) {
+		super.entityRemoved(entity);
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponets.has(entity)) {
 				cameraComponets.get(entity)
@@ -132,7 +139,6 @@ public class CameraRenderSystem
 			}
 			sortedCameras.removeValue(entity, true);
 		} else {
-			super.entityRemoved(entity);
 			if (spriteRenderers.has(entity)) {
 				spriteRenderers.get(entity).deleteObserver(this);
 			}
@@ -198,7 +204,7 @@ public class CameraRenderSystem
 			}
 			camera.far = cameraComponent.getClippingPlanes()
 										.getFar();
-			TransformComponent transformComponent = world.computeAbsoluteTransform(cameraEntity);
+			TransformComponent transformComponent = EntityUtilities.computeAbsoluteTransform(cameraEntity);
 
 			camera.direction.set(0,0,-1);
 			camera.up.set(0,1,0);
@@ -228,7 +234,7 @@ public class CameraRenderSystem
 			// draw all entities
 			for (int i = 0; i < entities.size(); i++) {
 				Entity entity = entities.get(i);
-				if (world.isEntityEnabled(entity)) {
+				if (EntityUtilities.isEntityEnabled(entity)) {
 					LayerComponent layerComponent = null;
 					if (layers.has(entity)) {
 						layerComponent = layers.get(entity);
@@ -251,7 +257,7 @@ public class CameraRenderSystem
 							transforms.get(entity).setX((float) (Math.sin(world.getT())));
 							transforms.get(entity).setZ((float) (Math.cos(world.getT())));
 							transforms.get(entity).notifyObservers();
-							TransformComponent spriteTransform = world.computeAbsoluteTransform(entity);
+							TransformComponent spriteTransform = EntityUtilities.computeAbsoluteTransform(entity);
 							sprite.setPosition(spriteTransform.getPosition());
 							sprite.setRotation(spriteTransform.getRotation());
 							sprite.setScale(spriteTransform.getXScale(), spriteTransform.getYScale());
@@ -303,10 +309,10 @@ public class CameraRenderSystem
 			LayerSortable ls1 = cameraRenderSystem.getSortable(o1);
 			LayerSortable ls2 = cameraRenderSystem.getSortable(o2);
 			int sortingLayer1 = (ls1 != null && ls1.getSortingLayer() != null)
-									? cameraRenderSystem.getSortingLayers().get(ls1.getSortingLayer())
+									? cameraRenderSystem.world.getSortingLayers().get(ls1.getSortingLayer())
 									: Integer.MIN_VALUE;
 			int sortingLayer2 = (ls2 != null && ls2.getSortingLayer() != null)
-								? cameraRenderSystem.getSortingLayers().get(ls2.getSortingLayer())
+								? cameraRenderSystem.world.getSortingLayers().get(ls2.getSortingLayer())
 									: Integer.MIN_VALUE;
 			return sortingLayer1-sortingLayer2;
 		}

@@ -26,8 +26,8 @@ import java.awt.Dimension;
 public class CanvasSystem extends IteratingSystem
 		implements EntityListener, EventListener {
 
-	private ComponentMapper<CanvasComponent> canvasComponents = ComponentMapper.getFor(CanvasComponent.class);
-	private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
+	transient private ComponentMapper<CanvasComponent> canvasComponents = ComponentMapper.getFor(CanvasComponent.class);
+	transient private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
 
 	public CanvasSystem() {
 		super(Family.all(CanvasComponent.class, CanvasElementComponent.class)
@@ -43,6 +43,7 @@ public class CanvasSystem extends IteratingSystem
 	@Override
 	public void removedFromEngine(Engine engine) {
 		super.removedFromEngine(engine);
+		engine.removeEntityListener(this);
 	}
 
 	@Override
@@ -61,9 +62,11 @@ public class CanvasSystem extends IteratingSystem
 
 	@Override
 	public void entityRemoved(Entity entity) {
-		CanvasComponent canvasComponent = canvasComponents.get(entity);
-		canvasComponent.getStage()
-					   .dispose();
+		if (canvasComponents.has(entity)) {
+			CanvasComponent canvasComponent = canvasComponents.get(entity);
+			canvasComponent.getStage()
+						   .dispose();
+		}
 	}
 
 	@Override

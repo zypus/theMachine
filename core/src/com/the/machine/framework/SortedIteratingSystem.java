@@ -15,14 +15,14 @@ import java.util.Comparator;
  * TODO Add description
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
- * @created 14/02/15
+ * 1@created 14/02/15
  */
 public abstract class SortedIteratingSystem extends AbstractSystem implements EntityListener {
-	private       Family                 family;
-	private       Array<Entity>          sortedEntities;
-	private final ImmutableArray<Entity> entities;
-	private       boolean                shouldSort;
-	@Getter @Setter private Comparator<Entity> comparator;
+	transient private       Family                 family;
+	transient private       Array<Entity>          sortedEntities;
+	transient private final ImmutableArray<Entity> entities;
+	transient private       boolean                shouldSort;
+	transient @Getter @Setter private Comparator<Entity> comparator;
 
 	public SortedIteratingSystem(Family family) {
 		this(family, (o1, o2) -> 0, 0);

@@ -36,9 +36,9 @@ public class DefaultInterfaceBuilder implements InterfaceBuilder {
 		for (Field field : fields) {
 			if (!Modifier.isTransient(field.getModifiers())) {
 				Entity part;
-				EntityBuilder.relate(comp, EntityBuilder.makeLabel(field.getName())
-														.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
-																					 .setSpaceRight(new Value.Fixed(10))));
+				EntityUtilities.relate(comp, EntityUtilities.makeLabel(field.getName())
+															.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																						 .setSpaceRight(new Value.Fixed(10))));
 				Class<?> fieldClass = field.getType();
 				if (interfacer.getInterfaceBuilders()
 							  .containsKey(fieldClass)) {
@@ -63,7 +63,7 @@ public class DefaultInterfaceBuilder implements InterfaceBuilder {
 					part = missingEntity(field);
 				}
 				part.add(new TableCellComponent().setFillX(1).setRowEnd(true));
-				EntityBuilder.relate(comp, part);
+				EntityUtilities.relate(comp, part);
 			}
 		}
 		return comp;

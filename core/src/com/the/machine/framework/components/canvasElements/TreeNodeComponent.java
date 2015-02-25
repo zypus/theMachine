@@ -13,6 +13,6 @@ import lombok.Setter;
  */
 @Getter
 public class TreeNodeComponent extends AbstractComponent {
-	@Setter Tree.Node node = null;
-	@Setter private boolean added = false;
+	transient @Setter Tree.Node node = null;
+	transient @Setter private boolean added = false;
 }

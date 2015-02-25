@@ -9,5 +9,6 @@ package com.the.machine.framework.engine;
 public enum WorldState {
 	INITIALIZED,
 	RUNNING,
-	PAUSED
+	PAUSED,
+	FULL_PAUSED
 }

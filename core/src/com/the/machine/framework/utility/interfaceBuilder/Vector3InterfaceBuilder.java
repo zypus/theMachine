@@ -16,7 +16,7 @@ import com.the.machine.framework.components.canvasElements.TableComponent;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
 import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
-import com.the.machine.framework.utility.EntityBuilder;
+import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Enums;
 import com.the.machine.framework.utility.InterfaceBuilder;
 import com.the.machine.framework.utility.Interfacer;
@@ -46,28 +46,28 @@ public class Vector3InterfaceBuilder
 
 		Vector3Handler handler = new Vector3Handler(vector3);
 
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeLabel("x"))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeLabel("x"))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))));
 		TextFieldComponent x = new TextFieldComponent().setText("" + vector3.x)
 													   .setTextFieldListeners(new Vector3Listener(handler, "x"))
 													   .setTextFieldFilter(new FloatFilter());
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeTextField(x))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeTextField(x))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))
 															   .setWidth(new Value.Fixed(60))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeLabel("y"))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeLabel("y"))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))));
 		TextFieldComponent y = new TextFieldComponent().setText("" + vector3.y)
 													   .setTextFieldListeners(new Vector3Listener(handler, "y"))
 													   .setTextFieldFilter(new FloatFilter());
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeTextField(y))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeTextField(y))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))
 															   .setWidth(new Value.Fixed(60))));
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeLabel("z"))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeLabel("z"))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))));
 		TextFieldComponent z = new TextFieldComponent().setText("" + vector3.z)
 													   .setTextFieldListeners(new Vector3Listener(handler, "z"))
 													   .setTextFieldFilter(new FloatFilter());
-		entities.add(EntityBuilder.relate(table, EntityBuilder.makeTextField(z))
+		entities.add(EntityUtilities.relate(table, EntityUtilities.makeTextField(z))
 								  .add(new TableCellComponent().setSpaceRight(new Value.Fixed(10))
 															   .setWidth(new Value.Fixed(60))));
 

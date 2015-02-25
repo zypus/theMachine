@@ -13,8 +13,8 @@ import lombok.Data;
  */
 @Data
 public class CanvasComponent extends AbstractComponent implements LayerSortable {
-	private SpriteBatch batch;
-	private Stage stage;
+	transient private SpriteBatch batch;
+	transient private Stage stage;
 	private boolean debug = false;
 
 	@Override
