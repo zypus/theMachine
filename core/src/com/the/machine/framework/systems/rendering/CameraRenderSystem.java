@@ -48,7 +48,7 @@ public class CameraRenderSystem
 
 	//TODO CameraListener, if the depth of a camera changes, camera order needs to be updated
 
-	@Getter private transient ComponentMapper<CameraComponent>       cameraComponets = ComponentMapper.getFor(CameraComponent.class);
+	@Getter private transient ComponentMapper<CameraComponent> cameraComponents = ComponentMapper.getFor(CameraComponent.class);
 	private transient ComponentMapper<TransformComponent>    transforms = ComponentMapper.getFor(TransformComponent.class);
 	private transient ComponentMapper<SpriteRenderComponent> spriteRenderers = ComponentMapper.getFor(SpriteRenderComponent.class);
 	private transient ComponentMapper<CanvasComponent> canvas = ComponentMapper.getFor(CanvasComponent.class);
@@ -118,8 +118,8 @@ public class CameraRenderSystem
 	public void entityAdded(Entity entity) {
 		super.entityAdded(entity);
 		if (cameraFamily.matches(entity)) {
-			if (cameraComponets.has(entity)) {
-				cameraComponets.get(entity)
+			if (cameraComponents.has(entity)) {
+				cameraComponents.get(entity)
 							   .addObserver(this);
 			}
 			sortedCameras.add(entity);
@@ -133,8 +133,8 @@ public class CameraRenderSystem
 	public void entityRemoved(Entity entity) {
 		super.entityRemoved(entity);
 		if (cameraFamily.matches(entity)) {
-			if (cameraComponets.has(entity)) {
-				cameraComponets.get(entity)
+			if (cameraComponents.has(entity)) {
+				cameraComponents.get(entity)
 							   .deleteObserver(this);
 			}
 			sortedCameras.removeValue(entity, true);
@@ -185,7 +185,7 @@ public class CameraRenderSystem
 		ImmutableArray<Entity> entities = getEntities();
 		for (int c = 0; c < cameras.size(); c++) {
 			Entity cameraEntity = sortedCameras.get(c);
-			CameraComponent cameraComponent = cameraComponets.get(cameraEntity);
+			CameraComponent cameraComponent = cameraComponents.get(cameraEntity);
 			Camera camera;
 			if (cameraComponent.getProjection() == CameraComponent.Projection.ORTHOGRAPHIC) {
 				camera = orthoCam;
@@ -354,8 +354,8 @@ public class CameraRenderSystem
 
 		@Override
 		public int compare(Entity o1, Entity o2) {
-			CameraComponent camera1 = cameraRenderSystem.cameraComponets.get(o1);
-			CameraComponent camera2 = cameraRenderSystem.cameraComponets.get(o2);
+			CameraComponent camera1 = cameraRenderSystem.cameraComponents.get(o1);
+			CameraComponent camera2 = cameraRenderSystem.cameraComponents.get(o2);
 			return camera1.getDepth() - camera2.getDepth();
 		}
 	}

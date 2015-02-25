@@ -54,7 +54,15 @@ public class SubEntityTestScene
 		camera.add(new NameComponent().setName("Main Camera"));
 		world.addEntity(camera);
 
-        // badlogicEntity and badlogicEntity2 (both are only textures)
+        // badlogicImageEntity and badlogicImageEntity2 (both are only textures)
+
+        /*
+         * badLogicImageEntity(2) has the following components
+         *  - layerComponent
+         *  - spriteRenderComponent
+         *  - transformComponent
+         *  - nameComponent
+         */
         Entity badlogicImageEntity = new Entity();
         Asset<TextureRegion> textureRegion = Asset.fetch("badlogic", TextureRegion.class);
 		badlogicImageEntity.add(new LayerComponent(BitBuilder.none(32)

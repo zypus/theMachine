@@ -6,7 +6,8 @@ import com.the.machine.framework.systems.rendering.LayerSortable;
 import lombok.Data;
 
 /**
- * TODO Add description
+ * CanvasComponents are components on top of the rendered objects. Can for example also have the ButtonComponent
+ * or a LabelComponent
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 16/02/15

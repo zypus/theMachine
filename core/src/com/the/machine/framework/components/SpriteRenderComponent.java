@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
- * TODO Add description
+ * The SpriteRenderComponent is added to sprites which can be viewed by a camera
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 12/02/15
