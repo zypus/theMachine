@@ -18,7 +18,7 @@ import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
 
 /**
- * TODO Add description
+ * The Scene that is shown when the World is created
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 23/02/15
@@ -27,9 +27,18 @@ public class SubEntityTestScene
 		implements SceneBuilder {
 	@Override
 	public void createScene(World world) {
+        // The systems which act in this scene
 		world.addSystem(new CameraRenderSystem(), AssetLoadingFinishedEvent.class);
 
-		// entities
+		/*
+		 * Create the entities
+		 *
+		 * Atm it has a
+		 *   - main camera
+		 *   - badlogicImageEntity
+		 */
+
+        // Camera
 		Entity camera = new Entity();
 		CameraComponent cameraComponent = new CameraComponent();
 		Bits mask = BitBuilder.all(32)
@@ -39,36 +48,38 @@ public class SubEntityTestScene
 		cameraComponent.setProjection(CameraComponent.Projection.PERSPECTIVE);
 		cameraComponent.setZoom(0.01f);
 		camera.add(cameraComponent);
+
 		TransformComponent transformComponent = new TransformComponent().setPosition(new Vector3(0, 0, 5));
-		camera.add(transformComponent);
+		camera.add(transformComponent);             // The transform component allows moving and rotating the camera
 		camera.add(new NameComponent().setName("Main Camera"));
 		world.addEntity(camera);
 
-		Asset<TextureRegion> textureRegion = Asset.fetch("badlogic", TextureRegion.class);
-
-		Entity test = new Entity();
-		test.add(new LayerComponent(BitBuilder.none(32)
+        // badlogicEntity and badlogicEntity2 (both are only textures)
+        Entity badlogicImageEntity = new Entity();
+        Asset<TextureRegion> textureRegion = Asset.fetch("badlogic", TextureRegion.class);
+		badlogicImageEntity.add(new LayerComponent(BitBuilder.none(32)
 											  .s(1)
 											  .get()));
-		test.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
+		badlogicImageEntity.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
 											.setSortingLayer("Default"));
-		test.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
+		badlogicImageEntity.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
 										 .setZRotation(0)
 										 .setScale(1f));
-		test.add(new NameComponent().setName("Badlogic1"));
-		world.addEntity(test);
+		badlogicImageEntity.add(new NameComponent().setName("Badlogic1"));
+		world.addEntity(badlogicImageEntity);
 
-		Entity test2 = new Entity();
-		test2.add(new LayerComponent(BitBuilder.none(32)
+		Entity badlogicImageEntity2 = new Entity();
+		badlogicImageEntity2.add(new LayerComponent(BitBuilder.none(32)
 											  .s(1)
 											  .get()));
-		test2.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
+		badlogicImageEntity2.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
 											.setSortingLayer("Default"));
-		test2.add(new TransformComponent().setPosition(new Vector3(0, 1, 0))
+		badlogicImageEntity2.add(new TransformComponent().setPosition(new Vector3(0, 1, 0))
 										 .setZRotation(0)
 										 .setScale(1f));
-		test2.add(new NameComponent().setName("Badlogic2"));
-		EntityUtilities.relate(test, test2);
-		world.addEntity(test2);
+		badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
+		EntityUtilities.relate(badlogicImageEntity, badlogicImageEntity2);
+
+        world.addEntity(badlogicImageEntity2);
 	}
 }
