@@ -73,27 +73,32 @@ public class Asset<T> {
 	 */
 	private static AssetManager manager;
 
+	private static boolean initialized = false;
+
 	/**
 	 * This initialization needs to be called before the asset class can be used to set up everything properly.
 	 */
 	public static void initialize() {
-		resolver = new SmartFileHandleResolver();
-		manager = new AssetManager(resolver);
-		manager.setLoader(TextureRegion.class, new TextureRegionLoader(resolver));
-		// load placeholders
-		placeholders = new HashMap<>();
-		Texture texture = new Texture(Gdx.files.local("missing/missing.jpg"));
-		placeholders.put(Texture.class, texture);
-		placeholders.put(TextureRegion.class, new TextureRegion(texture));
-		placeholders.put(Skin.class, new Skin(Gdx.files.local("missing/missingskin.json")));
-		// load ambiguity indicators
-		ambiguity = new HashMap<>();
-		Texture texture2 = new Texture(Gdx.files.local("missing/ambiguous.jpg"));
-		ambiguity.put(Texture.class, texture2);
-		ambiguity.put(TextureRegion.class, new TextureRegion(texture2));
-		ambiguity.put(Skin.class, new Skin(Gdx.files.local("missing/ambiguousskin.json")));
-		// progress texture
-		progressTexture = new LoadingTexture(manager);
+		if (!initialized) {
+			resolver = new SmartFileHandleResolver();
+			manager = new AssetManager(resolver);
+			manager.setLoader(TextureRegion.class, new TextureRegionLoader(resolver));
+			// load placeholders
+			placeholders = new HashMap<>();
+			Texture texture = new Texture(Gdx.files.local("missing/missing.jpg"));
+			placeholders.put(Texture.class, texture);
+			placeholders.put(TextureRegion.class, new TextureRegion(texture));
+			placeholders.put(Skin.class, new Skin(Gdx.files.local("missing/missingskin.json")));
+			// load ambiguity indicators
+			ambiguity = new HashMap<>();
+			Texture texture2 = new Texture(Gdx.files.local("missing/ambiguous.jpg"));
+			ambiguity.put(Texture.class, texture2);
+			ambiguity.put(TextureRegion.class, new TextureRegion(texture2));
+			ambiguity.put(Skin.class, new Skin(Gdx.files.local("missing/ambiguousskin.json")));
+			// progress texture
+			progressTexture = new LoadingTexture(manager);
+			initialized = true;
+		}
 	}
 
 	/**
@@ -123,12 +128,12 @@ public class Asset<T> {
 	 */
 	public static <A> Asset<A> fetch(String name, Class<A> type) {
 		SmartFileHandleResolver.NAME_CHECK check = resolver.check(name);
+		Asset<A> asset = new Asset<>(name, type);
 		if (check == SmartFileHandleResolver.NAME_CHECK.EXISTS) {
 			if (!manager.isLoaded(name, type)) {
 				manager.load(name, type);
 			}
 		}
-		Asset<A> asset = new Asset<>(name, type);
 		if (check == SmartFileHandleResolver.NAME_CHECK.AMBIGUOUS) {
 			asset.ambiguous = true;
 		}
@@ -234,6 +239,9 @@ public class Asset<T> {
 		 * @return If the file can be found, is missing, or ambiguous.
 		 */
 		public NAME_CHECK check(String fileName) {
+			if (fileName.equals("")) {
+				return NAME_CHECK.MISSING;
+			}
 			FileHandle fileHandle = Gdx.files.local(fileName);
 			if (fileHandle.exists()) {
 				return NAME_CHECK.EXISTS;

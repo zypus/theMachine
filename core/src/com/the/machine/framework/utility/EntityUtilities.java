@@ -15,6 +15,8 @@ import com.the.machine.framework.components.canvasElements.SelectBoxComponent;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
 
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * TODO Add description
@@ -28,6 +30,8 @@ public class EntityUtilities {
 	private static ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
 	private static ComponentMapper<DisabledComponent> disabled = ComponentMapper.getFor(DisabledComponent.class);
 	private static ComponentMapper<TransformComponent>   transforms  = ComponentMapper.getFor(TransformComponent.class);
+
+	private static Map<Long, SubEntityComponent> relationMemory = new HashMap<>();
 
 	public static Entity makeLabel(String text) {
 		Entity label = new Entity();
@@ -71,10 +75,14 @@ public class EntityUtilities {
 	}
 
 	public static Entity relate(Entity parent, Entity child) {
-		if (!subs.has(parent)) {
-			parent.add(new SubEntityComponent());
+		SubEntityComponent subEntityComponent;
+		if (!relationMemory.containsKey(parent.getId())) {
+			subEntityComponent = new SubEntityComponent();
+			parent.add(subEntityComponent);
+			relationMemory.put(parent.getId(), subEntityComponent);
+		} else {
+			subEntityComponent = relationMemory.get(parent.getId());
 		}
-		SubEntityComponent subEntityComponent = subs.get(parent);
 		int i = subEntityComponent.size();
 		if (!parents.has(child)) {
 			child.add(new ParentComponent(new WeakReference<>(parent), i));

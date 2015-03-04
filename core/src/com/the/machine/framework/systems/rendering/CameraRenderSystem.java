@@ -21,6 +21,7 @@ import com.badlogic.gdx.utils.Array;
 import com.the.machine.framework.SortedIteratingSystem;
 import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.CanvasComponent;
+import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
@@ -50,9 +51,10 @@ public class CameraRenderSystem
 
 	@Getter private transient ComponentMapper<CameraComponent> cameraComponents = ComponentMapper.getFor(CameraComponent.class);
 	private transient ComponentMapper<TransformComponent>    transforms = ComponentMapper.getFor(TransformComponent.class);
+	private transient ComponentMapper<DimensionComponent>    dimensions      = ComponentMapper.getFor(DimensionComponent.class);
 	private transient ComponentMapper<SpriteRenderComponent> spriteRenderers = ComponentMapper.getFor(SpriteRenderComponent.class);
-	private transient ComponentMapper<CanvasComponent> canvas = ComponentMapper.getFor(CanvasComponent.class);
-	private transient ComponentMapper<LayerComponent> layers = ComponentMapper.getFor(LayerComponent.class);
+	private transient ComponentMapper<CanvasComponent>       canvas          = ComponentMapper.getFor(CanvasComponent.class);
+	private transient ComponentMapper<LayerComponent>        layers          = ComponentMapper.getFor(LayerComponent.class);
 
 	private transient OrthographicCamera orthoCam = new OrthographicCamera();
 	private transient PerspectiveCamera  persCam  = new PerspectiveCamera();
@@ -120,7 +122,7 @@ public class CameraRenderSystem
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponents.has(entity)) {
 				cameraComponents.get(entity)
-							   .addObserver(this);
+								.addObserver(this);
 			}
 			sortedCameras.add(entity);
 			sortedCameras.sort(cameraComparator);
@@ -135,12 +137,13 @@ public class CameraRenderSystem
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponents.has(entity)) {
 				cameraComponents.get(entity)
-							   .deleteObserver(this);
+								.deleteObserver(this);
 			}
 			sortedCameras.removeValue(entity, true);
 		} else {
 			if (spriteRenderers.has(entity)) {
-				spriteRenderers.get(entity).deleteObserver(this);
+				spriteRenderers.get(entity)
+							   .deleteObserver(this);
 			}
 			decalMap.remove(entity.getId());
 		}
@@ -150,8 +153,7 @@ public class CameraRenderSystem
 	public void update(Observable o, Object arg) {
 		if (o instanceof CameraComponent) {
 			sortedCameras.sort(cameraComparator);
-		}
-		else if (o instanceof SpriteRenderComponent) {
+		} else if (o instanceof SpriteRenderComponent) {
 			SpriteRenderComponent src = (SpriteRenderComponent) o;
 			Entity entity = src.getOwner()
 							   .get();
@@ -254,10 +256,18 @@ public class CameraRenderSystem
 								decalMap.put(entity.getId(), sprite);
 								spriteRenderComponent.addObserver(this);
 							}
+							if (spriteRenderComponent.isDirty()) {
+								sprite.setTextureRegion(spriteRenderComponent.getTextureRegion().get());
+							}
 							TransformComponent spriteTransform = EntityUtilities.computeAbsoluteTransform(entity);
 							sprite.setPosition(spriteTransform.getPosition());
 							sprite.setRotation(spriteTransform.getRotation());
-							sprite.setScale(spriteTransform.getXScale(), spriteTransform.getYScale());
+							if (dimensions.has(entity)) {
+								DimensionComponent dimensionComponent = dimensions.get(entity);
+								sprite.setScale(spriteTransform.getXScale()*dimensionComponent.getWidth(), spriteTransform.getYScale()*dimensionComponent.getHeight());
+							} else {
+								sprite.setScale(spriteTransform.getXScale(), spriteTransform.getYScale());
+							}
 //													sprite.setRotation(new Vector3(-camera.direction.x, -camera.direction.y, -camera.direction.z), Vector3.Y);
 							decalBatch.add(sprite);
 						}

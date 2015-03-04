@@ -22,7 +22,7 @@ public class SpriteRenderComponent
 	private String sortingLayer = null;
 	private int sortingOrder = 0;
 	private Asset<TextureRegion>
-	textureRegion;
+	textureRegion = Asset.fetch("", TextureRegion.class);
 	private Color tint = Color.WHITE;
 
 	public SpriteRenderComponent setTextureRegion(Asset<TextureRegion> textureRegion) {

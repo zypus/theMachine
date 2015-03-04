@@ -76,7 +76,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		engine.addEntityListener(Family.all(CanvasElementComponent.class).get(), this);
+		engine.addEntityListener(Family.all(CanvasElementComponent.class, DimensionComponent.class).get(), this);
 	}
 
 	@Override

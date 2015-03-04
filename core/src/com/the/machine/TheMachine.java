@@ -1,9 +1,10 @@
 package com.the.machine;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.engine.World;
-import com.the.machine.scenes.SubEntityTestScene;
+import com.the.machine.scenes.MapEditorSceneBuilder;
 
 public class TheMachine extends ApplicationAdapter {
 
@@ -14,7 +15,8 @@ public class TheMachine extends ApplicationAdapter {
 		Asset.initialize();
 		world = new World();
 		world.create();
-		world.buildScene(new SubEntityTestScene());
+		world.buildScene(new MapEditorSceneBuilder());
+		Gdx.input.setInputProcessor(world.getInputMultiplexer());
 //		world.updateActiveScene();
 //		world.saveActiveScene();
 //		world.loadScene("Unnamed Scene");

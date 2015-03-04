@@ -5,15 +5,17 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.CanvasComponent;
+import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.ResizeEvent;
+import com.the.machine.framework.utility.EntityUtilities;
 
 import java.awt.Dimension;
 
@@ -28,6 +30,9 @@ public class CanvasSystem extends IteratingSystem
 
 	transient private ComponentMapper<CanvasComponent> canvasComponents = ComponentMapper.getFor(CanvasComponent.class);
 	transient private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
+	transient private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
+
+	transient private Array<Entity> elementsToAdd = new Array<>();
 
 	public CanvasSystem() {
 		super(Family.all(CanvasComponent.class, CanvasElementComponent.class)
@@ -37,7 +42,8 @@ public class CanvasSystem extends IteratingSystem
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		engine.addEntityListener(family, this);
+		engine.addEntityListener(Family.one(CanvasComponent.class, CanvasElementComponent.class)
+									   .get(), this);
 	}
 
 	@Override
@@ -48,22 +54,39 @@ public class CanvasSystem extends IteratingSystem
 
 	@Override
 	public void entityAdded(Entity entity) {
-		CanvasComponent canvasComponent = canvasComponents.get(entity);
-		canvasComponent.setBatch(new SpriteBatch());
-		Stage stage = new Stage();
-		Gdx.input.setInputProcessor(stage);
-		canvasComponent.setStage(stage);
+		if (canvasComponents.has(entity)) {
+			CanvasComponent canvasComponent = canvasComponents.get(entity);
+			canvasComponent.setBatch(new SpriteBatch());
+			Stage stage = new Stage();
+			world.getInputMultiplexer()
+				 .addProcessor(stage);
+			canvasComponent.setStage(stage);
 
-		CanvasElementComponent elementComponent = canvasElements.get(entity);
-		elementComponent.setActor(stage.getRoot());
-		elementComponent.setGroup(true);
-		elementComponent.setAdded(true);
+			CanvasElementComponent elementComponent = canvasElements.get(entity);
+			elementComponent.setActor(stage.getRoot());
+			elementComponent.setGroup(true);
+			elementComponent.setAdded(true);
+		} else {
+			ParentComponent parentComponent = parents.get(entity);
+			Entity parent = parentComponent.getParent()
+										   .get();
+			if (parent != null && !canvasComponents.has(parent) || !canvasElements.has(parent)) {
+				if (getEntities().size() > 0) {
+					Entity mainCanvas = getEntities().first();
+					EntityUtilities.relate(mainCanvas, entity);
+				} else {
+					elementsToAdd.add(entity);
+				}
+			}
+		}
 	}
 
 	@Override
 	public void entityRemoved(Entity entity) {
 		if (canvasComponents.has(entity)) {
 			CanvasComponent canvasComponent = canvasComponents.get(entity);
+			world.getInputMultiplexer()
+				 .removeProcessor(canvasComponent.getStage());
 			canvasComponent.getStage()
 						   .dispose();
 		}
@@ -90,6 +113,12 @@ public class CanvasSystem extends IteratingSystem
 
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
+		if (elementsToAdd.size > 0) {
+			for (Entity toAdd : elementsToAdd) {
+				EntityUtilities.relate(entity, toAdd);
+			}
+			elementsToAdd.clear();
+		}
 		CanvasComponent canvasComponent = canvasComponents.get(entity);
 		canvasComponent.getStage().act(deltaTime);
 	}

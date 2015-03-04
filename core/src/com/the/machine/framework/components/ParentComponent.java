@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.lang.ref.WeakReference;
 
@@ -18,9 +19,10 @@ import java.lang.ref.WeakReference;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Accessors(chain = true)
 public class ParentComponent extends Component {
 	private WeakReference<Entity> parent;
-	private int index;
+	private int index = 0;
 
 	public <T extends Component> T askForNext(Class<T> type, ComponentMapper<T> componentMapper, ComponentMapper<ParentComponent> parents) {
 		Entity parentRef = parent.get();
