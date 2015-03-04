@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 21/02/15
  */
-public class EnumInterfaceBuilder implements InterfaceBuilder {
+public class EnumInterfaceBuilder implements InterfaceBuilder<Object> {
 	@Override
 	public Entity interfaceFor(Interfacer interfacer, Object object, Class<?> aClass, Object owner, Field field) {
 		Object[] constants = aClass.getEnumConstants();

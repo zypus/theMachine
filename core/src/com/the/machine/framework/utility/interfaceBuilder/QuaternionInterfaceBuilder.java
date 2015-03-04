@@ -25,10 +25,9 @@ import java.lang.reflect.Field;
  * @created 20/02/15
  */
 public class QuaternionInterfaceBuilder
-		implements InterfaceBuilder {
+		implements InterfaceBuilder<Quaternion> {
 	@Override
-	public Entity interfaceFor(Interfacer interfacer, Object object, Class<?> aClass, Object owner, Field field) {
-		Quaternion quaternion = (Quaternion) object;
+	public Entity interfaceFor(Interfacer interfacer, Quaternion quaternion, Class<?> aClass, Object owner, Field field) {
 		Entity table = new Entity();
 		table.add(new TableComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT));
 		table.add(new CanvasElementComponent());

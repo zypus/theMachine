@@ -46,12 +46,14 @@ public class TableSystem extends IteratingSystem implements EventListener {
 	@Override
 	public void handleEvent(Event event) {
 		if (event instanceof ResizeEvent) {
-			for (Entity entity : getEntities()) {
-				CanvasElementComponent elementComponent = canvasElements.get(entity);
-				Table table = (Table) elementComponent.getUnwrappedActor();
-				TableComponent tableComponent = tables.get(entity);
-				if (table != null && tableComponent.isFillParent()) {
-					table.invalidate();
+			if (getEntities() != null) {
+				for (Entity entity : getEntities()) {
+					CanvasElementComponent elementComponent = canvasElements.get(entity);
+					Table table = (Table) elementComponent.getUnwrappedActor();
+					TableComponent tableComponent = tables.get(entity);
+					if (table != null && tableComponent.isFillParent()) {
+						table.invalidate();
+					}
 				}
 			}
 		}

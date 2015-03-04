@@ -18,30 +18,100 @@ import java.lang.reflect.Field;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 21/02/15
  */
-public class IntegerInterfaceBuilder implements InterfaceBuilder {
+public class IntegerInterfaceBuilder implements InterfaceBuilder<Integer> {
 	@Override
-	public Entity interfaceFor(Interfacer interfacer, Object object, Class<?> aClass, Object owner, Field field) {
-		Integer integer = (Integer) object;
-		IntegerHandler handler = new IntegerHandler(integer);
-		TextFieldComponent textFieldComponent = new TextFieldComponent().setText(integer.toString()).setTextFieldListeners(handler).setTextFieldFilter(new IntegerFilter());
+	public Entity interfaceFor(Interfacer interfacer, Integer integer, Class<?> aClass, Object owner, Field field) {
+		Entity intEntity;
+		IntegerHandler handler = new IntegerHandler(owner, field);
+		TextFieldComponent textFieldComponent = new TextFieldComponent().setText(integer.toString())
+																		.setTextFieldListeners(handler)
+																		.setTextFieldFilter(new IntegerFilter());
 		handler.setTextFieldComponent(textFieldComponent);
-		Entity intEntity = EntityUtilities.makeTextField(textFieldComponent);
-		if (owner instanceof Observable) {
-			((Observable) owner).addObserver(handler);
-			handler.setObservable((Observable) owner);
-		}
+
+  		intEntity = EntityUtilities.makeTextField(textFieldComponent);
+
 		return intEntity;
 	}
 
 	private static class IntegerHandler implements Observer, TextField.TextFieldListener {
 
-		static Class<Integer> integerClass = Integer.class;
+		private int last = 0;
 		private boolean changed = false;
-		@Setter private Observable observable;
+		private Observable observable = null;
+		private Object owner;
+		private Field field;
 		@Setter TextFieldComponent textFieldComponent;
+
+		public IntegerHandler(Object owner, Field field) {
+			this.owner = owner;
+			this.field = field;
+			field.setAccessible(true);
+			if (owner instanceof Observable) {
+				observable = (Observable) owner;
+				observable.addObserver(this);
+			}
+		}
+
+		@Override
+		public void keyTyped(TextField textField, char c) {
+			if (c == '\r') {
+				observable.forceChanged();
+				observable.notifyObservers();
+				return;
+			}
+			int v;
+			if (!Character.isDigit(c) && !Character.isAlphabetic(c) && c != '-' && !Character.isWhitespace(c)) {
+				return;
+			}
+			if (textField.getText()
+						 .equals("") || textField.getText()
+												 .equals("-")) {
+				v = 0;
+			} else {
+				v = Integer.parseInt(textField.getText());
+			}
+			if (last == v || ( last > -10 && last < 10 && v > -10 && v < 10 ) ) {
+				textFieldComponent.setText("" + v);
+			}
+			if (last != v) {
+				try {
+					field.setInt(owner, v);
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
+				if (observable != null) {
+					changed = true;
+					observable.forceChanged();
+					observable.notifyObservers();
+				}
+			}
+			last = v;
+		}
+
+		@Override
+		public void update(Observable o, Object arg) {
+			if (!changed) {
+				try {
+					textFieldComponent.setText("" + field.getInt(o));
+					textFieldComponent.notifyObservers();
+				} catch (IllegalAccessException e) {
+//						e.printStackTrace();
+				}
+			}
+			changed = false;
+		}
+	}
+
+	private static class SoloIntegerHandler
+			implements Observer, TextField.TextFieldListener {
+
+		static  Class<Integer> integerClass = Integer.class;
+		private boolean        changed      = false;
+		@Setter private Observable         observable;
+		@Setter         TextFieldComponent textField;
 		Integer integer;
 
-		private IntegerHandler(Integer integer) {
+		private SoloIntegerHandler(Integer integer) {
 			this.integer = integer;
 		}
 
@@ -60,7 +130,7 @@ public class IntegerInterfaceBuilder implements InterfaceBuilder {
 				value.setAccessible(true);
 				value.set(integer, v);
 				if (observable != null) {
-					changed = true;
+//					changed = true;
 					observable.forceChanged();
 					observable.notifyObservers();
 				}
@@ -74,8 +144,11 @@ public class IntegerInterfaceBuilder implements InterfaceBuilder {
 		@Override
 		public void update(Observable o, Object arg) {
 			if (!changed) {
-				textFieldComponent.setText("" + integer.intValue());
-				textFieldComponent.notifyObservers();
+				int position = textField.getTextField()
+										.getCursorPosition();
+				textField.setText("" + integer.intValue());
+				textField.notifyObservers();
+				textField.getTextField().setCursorPosition(position);
 			}
 			changed = false;
 		}

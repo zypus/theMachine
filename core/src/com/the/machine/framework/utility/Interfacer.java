@@ -11,6 +11,7 @@ import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.components.canvasElements.LabelComponent;
 import com.the.machine.framework.utility.interfaceBuilder.AbstractComponentInterfaceBuilder;
+import com.the.machine.framework.utility.interfaceBuilder.EntityInterfaceBuilder;
 import com.the.machine.framework.utility.interfaceBuilder.IntegerInterfaceBuilder;
 import com.the.machine.framework.utility.interfaceBuilder.OwnableComponentInterfaceBuilder;
 import com.the.machine.framework.utility.interfaceBuilder.QuaternionInterfaceBuilder;
@@ -41,7 +42,8 @@ public class Interfacer {
 		interfaceBuilders.put(ObservableComponent.class, new OwnableComponentInterfaceBuilder());
 		interfaceBuilders.put(Vector3.class, new Vector3InterfaceBuilder());
 		interfaceBuilders.put(Quaternion.class, new QuaternionInterfaceBuilder());
-		interfaceBuilders.put(Integer.class, new IntegerInterfaceBuilder());
+		interfaceBuilders.put(int.class, new IntegerInterfaceBuilder());
+		interfaceBuilders.put(Entity.class, new EntityInterfaceBuilder());
 	}
 
 	public Entity interfaceFor(Object object) {

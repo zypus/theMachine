@@ -19,8 +19,7 @@ import java.lang.ref.WeakReference;
 @NoArgsConstructor
 @Data
 public class ParentComponent extends Component {
-	private WeakReference<Entity>
-	parent;
+	private WeakReference<Entity> parent;
 	private int index;
 
 	public <T extends Component> T askForNext(Class<T> type, ComponentMapper<T> componentMapper, ComponentMapper<ParentComponent> parents) {

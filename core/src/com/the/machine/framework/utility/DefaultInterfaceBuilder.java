@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.ui.Value;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.the.machine.framework.components.DimensionComponent;
+import com.the.machine.framework.components.ParentComponent;
+import com.the.machine.framework.components.SubEntityComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.components.canvasElements.LabelComponent;
@@ -12,6 +14,7 @@ import com.the.machine.framework.components.canvasElements.TableCellComponent;
 import com.the.machine.framework.components.canvasElements.TableComponent;
 import com.the.machine.framework.utility.interfaceBuilder.EnumInterfaceBuilder;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -21,7 +24,7 @@ import java.lang.reflect.Modifier;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 20/02/15
  */
-public class DefaultInterfaceBuilder implements InterfaceBuilder {
+public class DefaultInterfaceBuilder implements InterfaceBuilder<Object> {
 
 	InterfaceBuilder enumBuilder = new EnumInterfaceBuilder();
 
@@ -33,12 +36,16 @@ public class DefaultInterfaceBuilder implements InterfaceBuilder {
 		comp.add(new CanvasElementComponent());
 		comp.add(new TransformComponent());
 		comp.add(new DimensionComponent());
+		SubEntityComponent subs = new SubEntityComponent();
+		int index = 0;
 		for (Field field : fields) {
 			if (!Modifier.isTransient(field.getModifiers())) {
 				Entity part;
-				EntityUtilities.relate(comp, EntityUtilities.makeLabel(field.getName())
-															.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
-																						 .setSpaceRight(new Value.Fixed(10))));
+				Entity label = EntityUtilities.makeLabel(field.getName())
+											.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																		 .setSpaceRight(new Value.Fixed(10)));
+				subs.add(label);
+				label.add(new ParentComponent(new WeakReference<>(comp), index));
 				Class<?> fieldClass = field.getType();
 				if (interfacer.getInterfaceBuilders()
 							  .containsKey(fieldClass)) {
@@ -63,9 +70,12 @@ public class DefaultInterfaceBuilder implements InterfaceBuilder {
 					part = missingEntity(field);
 				}
 				part.add(new TableCellComponent().setFillX(1).setRowEnd(true));
-				EntityUtilities.relate(comp, part);
+				subs.add(part);
+				part.add(new ParentComponent(new WeakReference<>(comp), index));
+				index++;
 			}
 		}
+		comp.add(subs);
 		return comp;
 	}
 

@@ -74,10 +74,16 @@ public class CanvasSystem extends IteratingSystem
 		if (event instanceof ResizeEvent) {
 			ResizeEvent resizeEvent = (ResizeEvent) event;
 			Dimension newSize = resizeEvent.getNewSize();
-			for (Entity entity : getEntities()) {
-				CanvasComponent canvasComponent = canvasComponents.get(entity);
-				canvasComponent.getStage().getViewport().update(newSize.width, newSize.height, true);
-				canvasComponent.getStage().getViewport().setWorldSize(newSize.width, newSize.height);
+			if (getEntities() != null) {
+				for (Entity entity : getEntities()) {
+					CanvasComponent canvasComponent = canvasComponents.get(entity);
+					canvasComponent.getStage()
+								   .getViewport()
+								   .update(newSize.width, newSize.height, true);
+					canvasComponent.getStage()
+								   .getViewport()
+								   .setWorldSize(newSize.width, newSize.height);
+				}
 			}
 		}
 	}

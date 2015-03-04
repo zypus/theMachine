@@ -93,9 +93,11 @@ public class EntityUtilities {
 	}
 
 	public static void derelate(Entity parent, Entity child) {
-		if (subs.has(parent) && parents.has(child)) {
+		if (subs.has(parent)) {
 			subs.get(parent)
 				.remove(child);
+		}
+		if (parents.has(child)) {
 			child.remove(ParentComponent.class);
 		}
 	}

@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Cell;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.DimensionComponent;
+import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.components.canvasElements.TableCellComponent;
@@ -25,6 +26,7 @@ public class TableCellSystem extends IteratingSystem {
 	private transient ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
 	private transient ComponentMapper<TableCellComponent> tableCells = ComponentMapper.getFor(TableCellComponent.class);
 	private transient ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
+	private transient ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
 
 	public TableCellSystem() {
 		super(Family.all(TableCellComponent.class, CanvasElementComponent.class, TransformComponent.class, DimensionComponent.class)
@@ -39,7 +41,8 @@ public class TableCellSystem extends IteratingSystem {
 			TransformComponent transform = transforms.get(entity);
 			DimensionComponent dimension = dimensions.get(entity);
 			Vector3 actorPosition = new Vector3(actor.getX(), actor.getY(), actor.getZIndex());
-			if (!transform.getPosition().equals(actorPosition)) {
+			if (!transform.getPosition()
+						  .equals(actorPosition)) {
 				transform.setPosition(actor.getX(), actor.getY(), actor.getZIndex());
 				transform.notifyObservers("Position");
 			}

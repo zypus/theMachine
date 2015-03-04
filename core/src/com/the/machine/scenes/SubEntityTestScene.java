@@ -4,15 +4,16 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
+import com.the.machine.components.VelocityComponent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.*;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
-import com.the.machine.framework.systems.MovementSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
+import com.the.machine.systems.MovementSystem;
 
 /**
  * The Scene that is shown when the World is created
@@ -64,24 +65,25 @@ public class SubEntityTestScene
         Entity badlogicImageEntity = new Entity();
         Asset<TextureRegion> textureRegion = Asset.fetch("badlogic", TextureRegion.class);
 		badlogicImageEntity.add(new LayerComponent(BitBuilder.none(32)
-											  .s(1)
-											  .get()));
+															 .s(1)
+															 .get()));
 		badlogicImageEntity.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
 											.setSortingLayer("Default"));
 		badlogicImageEntity.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
 										 .setZRotation(0)
 										 .setScale(1f));
 		badlogicImageEntity.add(new NameComponent().setName("Badlogic1"));
+		badlogicImageEntity.add(new VelocityComponent().setVelocity(0.1f));
         badlogicImageEntity.add(new DirectionComponent().setDirection(new Vector3(
-                (float) 0.1,
-                (float) 0.05,
-                (float) 0)));
+				(float) 0.1,
+				(float) 0.05,
+				(float) 0)));
 		world.addEntity(badlogicImageEntity);
 
 		Entity badlogicImageEntity2 = new Entity();
 		badlogicImageEntity2.add(new LayerComponent(BitBuilder.none(32)
-											  .s(1)
-											  .get()));
+															  .s(1)
+															  .get()));
 		badlogicImageEntity2.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
 											.setSortingLayer("Default"));
 		badlogicImageEntity2.add(new TransformComponent().setPosition(new Vector3(0, 1, 0))

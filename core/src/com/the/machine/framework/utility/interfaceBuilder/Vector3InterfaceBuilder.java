@@ -32,10 +32,9 @@ import java.lang.reflect.Field;
  * @created 20/02/15
  */
 public class Vector3InterfaceBuilder
-		implements InterfaceBuilder {
+		implements InterfaceBuilder<Vector3> {
 	@Override
-	public Entity interfaceFor(Interfacer interfacer, Object object, Class<?> aClass, Object owner, Field field) {
-		Vector3 vector3 = (Vector3) object;
+	public Entity interfaceFor(Interfacer interfacer, Vector3 vector3, Class<?> aClass, Object owner, Field field) {
 		Entity table = new Entity();
 		table.add(new TableComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT));
 		table.add(new CanvasElementComponent());

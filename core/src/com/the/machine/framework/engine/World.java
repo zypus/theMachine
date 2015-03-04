@@ -29,6 +29,7 @@ import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.assets.LoadingTexture;
 import com.the.machine.framework.components.DisabledComponent;
+import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.ObservableComponent;
 import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.SubEntityComponent;
@@ -141,6 +142,7 @@ public class World implements ApplicationListener {
 	}
 
 	public void resetActiveScene() {
+		setup();
 		loadActiveScene();
 	}
 
@@ -158,13 +160,16 @@ public class World implements ApplicationListener {
 			}
 		}
 		for (Entity entity : activeScene.getEntities()) {
-			addEntity(entity);
 			if (worlds.has(entity)) {
 				Entity previousWorld = worldEntityRef.get();
 				WorldComponent worldComponent = worlds.get(entity);
-				worldComponent.setWorld(worlds.get(previousWorld).getWorld());
+				worldComponent.setWorld(worlds.get(previousWorld)
+											  .getWorld());
 				removeEntity(previousWorld);
 				worldEntityRef = new WeakReference<>(entity);
+				engine.addEntity(entity);
+			} else {
+				addEntity(entity);
 			}
 		}
 		worldState = WorldState.RUNNING;
@@ -230,7 +235,7 @@ public class World implements ApplicationListener {
 		Entity worldEntity = worldEntityRef.get();
 		removeAllSystems();
 		removeAllEntities();
-		addEntity(worldEntity);
+		engine.addEntity(worldEntity);
 	}
 
 	public void buildScene(SceneBuilder builder) {
@@ -239,10 +244,10 @@ public class World implements ApplicationListener {
 		setup();
 		builder.createScene(this);
 		worldState = previousState;
-		updateActiveScene();
-		saveActiveScene();
-
-		resetActiveScene();
+//		updateActiveScene();
+//		saveActiveScene();
+//
+//		resetActiveScene();
 	}
 
 	@Override
@@ -256,8 +261,9 @@ public class World implements ApplicationListener {
 
 		Entity worldEntity = new Entity();
 		worldEntity.add(new WorldComponent().setWorld(this));
+		worldEntity.add(new NameComponent().setName("World"));
 		worldEntityRef = new WeakReference<>(worldEntity);
-		addEntity(worldEntity);
+		engine.addEntity(worldEntity);
 
 //		loadScene("Unnamed Scene");
 
@@ -611,10 +617,30 @@ public class World implements ApplicationListener {
 	}
 
 	public void removeAllEntities() {
+		for (Entity entity : engine.getEntities()) {
+			if (parents.has(entity)) {
+				Entity parent = parents.get(entity)
+									   .getParent()
+									   .get();
+				if (parent != null && parent == worldEntityRef.get()) {
+					Entity worldEntity = worldEntityRef.get();
+					EntityUtilities.derelate(worldEntity, entity);
+				}
+			}
+		}
 		engine.removeAllEntities();
 	}
 
 	public void removeEntity(Entity entity) {
+		if (parents.has(entity)) {
+			Entity parent = parents.get(entity)
+								   .getParent()
+								   .get();
+			if (parent != null && parent == worldEntityRef.get()) {
+				Entity worldEntity = worldEntityRef.get();
+				EntityUtilities.derelate(worldEntity, entity);
+			}
+		}
 		engine.removeEntity(entity);
 	}
 

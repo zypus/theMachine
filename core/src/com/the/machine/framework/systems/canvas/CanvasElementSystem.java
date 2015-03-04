@@ -1,7 +1,9 @@
 package com.the.machine.framework.systems.canvas;
 
 import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
@@ -35,13 +37,15 @@ import com.the.machine.framework.components.canvasElements.TreeComponent;
 import com.the.machine.framework.components.canvasElements.TreeNodeComponent;
 import com.the.machine.framework.utility.Enums;
 
+import java.lang.ref.WeakReference;
+
 /**
  * TODO Add description
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 17/02/15
  */
-public class CanvasElementSystem extends IteratingSystem {
+public class CanvasElementSystem extends IteratingSystem implements EntityListener {
 
 	transient private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
 	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
@@ -70,8 +74,32 @@ public class CanvasElementSystem extends IteratingSystem {
 	}
 
 	@Override
+	public void addedToEngine(Engine engine) {
+		super.addedToEngine(engine);
+		engine.addEntityListener(Family.all(CanvasElementComponent.class).get(), this);
+	}
+
+	@Override
+	public void removedFromEngine(Engine engine) {
+		super.removedFromEngine(engine);
+		engine.removeEntityListener(this);
+	}
+
+	@Override
+	public void entityAdded(Entity entity) {
+		updateCanvasElement(entity);
+	}
+
+	@Override
+	public void entityRemoved(Entity entity) {
+		CanvasElementComponent elementComponent = canvasElements.get(entity);
+		elementComponent.getUnwrappedActor().remove();
+		elementComponent.setAdded(false);
+	}
+
+	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
-		updateCanvasElement(entity, deltaTime);
+		updateCanvasElement(entity);
 		CanvasElementComponent elementComponent = canvasElements.get(entity);
 		// handle children
 		if (subs.has(entity) && elementComponent.getGroup() != null) {
@@ -94,7 +122,7 @@ public class CanvasElementSystem extends IteratingSystem {
 		}
 	}
 
-	protected void updateCanvasElement(Entity entity, float deltaTime) {
+	protected void updateCanvasElement(Entity entity) {
 		boolean hasMain = false;
 		CanvasElementComponent elementComponent = canvasElements.get(entity);
 		TransformComponent transform = transforms.get(entity);
@@ -240,9 +268,14 @@ public class CanvasElementSystem extends IteratingSystem {
 			elementComponent.setGroup(true);
 		}
 
+		Actor actor = elementComponent.getUnwrappedActor();
+		if (actor.getUserObject() != null) {
+			actor.setUserObject(new WeakReference<>(entity));
+		}
+
 		if (!tableCells.has(entity) && !treeNodes.has(entity) && !(tables.has(entity) && tables.get(entity).isFillParent())) {
 
-			Actor actor = elementComponent.getActor();
+
 
 			actor.setZIndex((int) transform.getZ());
 			//FIXME Fix stuff related to transform = true for tables, etc.

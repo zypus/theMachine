@@ -9,6 +9,8 @@ import com.the.machine.framework.components.SubEntityComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.components.canvasElements.TreeNodeComponent;
 
+import java.lang.ref.WeakReference;
+
 /**
  * TODO Add description
  *
@@ -50,6 +52,7 @@ public class TreeNodeSystem extends IteratingSystem {
 							} else {
 								node = nodeComponent.getNode();
 							}
+							node.setObject(new WeakReference<>(child));
 							nodeComponent.setAdded(true);
 							parentNode.insert(index, node);
 						} else if (nodeComponent.isAdded() && childElement.getActor() != null && parentNode.getChildren()

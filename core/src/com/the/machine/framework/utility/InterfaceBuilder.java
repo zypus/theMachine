@@ -10,8 +10,8 @@ import java.lang.reflect.Field;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 20/02/15
  */
-public interface InterfaceBuilder {
+public interface InterfaceBuilder<T> {
 
-	Entity interfaceFor(Interfacer interfacer, Object object, Class<?> aClass, Object owner, Field field);
+	Entity interfaceFor(Interfacer interfacer, T object, Class<?> aClass, Object owner, Field field);
 
 }

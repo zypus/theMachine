@@ -21,15 +21,18 @@ public class TableBoxer implements Boxer {
 	@Override
 	public Entity box(Entity ... entities) {
 		Entity box = new Entity();
-		box.add(new TableComponent().setFillParent(true).setHorizontalAlignment(Enums.HorizontalAlignment.RIGHT).setVerticalAlignment(Enums.VerticalAlignment.BOTTOM));
+		box.add(new TableComponent());
 		box.add(new CanvasElementComponent());
 		box.add(new TransformComponent());
 		box.add(new DimensionComponent());
 		SubEntityComponent subEntityComponent = new SubEntityComponent();
 		for (int i = 0; i < entities.length; i++) {
 			Entity entity = entities[i];
-			entity.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+			entity.add(new TableCellComponent()
 											   .setFillX(1)
+												.setFillY(1)
+												.setExpandX(1)
+					.setExpandY(1)
 											   .setRowEnd(true));
 			entity.add(new ParentComponent(new WeakReference<>(box), i));
 			subEntityComponent.add(entity);
