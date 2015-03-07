@@ -9,6 +9,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -31,6 +32,9 @@ import com.the.machine.framework.utility.Utils;
 
 import java.lang.ref.WeakReference;
 
+import static com.badlogic.gdx.Input.Keys.*;
+import static com.the.machine.components.AreaComponent.AreaType.*;
+
 /**
  * TODO Add description
  *
@@ -47,9 +51,9 @@ public class MapSystem
 	transient private ComponentMapper<DimensionComponent>    dimensions       = ComponentMapper.getFor(DimensionComponent.class);
 	transient private ComponentMapper<AreaComponent>         areas            = ComponentMapper.getFor(AreaComponent.class);
 	transient private ComponentMapper<SpriteRenderComponent> sprites          = ComponentMapper.getFor(SpriteRenderComponent.class);
-	transient private ComponentMapper<DisabledComponent> disabled          = ComponentMapper.getFor(DisabledComponent.class);
-	transient private ComponentMapper<ReferenceComponent> references          = ComponentMapper.getFor(ReferenceComponent.class);
-	transient private ComponentMapper<HandleComponent> handleComponents          = ComponentMapper.getFor(HandleComponent.class);
+	transient private ComponentMapper<DisabledComponent>     disabled         = ComponentMapper.getFor(DisabledComponent.class);
+	transient private ComponentMapper<ReferenceComponent>    references       = ComponentMapper.getFor(ReferenceComponent.class);
+	transient private ComponentMapper<HandleComponent>       handleComponents = ComponentMapper.getFor(HandleComponent.class);
 
 	transient private final float   DOUBLE_TAP_TIME = 0.3f;
 	transient private       float   lastTap         = -2 * DOUBLE_TAP_TIME;
@@ -62,10 +66,11 @@ public class MapSystem
 
 	transient private Vector2 cameraMovement = new Vector2();
 
-	transient private Entity toDrag = null;
+	transient private Entity toDrag       = null;
 	transient private Entity handleToDrag = null;
 
 	transient private Entity selected = null;
+	transient private Vector3 selectionDelta = new Vector3();
 
 	public MapSystem() {
 		super(Family.all()
@@ -75,7 +80,8 @@ public class MapSystem
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		world.getInputMultiplexer().addProcessor(this);
+		world.getInputMultiplexer()
+			 .addProcessor(this);
 		mapElements = engine.getEntitiesFor(Family.all(TransformComponent.class, DimensionComponent.class, AreaComponent.class)
 												  .get());
 		findMapCamera();
@@ -84,9 +90,9 @@ public class MapSystem
 			Entity handle = new Entity();
 			handle.add(new HandleComponent().setType(handleTypes[i]));
 			handle.add(new DisabledComponent());
-			handle.add(new DimensionComponent().setDimension(20,20));
+			handle.add(new DimensionComponent().setDimension(20, 20));
 			handle.add(new CanvasElementComponent());
-//			handle.add(new LabelComponent().setText("h"+i));
+			//			handle.add(new LabelComponent().setText("h"+i));
 			handle.add(new ButtonComponent());
 			handle.add(new TransformComponent());
 			handle.add(new ReferenceComponent());
@@ -95,9 +101,10 @@ public class MapSystem
 	}
 
 	private void findMapCamera() {
-		ImmutableArray<Entity> cameras = world.getEntitiesFor(Family.one(CameraComponent.class).get());
-		handles = world.getEntitiesFor(Family.one(HandleComponent.class)
+		ImmutableArray<Entity> cameras = world.getEntitiesFor(Family.one(CameraComponent.class)
 																	.get());
+		handles = world.getEntitiesFor(Family.one(HandleComponent.class)
+											 .get());
 		for (Entity camera : cameras) {
 			if (names.has(camera)) {
 				if (names.get(camera)
@@ -112,7 +119,8 @@ public class MapSystem
 	@Override
 	public void removedFromEngine(Engine engine) {
 		super.removedFromEngine(engine);
-		world.getInputMultiplexer().removeProcessor(this);
+		world.getInputMultiplexer()
+			 .removeProcessor(this);
 		mapElements = null;
 		handles = null;
 	}
@@ -177,7 +185,8 @@ public class MapSystem
 			float wh = dimensionComponent.getWidth() / 2;
 			float hh = dimensionComponent.getHeight() / 2;
 			for (int i = 0; i < 8; i++) {
-				Vector3 pos = transform.getPosition().cpy();
+				Vector3 pos = transform.getPosition()
+									   .cpy();
 				pos.z = 0;
 				switch (i) {
 					case 0:
@@ -226,6 +235,29 @@ public class MapSystem
 
 	@Override
 	public boolean keyDown(int keycode) {
+		if (selected != null) {
+			TransformComponent transformComponent = transforms.get(selected);
+			if (keycode == BACKSPACE) {
+				AreaComponent areaComponent = areas.get(selected);
+				if (areaComponent.getType() != GROUND) {
+					world.removeEntity(selected);
+					selected = null;
+				}
+			} else if (keycode == UP && Gdx.input.isKeyPressed(SHIFT_LEFT)) {
+				transformComponent.setZ(MathUtils.clamp(transformComponent.getZ() + 1, 0, mapElements.size() - 1));
+			} else if (keycode == DOWN && Gdx.input.isKeyPressed(SHIFT_LEFT)) {
+				transformComponent.setZ(MathUtils.clamp(transformComponent.getZ() - 1, 0, mapElements.size() - 1));
+			} else if (keycode == UP) {
+				transformComponent.setY(transformComponent.getY() + 10);
+			} else if (keycode == RIGHT) {
+				transformComponent.setX(transformComponent.getX() + 10);
+			} else if (keycode == DOWN) {
+				transformComponent.setY(transformComponent.getY() - 10);
+			} else if (keycode == LEFT) {
+				transformComponent.setX(transformComponent.getX() - 10);
+			}
+			transformComponent.notifyObservers();
+		}
 		return false;
 	}
 
@@ -245,7 +277,7 @@ public class MapSystem
 		boolean doubleTap = false;
 		if (tapTime - lastTap < DOUBLE_TAP_TIME) {
 			doubleTap = true;
-			lastTap = -2*DOUBLE_TAP_TIME;
+			lastTap = -2 * DOUBLE_TAP_TIME;
 		} else {
 			lastTap = tapTime;
 		}
@@ -271,12 +303,20 @@ public class MapSystem
 			}
 			if (!handleDragging && mapElements != null) {
 				boolean found = false;
+				boolean ground = false;
 				for (Entity element : mapElements) {
 					Rectangle rect = getWorldDimensions(element);
+					AreaComponent areaComponent = areas.get(element);
 					if (rect.contains(unproject.x, unproject.y)) {
-						found = true;
-						if (doubleTap) {
-							AreaComponent areaComponent = areas.get(element);
+						boolean grounded = areaComponent.getType() == GROUND;
+						if (!grounded) {
+							found = true;
+							ground = false;
+						} else {
+							found = true;
+							ground = true;
+						}
+						if (!grounded && doubleTap) {
 							AreaComponent.AreaType type = areaComponent.getType();
 							AreaComponent.AreaType[] constants = type.getDeclaringClass()
 																	 .getEnumConstants();
@@ -285,20 +325,24 @@ public class MapSystem
 									.ordinal();
 							ordinal++;
 							if (ordinal >= length) {
-								ordinal = 0;
+								ordinal = 1;
 							}
 							areaComponent.setType(constants[ordinal]);
 						} else {
 							toDrag = element;
 						}
 						if (selected == null || selected != element) {
+							TransformComponent transformComponent = EntityUtilities.computeAbsoluteTransform(element);
 							selected = element;
+							selectionDelta.set(unproject.cpy()
+														.sub(transformComponent.getPosition()));
 						}
 					}
 				}
-				if (!found && doubleTap) {
+				if ((!found || ground) && doubleTap) {
 					Entity newMapElement = new Entity();
-					newMapElement.add(new TransformComponent().setPosition(unproject).setZ(mapElements.size()));
+					newMapElement.add(new TransformComponent().setPosition(unproject)
+															  .setZ(mapElements.size()));
 					newMapElement.add(new DimensionComponent().setDimension(50, 50));
 					AreaComponent.AreaType type = AreaComponent.AreaType.WALL;
 					newMapElement.add(new AreaComponent().setType(type));
@@ -309,7 +353,8 @@ public class MapSystem
 																 .setSortingLayer("Default"));
 					selected = newMapElement;
 					world.addEntity(newMapElement);
-				} else if (!found) {
+				}
+				if (!found) {
 					selected = null;
 				}
 			}
@@ -336,8 +381,9 @@ public class MapSystem
 	private Vector3 getScreenCoordinates(Vector3 pos, Entity camera) {
 		TransformComponent absoluteTransform = EntityUtilities.computeAbsoluteTransform(camera);
 		CameraComponent cameraComponent = cameraComponents.get(camera);
-		pos.sub(absoluteTransform.getPosition()).scl(2f / world.getWidth(), 2f / world.getHeight(), 1)
-				 .scl(1f / cameraComponent.getZoom());
+		pos.sub(absoluteTransform.getPosition())
+		   .scl(2f / world.getWidth(), 2f / world.getHeight(), 1)
+		   .scl(1f / cameraComponent.getZoom());
 		return cam.project(pos);
 	}
 
@@ -408,12 +454,13 @@ public class MapSystem
 							tf.setX(tf.getX() + delta.x / 2);
 							break;
 					}
+					tf.notifyObservers();
 				}
-			}
-			else if (toDrag != null) {
+			} else if (toDrag != null) {
 				TransformComponent transformComponent = transforms.get(toDrag);
-				transformComponent.setPosition(delta.cpy()
-													.add(transformComponent.getPosition()));
+				transformComponent.setPosition(unproject.cpy()
+														.add(selectionDelta));
+				transformComponent.notifyObservers();
 			}
 			touchDownPoint = unproject;
 		}

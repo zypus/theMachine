@@ -45,16 +45,16 @@ import java.util.Map;
  */
 public class CameraRenderSystem
 		extends SortedIteratingSystem
-		implements EntityListener, Observer, EventListener{
+		implements EntityListener, Observer, EventListener {
 
 	//TODO CameraListener, if the depth of a camera changes, camera order needs to be updated
 
-	@Getter private transient ComponentMapper<CameraComponent> cameraComponents = ComponentMapper.getFor(CameraComponent.class);
-	private transient ComponentMapper<TransformComponent>    transforms = ComponentMapper.getFor(TransformComponent.class);
-	private transient ComponentMapper<DimensionComponent>    dimensions      = ComponentMapper.getFor(DimensionComponent.class);
-	private transient ComponentMapper<SpriteRenderComponent> spriteRenderers = ComponentMapper.getFor(SpriteRenderComponent.class);
-	private transient ComponentMapper<CanvasComponent>       canvas          = ComponentMapper.getFor(CanvasComponent.class);
-	private transient ComponentMapper<LayerComponent>        layers          = ComponentMapper.getFor(LayerComponent.class);
+	@Getter private transient ComponentMapper<CameraComponent>       cameraComponents = ComponentMapper.getFor(CameraComponent.class);
+	private transient         ComponentMapper<TransformComponent>    transforms       = ComponentMapper.getFor(TransformComponent.class);
+	private transient         ComponentMapper<DimensionComponent>    dimensions       = ComponentMapper.getFor(DimensionComponent.class);
+	private transient         ComponentMapper<SpriteRenderComponent> spriteRenderers  = ComponentMapper.getFor(SpriteRenderComponent.class);
+	private transient         ComponentMapper<CanvasComponent>       canvas           = ComponentMapper.getFor(CanvasComponent.class);
+	private transient         ComponentMapper<LayerComponent>        layers           = ComponentMapper.getFor(LayerComponent.class);
 
 	private transient OrthographicCamera orthoCam = new OrthographicCamera();
 	private transient PerspectiveCamera  persCam  = new PerspectiveCamera();
@@ -66,7 +66,7 @@ public class CameraRenderSystem
 
 	private transient ShapeRenderer shapeRenderer;
 
-	private transient Map<Long, Decal> decalMap = new HashMap<>();
+	private transient Map<Entity, Decal> decalMap = new HashMap<>();
 
 	@Override
 	public boolean isRenderSystem() {
@@ -101,7 +101,7 @@ public class CameraRenderSystem
 			}
 			sortedCameras.sort(cameraComparator);
 		}
-		engine.addEntityListener(cameraFamily, this);
+		engine.addEntityListener(this);
 		shapeRenderer = new ShapeRenderer();
 		world.getSortingLayers()
 			 .put("UI", 2);
@@ -127,6 +127,13 @@ public class CameraRenderSystem
 			sortedCameras.add(entity);
 			sortedCameras.sort(cameraComparator);
 		} else {
+			if (spriteRenderers.has(entity)) {
+				SpriteRenderComponent spriteRenderComponent = spriteRenderers.get(entity);
+				Decal sprite = Decal.newDecal(1, 1, spriteRenderComponent.getTextureRegion()
+																   .get());
+				decalMap.put(entity, sprite);
+				spriteRenderComponent.addObserver(this);
+			}
 			super.entityAdded(entity);
 		}
 	}
@@ -145,7 +152,7 @@ public class CameraRenderSystem
 				spriteRenderers.get(entity)
 							   .deleteObserver(this);
 			}
-			decalMap.remove(entity.getId());
+			decalMap.remove(entity);
 		}
 	}
 
@@ -158,7 +165,7 @@ public class CameraRenderSystem
 			Entity entity = src.getOwner()
 							   .get();
 			if (entity != null) {
-				Decal decal = decalMap.get(entity.getId());
+				Decal decal = decalMap.get(entity);
 				if (decal != null) {
 					decal.setTextureRegion(src.getTextureRegion()
 											  .get());
@@ -172,7 +179,7 @@ public class CameraRenderSystem
 	public void handleEvent(Event event) {
 		if (event instanceof AssetLoadingFinishedEvent) {
 			for (Entity entity : getEntities()) {
-				Decal decal = decalMap.get(entity.getId());
+				Decal decal = decalMap.get(entity);
 				if (decal != null) {
 					decal.setTextureRegion(spriteRenderers.get(entity)
 														  .getTextureRegion()
@@ -197,7 +204,8 @@ public class CameraRenderSystem
 			} else {
 				camera = persCam;
 				persCam.fieldOfView = cameraComponent.getFieldOfView();
-				if (cameraComponent.getClippingPlanes().getNear() == 0) {
+				if (cameraComponent.getClippingPlanes()
+								   .getNear() == 0) {
 					camera.near = 0.001f;
 				} else {
 					camera.near = cameraComponent.getClippingPlanes()
@@ -208,14 +216,16 @@ public class CameraRenderSystem
 										.getFar();
 			TransformComponent transformComponent = EntityUtilities.computeAbsoluteTransform(cameraEntity);
 
-			camera.direction.set(0,0,-1);
-			camera.up.set(0,1,0);
+			camera.direction.set(0, 0, -1);
+			camera.up.set(0, 1, 0);
 			camera.rotate(transformComponent.getRotation());
 			Rectangle viewportRect = cameraComponent.getViewportRect();
 			int width = (int) (world.getWidth() * viewportRect.getWidth());
 			int height = (int) (world.getHeight() * viewportRect.getHeight());
 			Vector2 origin = cameraComponent.getOrigin();
-			camera.position.set(transformComponent.getPosition().cpy().add(width * (0.5f - origin.x), height * (0.5f - origin.y), 0));
+			camera.position.set(transformComponent.getPosition()
+												  .cpy()
+												  .add(width * (0.5f - origin.x), height * (0.5f - origin.y), 0));
 			int x = (int) (world.getX() + world.getWidth() * viewportRect.getX());
 			int y = (int) (world.getY() + world.getHeight() * viewportRect.getY());
 			camera.viewportWidth = width;
@@ -228,7 +238,8 @@ public class CameraRenderSystem
 			gl.glClearColor(background.r, background.g, background.b, background.a);
 			gl.glClear(cameraComponent.getClearFlag());
 
-			world.getCameraGroupStrategy().setCamera(camera);
+			world.getCameraGroupStrategy()
+				 .setCamera(camera);
 			DecalBatch decalBatch = world.getDecalBatch();
 
 			camera.update();
@@ -249,43 +260,47 @@ public class CameraRenderSystem
 							gl.glEnable(GL20.GL_DEPTH_TEST);
 							SpriteRenderComponent spriteRenderComponent = spriteRenderers.get(entity);
 							Decal sprite;
-							if (decalMap.containsKey(entity.getId())) {
-								sprite = decalMap.get(entity.getId());
-							} else {
-								sprite = Decal.newDecal(1, 1, spriteRenderComponent.getTextureRegion().get());
-								decalMap.put(entity.getId(), sprite);
-								spriteRenderComponent.addObserver(this);
+							if (decalMap.containsKey(entity)) {
+								sprite = decalMap.get(entity);
+								if (spriteRenderComponent.isDirty()) {
+									sprite.setTextureRegion(spriteRenderComponent.getTextureRegion()
+																				 .get());
+								}
+								TransformComponent spriteTransform = EntityUtilities.computeAbsoluteTransform(entity);
+								sprite.setPosition(spriteTransform.getPosition());
+								sprite.setRotation(spriteTransform.getRotation());
+								if (dimensions.has(entity)) {
+									DimensionComponent dimensionComponent = dimensions.get(entity);
+									sprite.setScale(spriteTransform.getXScale() * dimensionComponent.getWidth(), spriteTransform.getYScale() * dimensionComponent.getHeight());
+								} else {
+									sprite.setScale(spriteTransform.getXScale(), spriteTransform.getYScale());
+								}
+								//													sprite.setRotation(new Vector3(-camera.direction.x, -camera.direction.y, -camera.direction.z), Vector3.Y);
+								decalBatch.add(sprite);
 							}
-							if (spriteRenderComponent.isDirty()) {
-								sprite.setTextureRegion(spriteRenderComponent.getTextureRegion().get());
-							}
-							TransformComponent spriteTransform = EntityUtilities.computeAbsoluteTransform(entity);
-							sprite.setPosition(spriteTransform.getPosition());
-							sprite.setRotation(spriteTransform.getRotation());
-							if (dimensions.has(entity)) {
-								DimensionComponent dimensionComponent = dimensions.get(entity);
-								sprite.setScale(spriteTransform.getXScale()*dimensionComponent.getWidth(), spriteTransform.getYScale()*dimensionComponent.getHeight());
-							} else {
-								sprite.setScale(spriteTransform.getXScale(), spriteTransform.getYScale());
-							}
-//													sprite.setRotation(new Vector3(-camera.direction.x, -camera.direction.y, -camera.direction.z), Vector3.Y);
-							decalBatch.add(sprite);
 						}
 						// draw canvas
 						if (canvas.has(entity) && canvas.get(entity)
 														.isEnabled()) {
 							CanvasComponent canvasComponent = canvas.get(entity);
-							canvasComponent.getStage().getViewport().setCamera(camera);
-							canvasComponent.getStage().draw();
+							canvasComponent.getStage()
+										   .getViewport()
+										   .setCamera(camera);
+							canvasComponent.getStage()
+										   .draw();
 							if (canvasComponent.isDebug()) {
 								canvasComponent.getStage()
 											   .getRoot()
 											   .setDebug(true, true);
 							}
-							canvasComponent.getStage().getRoot().setTransform(true);
+							canvasComponent.getStage()
+										   .getRoot()
+										   .setTransform(true);
 							shapeRenderer.setProjectionMatrix(camera.combined);
 							shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-							canvasComponent.getStage().getRoot().drawDebug(shapeRenderer);
+							canvasComponent.getStage()
+										   .getRoot()
+										   .drawDebug(shapeRenderer);
 							shapeRenderer.end();
 							gl.glScissor(x, y, width, height);
 							gl.glViewport(x, y, width, height);
@@ -303,7 +318,8 @@ public class CameraRenderSystem
 
 	}
 
-	protected static class LayerComparator implements Comparator<Entity> {
+	protected static class LayerComparator
+			implements Comparator<Entity> {
 
 		private CameraRenderSystem cameraRenderSystem;
 
@@ -316,12 +332,14 @@ public class CameraRenderSystem
 			LayerSortable ls1 = cameraRenderSystem.getSortable(o1);
 			LayerSortable ls2 = cameraRenderSystem.getSortable(o2);
 			int sortingLayer1 = (ls1 != null && ls1.getSortingLayer() != null)
-									? cameraRenderSystem.world.getSortingLayers().get(ls1.getSortingLayer())
-									: Integer.MIN_VALUE;
+								? cameraRenderSystem.world.getSortingLayers()
+														  .get(ls1.getSortingLayer())
+								: Integer.MIN_VALUE;
 			int sortingLayer2 = (ls2 != null && ls2.getSortingLayer() != null)
-								? cameraRenderSystem.world.getSortingLayers().get(ls2.getSortingLayer())
-									: Integer.MIN_VALUE;
-			return sortingLayer1-sortingLayer2;
+								? cameraRenderSystem.world.getSortingLayers()
+														  .get(ls2.getSortingLayer())
+								: Integer.MIN_VALUE;
+			return sortingLayer1 - sortingLayer2;
 		}
 	}
 
@@ -332,7 +350,8 @@ public class CameraRenderSystem
 		return null;
 	}
 
-	protected static class OrderComparator implements Comparator<Entity> {
+	protected static class OrderComparator
+			implements Comparator<Entity> {
 
 		private CameraRenderSystem cameraRenderSystem;
 
@@ -345,16 +364,17 @@ public class CameraRenderSystem
 			LayerSortable ls1 = cameraRenderSystem.getSortable(o1);
 			LayerSortable ls2 = cameraRenderSystem.getSortable(o2);
 			int sortingOrder1 = (ls1 != null)
-									? ls1.getSortingOrder()
-									: Integer.MIN_VALUE;
+								? ls1.getSortingOrder()
+								: Integer.MIN_VALUE;
 			int sortingOrder2 = (ls2 != null)
-									? ls2.getSortingOrder()
-									: Integer.MIN_VALUE;
+								? ls2.getSortingOrder()
+								: Integer.MIN_VALUE;
 			return sortingOrder1 - sortingOrder2;
 		}
 	}
 
-	protected static class CameraComparator implements Comparator<Entity> {
+	protected static class CameraComparator
+			implements Comparator<Entity> {
 
 		private CameraRenderSystem cameraRenderSystem;
 

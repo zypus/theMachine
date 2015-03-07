@@ -4,17 +4,20 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
+import com.the.machine.components.AreaComponent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.CanvasComponent;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.NameComponent;
+import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
+import com.the.machine.framework.systems.basic.PhysicsSystem;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
@@ -36,6 +39,7 @@ public class MapEditorSceneBuilder
 		world.addSystem(new CanvasSystem(), ResizeEvent.class);
 		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new MapSystem());
+		world.addSystem(new PhysicsSystem());
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
@@ -79,6 +83,18 @@ public class MapEditorSceneBuilder
 												.get()));
 		canvas.add(new NameComponent().setName("Canvas"));
 		world.addEntity(canvas);
+
+		Entity map = new Entity();
+		map.add(new TransformComponent().setZ(-1));
+		map.add(new DimensionComponent().setDimension(300, 300));
+		AreaComponent.AreaType type = AreaComponent.AreaType.GROUND;
+		map.add(new AreaComponent().setType(type));
+		map.add(new LayerComponent(BitBuilder.none(32)
+													   .s(1)
+													   .get()));
+		map.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
+													 .setSortingLayer("Default"));
+		world.addEntity(map);
 
 
 	}

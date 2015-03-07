@@ -56,6 +56,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 	transient private ComponentMapper<TableCellComponent> tableCells = ComponentMapper.getFor(TableCellComponent.class);
 	transient private ComponentMapper<TreeNodeComponent> treeNodes = ComponentMapper.getFor(TreeNodeComponent.class);
 	transient private ComponentMapper<SkinComponent>     skins    = ComponentMapper.getFor(SkinComponent.class);
+	transient private ComponentMapper<CanvasComponent>     canvases    = ComponentMapper.getFor(CanvasComponent.class);
 
 	transient private final Asset<Skin> defaultSkin = Asset.fetch("uiskin.json", Skin.class);
 
@@ -102,6 +103,9 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 		updateCanvasElement(entity);
 		CanvasElementComponent elementComponent = canvasElements.get(entity);
 		// handle children
+		if (parents.has(entity) && !canvases.has(entity) && parents.get(entity).getParent().get() == world.getWorldEntityRef().get()) {
+			world.getSystem(CanvasSystem.class).getElementsToAdd().add(entity);
+		}
 		if (subs.has(entity) && elementComponent.getGroup() != null) {
 			SubEntityComponent children = subs.get(entity);
 			int index = 0;

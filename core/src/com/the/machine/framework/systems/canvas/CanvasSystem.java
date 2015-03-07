@@ -16,6 +16,7 @@ import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.ResizeEvent;
 import com.the.machine.framework.utility.EntityUtilities;
+import lombok.Getter;
 
 import java.awt.Dimension;
 
@@ -32,7 +33,7 @@ public class CanvasSystem extends IteratingSystem
 	transient private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
 	transient private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
 
-	transient private Array<Entity> elementsToAdd = new Array<>();
+	@Getter transient private Array<Entity> elementsToAdd = new Array<>();
 
 	public CanvasSystem() {
 		super(Family.all(CanvasComponent.class, CanvasElementComponent.class)
@@ -42,7 +43,7 @@ public class CanvasSystem extends IteratingSystem
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		engine.addEntityListener(Family.one(CanvasComponent.class, CanvasElementComponent.class)
+		engine.addEntityListener(Family.one(CanvasComponent.class)
 									   .get(), this);
 	}
 
@@ -66,18 +67,6 @@ public class CanvasSystem extends IteratingSystem
 			elementComponent.setActor(stage.getRoot());
 			elementComponent.setGroup(true);
 			elementComponent.setAdded(true);
-		} else {
-			ParentComponent parentComponent = parents.get(entity);
-			Entity parent = parentComponent.getParent()
-										   .get();
-			if (parent != null && !canvasComponents.has(parent) || !canvasElements.has(parent)) {
-				if (getEntities().size() > 0) {
-					Entity mainCanvas = getEntities().first();
-					EntityUtilities.relate(mainCanvas, entity);
-				} else {
-					elementsToAdd.add(entity);
-				}
-			}
 		}
 	}
 

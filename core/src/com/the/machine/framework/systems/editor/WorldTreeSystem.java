@@ -9,7 +9,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Tree;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.IgnoredComponent;
 import com.the.machine.framework.components.NameComponent;
-import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.ReferenceComponent;
 import com.the.machine.framework.components.SelectedComponent;
 import com.the.machine.framework.components.SubEntityComponent;
@@ -82,10 +81,7 @@ public class WorldTreeSystem extends IteratingSystem {
 												 .add(new TreeNodeComponent())
 							.add(new ReferenceComponent().setReference(new WeakReference<>(firstWorld)))
 												 .add(new IgnoredComponent());
-					SubEntityComponent subEntityComponent = new SubEntityComponent();
-					subEntityComponent.add(node);
-					node.add(new ParentComponent(new WeakReference<>(entity), 0));
-					entity.add(subEntityComponent);
+					EntityUtilities.relate(entity, node);
 					world.addEntity(node);
 					digDown(firstWorld, node);
 				}
@@ -116,8 +112,6 @@ public class WorldTreeSystem extends IteratingSystem {
 	private void digDown(Entity parent, Entity treeNode) {
 		if (!ignored.has(parent)) {
 			if (subs.has(parent)) {
-				SubEntityComponent subNodes = new SubEntityComponent();
-				int index = 0;
 				for (Entity child : subs.get(parent)) {
 					if (!ignored.has(child)) {
 						Entity node = EntityUtilities.makeLabel((names.has(child))
@@ -127,14 +121,11 @@ public class WorldTreeSystem extends IteratingSystem {
 													 .add(new TreeNodeComponent())
 													.add(new ReferenceComponent().setReference(new WeakReference<>(child)))
 													 .add(new IgnoredComponent());
-						subNodes.add(node);
-						node.add(new ParentComponent(new WeakReference<>(treeNode), index));
+						EntityUtilities.relate(treeNode, node);
 						world.addEntity(node);
 						digDown(child, node);
-						index++;
 					}
 				}
-				treeNode.add(subNodes);
 			}
 		}
 	}

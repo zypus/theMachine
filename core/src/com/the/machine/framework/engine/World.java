@@ -43,6 +43,7 @@ import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
 import com.the.machine.framework.serialization.EntitySerializer;
+import com.the.machine.framework.systems.WorldSystem;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
 
@@ -67,7 +68,7 @@ public class World implements ApplicationListener {
 	private TweenManager tweenManager;
 	@Getter private InputMultiplexer inputMultiplexer = new InputMultiplexer();
 
-	WeakReference<Entity> worldEntityRef;
+	@Getter WeakReference<Entity> worldEntityRef;
 
 	Kryo kryo = new Kryo();
 
@@ -238,6 +239,7 @@ public class World implements ApplicationListener {
 		removeAllSystems();
 		removeAllEntities();
 		engine.addEntity(worldEntity);
+		addSystem(new WorldSystem());
 	}
 
 	public void buildScene(SceneBuilder builder) {
@@ -267,6 +269,8 @@ public class World implements ApplicationListener {
 		worldEntity.add(new NameComponent().setName("World"));
 		worldEntityRef = new WeakReference<>(worldEntity);
 		engine.addEntity(worldEntity);
+
+		addSystem(new WorldSystem());
 
 		worldState = WorldState.RUNNING;
 	}
@@ -415,11 +419,12 @@ public class World implements ApplicationListener {
 			}
 		}
 		// if the added entity is a root entity make it a child of the world entity
-		Entity worldEntity = worldEntityRef.get();
-		if (worldEntity != null && !worldEntity.equals(entity) && !parents.has(entity)) {
-			EntityUtilities.relate(worldEntity, entity);
-		}
 		engine.addEntity(entity);
+//		Entity worldEntity = worldEntityRef.get();
+//		if (worldEntity != null && !worldEntity.equals(entity) && !(parents.has(entity) || EntityUtilities.getParentMemory()
+//																										  .containsKey(entity.getId()))) {
+//			EntityUtilities.relate(worldEntity, entity);
+//		}
 	}
 
 	public void addEntityListener(EntityListener listener) {

@@ -13,6 +13,7 @@ import com.the.machine.framework.components.canvasElements.CanvasElementComponen
 import com.the.machine.framework.components.canvasElements.LabelComponent;
 import com.the.machine.framework.components.canvasElements.SelectBoxComponent;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
+import lombok.Getter;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -31,7 +32,8 @@ public class EntityUtilities {
 	private static ComponentMapper<DisabledComponent> disabled = ComponentMapper.getFor(DisabledComponent.class);
 	private static ComponentMapper<TransformComponent>   transforms  = ComponentMapper.getFor(TransformComponent.class);
 
-	private static Map<Long, SubEntityComponent> relationMemory = new HashMap<>();
+	private static Map<Entity, SubEntityComponent> relationMemory = new HashMap<>();
+	@Getter private static Map<Entity, ParentComponent> parentMemory = new HashMap<>();
 
 	public static Entity makeLabel(String text) {
 		Entity label = new Entity();
@@ -76,22 +78,36 @@ public class EntityUtilities {
 
 	public static Entity relate(Entity parent, Entity child) {
 		SubEntityComponent subEntityComponent;
-		if (!relationMemory.containsKey(parent.getId())) {
+		if (!relationMemory.containsKey(parent) && !subs.has(parent)) {
 			subEntityComponent = new SubEntityComponent();
 			parent.add(subEntityComponent);
-			relationMemory.put(parent.getId(), subEntityComponent);
+			relationMemory.put(parent, subEntityComponent);
+		} else if (subs.has(parent)) {
+			subEntityComponent = subs.get(parent);
 		} else {
-			subEntityComponent = relationMemory.get(parent.getId());
+			subEntityComponent = relationMemory.get(parent);
 		}
 		int i = subEntityComponent.size();
-		if (!parents.has(child)) {
-			child.add(new ParentComponent(new WeakReference<>(parent), i));
+		if (!parentMemory.containsKey(child) && !parents.has(child)) {
+			ParentComponent parentComponent = new ParentComponent(new WeakReference<>(parent), i);
+			child.add(parentComponent);
+			parentMemory.put(child, parentComponent);
 		} else {
 			ParentComponent parentComponent = parents.get(child);
+			if (parentComponent == null) {
+				parentComponent = parentMemory.get(child);
+			}
 			Entity formerParent = parentComponent.getParent().get();
-			if (formerParent != null) {
+			if (formerParent != null && formerParent != parent) {
 				SubEntityComponent formerSubs = subs.get(formerParent);
-				formerSubs.remove(parentComponent.getIndex());
+				if (formerSubs != null) {
+					formerSubs.remove(child);
+				} else {
+					formerSubs = relationMemory.get(formerParent);
+					if (formerSubs != null) {
+						formerSubs.remove(child);
+					}
+				}
 			}
 			parentComponent.setParent(new WeakReference<>(parent));
 			parentComponent.setIndex(i);
