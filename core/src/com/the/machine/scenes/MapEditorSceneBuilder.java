@@ -5,6 +5,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.AreaComponent;
+import com.the.machine.events.MapEditorLoadEvent;
+import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.CanvasComponent;
@@ -13,15 +15,21 @@ import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.canvasElements.ButtonComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
+import com.the.machine.framework.components.canvasElements.TableCellComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
 import com.the.machine.framework.systems.basic.PhysicsSystem;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
+import com.the.machine.framework.systems.canvas.TableCellSystem;
+import com.the.machine.framework.systems.canvas.TableSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
+import com.the.machine.framework.utility.ClickEventListenerEventSpawner;
+import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.systems.MapSystem;
 
 /**
@@ -38,7 +46,9 @@ public class MapEditorSceneBuilder
 		world.addSystem(new CameraRenderSystem(), AssetLoadingFinishedEvent.class);
 		world.addSystem(new CanvasSystem(), ResizeEvent.class);
 		world.addSystem(new CanvasElementSystem());
-		world.addSystem(new MapSystem());
+		world.addSystem(new TableSystem());
+		world.addSystem(new TableCellSystem());
+		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class);
 		world.addSystem(new PhysicsSystem());
 
 		Entity mapCamera = new Entity();
@@ -90,12 +100,41 @@ public class MapEditorSceneBuilder
 		AreaComponent.AreaType type = AreaComponent.AreaType.GROUND;
 		map.add(new AreaComponent().setType(type));
 		map.add(new LayerComponent(BitBuilder.none(32)
-													   .s(1)
-													   .get()));
+											 .s(1)
+											 .get()));
 		map.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
-													 .setSortingLayer("Default"));
+										   .setSortingLayer("Default"));
 		world.addEntity(map);
 
+		Entity saveButton = new Entity();
+		CanvasElementComponent elementComponent = new CanvasElementComponent();
+		elementComponent.getListeners()
+						.add(new ClickEventListenerEventSpawner(world, MapEditorSaveEvent.class));
+		saveButton.add(elementComponent);
+		saveButton.add(new ButtonComponent());
+		saveButton.add(new TransformComponent());
+		saveButton.add(new DimensionComponent().setDimension(100, 40).setOrigin(0,0));
+		world.addEntity(saveButton);
+
+		Entity saveButtonLabel = EntityUtilities.makeLabel("Save Map").add(new TableCellComponent());
+		EntityUtilities.relate(saveButton, saveButtonLabel);
+		world.addEntity(saveButtonLabel);
+
+		Entity loadButton = new Entity();
+		CanvasElementComponent loadComponent = new CanvasElementComponent();
+		loadComponent.getListeners()
+						.add(new ClickEventListenerEventSpawner(world, MapEditorLoadEvent.class));
+		loadButton.add(loadComponent);
+		loadButton.add(new ButtonComponent());
+		loadButton.add(new TransformComponent().setPosition(110, 0, 0));
+		loadButton.add(new DimensionComponent().setDimension(100, 40)
+											   .setOrigin(0, 0));
+		world.addEntity(loadButton);
+
+		Entity loadButtonLabel = EntityUtilities.makeLabel("Load Map")
+												.add(new TableCellComponent());
+		EntityUtilities.relate(loadButton, loadButtonLabel);
+		world.addEntity(loadButtonLabel);
 
 	}
 }

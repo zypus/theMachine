@@ -36,9 +36,13 @@ public class EntityUtilities {
 	@Getter private static Map<Entity, ParentComponent> parentMemory = new HashMap<>();
 
 	public static Entity makeLabel(String text) {
+		return makeLabel(text, 100, 20);
+	}
+
+	public static Entity makeLabel(String text, int width, int height) {
 		Entity label = new Entity();
 		label.add(new TransformComponent());
-		label.add(new DimensionComponent().setDimension(100, 20));
+		label.add(new DimensionComponent().setDimension(width, height));
 		label.add(new CanvasElementComponent());
 		label.add(new LabelComponent().setText(text));
 		return label;
@@ -120,8 +124,14 @@ public class EntityUtilities {
 		if (subs.has(parent)) {
 			subs.get(parent)
 				.remove(child);
+			if (subs.get(parent)
+					.size() == 0) {
+				parent.remove(SubEntityComponent.class);
+				relationMemory.remove(parent);
+			}
 		}
 		if (parents.has(child)) {
+			parentMemory.remove(child);
 			child.remove(ParentComponent.class);
 		}
 	}

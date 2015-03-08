@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
@@ -124,13 +125,40 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 				}
 			}
 		}
+		Actor actor = elementComponent.getUnwrappedActor();
+		TransformComponent transform = transforms.get(entity);
+		DimensionComponent dimension = dimensions.get(entity);
+		if (!tableCells.has(entity) && !treeNodes.has(entity) && !(tables.has(entity) && tables.get(entity)
+																							   .isFillParent())) {
+
+			actor.setZIndex((int) transform.getZ());
+			//FIXME Fix stuff related to transform = true for tables, etc.
+			DimensionComponent dim = dimension;
+			if (elementComponent.isWrapped()) {
+				Actor unwrappedActor = elementComponent.getUnwrappedActor();
+				unwrappedActor.setBounds(transform.getX() - dim.getWidth() * dim.getOriginX(), transform.getY() - dim.getHeight() * dim.getOriginY(), dim.getWidth(), dim.getWidth());
+				unwrappedActor.setOrigin(dim.getWidth() * dim.getOriginX(), dim.getHeight() * dim.getOriginY());
+				actor.setOrigin(transform.getX() + dim.getWidth() * (dim.getPivotX() - dim.getOriginX()), transform.getY() + dim.getHeight() * (dim.getPivotY() - dim.getOriginY()));
+				actor.setBounds(transform.getX(), transform.getY(), dim.getWidth(), dim.getWidth());
+			} else {
+				//				actor.setBounds(transform.getX(), transform.getY(), dimension.getWidth(), dimension.getWidth());
+				//				actor.setOrigin(dimension.getOriginX() * actor.getWidth(), dimension.getOriginY() * actor.getHeight());
+				actor.setBounds(transform.getX() - dim.getWidth() * dim.getOriginX(), transform.getY() - dim.getHeight() * dim.getOriginY(), dim.getWidth(), dim.getHeight());
+				actor.setOrigin(dim.getWidth() * dim.getOriginX(), dim.getHeight() * dim.getOriginY());
+			}
+			actor.setScale(transform.getXScale(), transform.getYScale());
+			actor.setRotation(transform.getZRotation());
+			//			actor.setRotation(actor.getRotation()+1); // just continuously rotating the actor for testing
+			actor.setVisible(elementComponent.isEnabled());
+			for (EventListener listener : elementComponent.getListeners()) {
+				actor.addListener(listener);
+			}
+		}
 	}
 
 	protected void updateCanvasElement(Entity entity) {
 		boolean hasMain = false;
 		CanvasElementComponent elementComponent = canvasElements.get(entity);
-		TransformComponent transform = transforms.get(entity);
-		DimensionComponent dimension = dimensions.get(entity);
 		if (tables.has(entity)) {
 			resolveTypeChange(entity, Table.class);
 			TableComponent tc = tables.get(entity);
@@ -275,31 +303,6 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 		Actor actor = elementComponent.getUnwrappedActor();
 		if (actor.getUserObject() != null) {
 			actor.setUserObject(new WeakReference<>(entity));
-		}
-
-		if (!tableCells.has(entity) && !treeNodes.has(entity) && !(tables.has(entity) && tables.get(entity).isFillParent())) {
-
-
-
-			actor.setZIndex((int) transform.getZ());
-			//FIXME Fix stuff related to transform = true for tables, etc.
-			DimensionComponent dim = dimension;
-			if (elementComponent.isWrapped()) {
-				Actor unwrappedActor = elementComponent.getUnwrappedActor();
-				unwrappedActor.setBounds(transform.getX() - dim.getWidth() * dim.getOriginX(), transform.getY() - dim.getHeight() * dim.getOriginY(), dim.getWidth(), dim.getWidth());
-				unwrappedActor.setOrigin(dim.getWidth() * dim.getOriginX(), dim.getHeight() * dim.getOriginY());
-				actor.setOrigin(transform.getX() + dim.getWidth() * (dim.getPivotX() - dim.getOriginX()), transform.getY() + dim.getHeight() * (dim.getPivotY() - dim.getOriginY()));
-				actor.setBounds(transform.getX(), transform.getY(), dim.getWidth(), dim.getWidth());
-			} else {
-//				actor.setBounds(transform.getX(), transform.getY(), dimension.getWidth(), dimension.getWidth());
-//				actor.setOrigin(dimension.getOriginX() * actor.getWidth(), dimension.getOriginY() * actor.getHeight());
-				actor.setBounds(transform.getX() - dim.getWidth() * dim.getOriginX(), transform.getY() - dim.getHeight() * dim.getOriginY(), dim.getWidth(), dim.getWidth());
-				actor.setOrigin(dim.getWidth() * dim.getOriginX(), dim.getHeight() * dim.getOriginY());
-			}
-			actor.setScale(transform.getXScale(), transform.getYScale());
-			actor.setRotation(transform.getZRotation());
-//			actor.setRotation(actor.getRotation()+1); // just continuously rotating the actor for testing
-			actor.setVisible(elementComponent.isEnabled());
 		}
 
 	}

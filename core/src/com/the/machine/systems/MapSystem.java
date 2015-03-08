@@ -15,6 +15,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.HandleComponent;
+import com.the.machine.events.MapEditorLoadEvent;
+import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.DimensionComponent;
@@ -26,6 +28,8 @@ import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.ButtonComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
+import com.the.machine.framework.events.Event;
+import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Utils;
@@ -43,7 +47,7 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
  */
 public class MapSystem
 		extends AbstractSystem
-		implements InputProcessor {
+		implements InputProcessor, EventListener {
 
 	transient private ComponentMapper<NameComponent>         names            = ComponentMapper.getFor(NameComponent.class);
 	transient private ComponentMapper<CameraComponent>       cameraComponents = ComponentMapper.getFor(CameraComponent.class);
@@ -123,6 +127,30 @@ public class MapSystem
 			 .removeProcessor(this);
 		mapElements = null;
 		handles = null;
+	}
+
+	@Override
+	public void handleEvent(Event event) {
+		if (event instanceof MapEditorSaveEvent) {
+			Entity[] array = new Entity[mapElements.size()];
+			int index = 0;
+			for (Entity element : mapElements) {
+				array[index] = element;
+				index++;
+			}
+			world.savePrefab("TestMap", array);
+		} else if (event instanceof MapEditorLoadEvent) {
+			Entity[] array = new Entity[mapElements.size()];
+			int index = 0;
+			for (Entity element : mapElements) {
+				array[index] = element;
+				index++;
+			}
+			for (Entity entity : array) {
+				world.removeEntity(entity);
+			}
+			world.loadPrefab("TestMap");
+		}
 	}
 
 	@Override
@@ -304,7 +332,9 @@ public class MapSystem
 			if (!handleDragging && mapElements != null) {
 				boolean found = false;
 				boolean ground = false;
+				float max = -99;
 				for (Entity element : mapElements) {
+					TransformComponent tf = transforms.get(element);
 					Rectangle rect = getWorldDimensions(element);
 					AreaComponent areaComponent = areas.get(element);
 					if (rect.contains(unproject.x, unproject.y)) {
@@ -328,14 +358,15 @@ public class MapSystem
 								ordinal = 1;
 							}
 							areaComponent.setType(constants[ordinal]);
-						} else {
-							toDrag = element;
 						}
-						if (selected == null || selected != element) {
-							TransformComponent transformComponent = EntityUtilities.computeAbsoluteTransform(element);
+						if (tf.getZ() > max) {
+							max = tf.getZ();
 							selected = element;
-							selectionDelta.set(unproject.cpy()
-														.sub(transformComponent.getPosition()));
+							toDrag = selected;
+							TransformComponent transformComponent = EntityUtilities.computeAbsoluteTransform(element);
+							selectionDelta.set(transformComponent.getPosition()
+																 .cpy()
+																 .sub(unproject));
 						}
 					}
 				}

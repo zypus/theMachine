@@ -44,6 +44,7 @@ import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
 import com.the.machine.framework.serialization.EntitySerializer;
 import com.the.machine.framework.systems.WorldSystem;
+import com.the.machine.framework.utility.ClickEventListenerEventSpawner;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
 
@@ -110,6 +111,7 @@ public class World implements ApplicationListener {
 		engine = new Engine();
 		tweenManager = new TweenManager();
 		kryo.addDefaultSerializer(Entity.class, new EntitySerializer());
+		kryo.addDefaultSerializer(ClickEventListenerEventSpawner.class, new ClickEventListenerEventSpawner.ClickEventListenerEventSpawnerSerializer(this));
 	}
 
 	public FileHandle locateScene(String name) {
@@ -118,9 +120,9 @@ public class World implements ApplicationListener {
 		FileHandle scene;
 		if (list.length > 0 && list[0].isDirectory()) {
 			FileHandle sceneDir = list[0];
-			scene = findFile(sceneDir, name);
+			scene = findFile(sceneDir, name+".scene");
 		} else {
-			scene = findFile(internal, name);
+			scene = findFile(internal, name+".scene");
 		}
 		return scene;
 	}
@@ -137,6 +139,56 @@ public class World implements ApplicationListener {
 
 	public void reload() {
 		setActiveScene(loadedData);
+	}
+
+	public void savePrefab(String name, Entity ... entities) {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		Output output = new Output(outputStream);
+		kryo.writeObject(output, entities);
+		output.close();
+		byte[] bytes = outputStream.toByteArray();
+		FileHandle fileHandle = newPrefabLocation(name);
+		fileHandle.writeBytes(bytes, false);
+	}
+
+	public Entity[] loadPrefab(String name) {
+		FileHandle prefab = locatePrefab(name);
+		Entity[] entities = null;
+		if (prefab != null) {
+			byte[] data = prefab.readBytes();
+			InputStream inputStream = new ByteArrayInputStream(data);
+			Input input = new Input(inputStream);
+			entities = kryo.readObject(input, Entity[].class);
+			for (Entity entity : entities) {
+				addEntity(entity, true);
+			}
+		} else {
+			System.out.println("Prefab '" + name + "' not found.");
+		}
+		return entities;
+	}
+
+	private FileHandle locatePrefab(String name) {
+		FileHandle internal = Gdx.files.local("");
+		FileHandle[] list = internal.list("prefabs");
+		FileHandle prefab;
+		if (list.length > 0 && list[0].isDirectory()) {
+			FileHandle prefabDir = list[0];
+			prefab = findFile(prefabDir, name+".prefab");
+		} else {
+			prefab = findFile(internal, name+".prefab");
+		}
+		return prefab;
+	}
+
+	private FileHandle newPrefabLocation(String name) {
+		FileHandle internal = Gdx.files.local("");
+		FileHandle[] list = internal.list("prefabs");
+		if (list.length == 0) {
+			FileHandle scenes = Gdx.files.local("prefabs");
+			scenes.mkdirs();
+		}
+		return Gdx.files.local("prefabs/" + name + ".prefab");
 	}
 
 	public void setActiveScene(byte[] data) {
@@ -185,7 +237,7 @@ public class World implements ApplicationListener {
 			FileHandle scenes = Gdx.files.local("scenes");
 			scenes.mkdirs();
 		}
-		return Gdx.files.local("scenes/" + name);
+		return Gdx.files.local("scenes/" + name+".scene");
 	}
 
 	public void saveActiveScene() {
