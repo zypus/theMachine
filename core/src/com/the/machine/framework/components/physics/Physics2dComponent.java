@@ -15,7 +15,7 @@ import lombok.experimental.Accessors;
 @Data
 @NoArgsConstructor
 @Accessors(chain = true)
-public class PhysicsComponent
+public class Physics2dComponent
 		extends AbstractComponent {
 		Body body;
 }

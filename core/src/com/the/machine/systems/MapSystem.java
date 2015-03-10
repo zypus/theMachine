@@ -19,6 +19,7 @@ import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.components.CameraComponent;
+import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.DisabledComponent;
 import com.the.machine.framework.components.LayerComponent;
@@ -28,6 +29,7 @@ import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.ButtonComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
+import com.the.machine.framework.components.physics.Physics2dComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.utility.BitBuilder;
@@ -58,6 +60,7 @@ public class MapSystem
 	transient private ComponentMapper<DisabledComponent>     disabled         = ComponentMapper.getFor(DisabledComponent.class);
 	transient private ComponentMapper<ReferenceComponent>    references       = ComponentMapper.getFor(ReferenceComponent.class);
 	transient private ComponentMapper<HandleComponent>       handleComponents = ComponentMapper.getFor(HandleComponent.class);
+	transient private ComponentMapper<ColliderComponent>       colliders = ComponentMapper.getFor(ColliderComponent.class);
 
 	transient private final float   DOUBLE_TAP_TIME = 0.3f;
 	transient private       float   lastTap         = -2 * DOUBLE_TAP_TIME;
@@ -382,6 +385,8 @@ public class MapSystem
 																   .get()));
 					newMapElement.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
 																 .setSortingLayer("Default"));
+					newMapElement.add(new Physics2dComponent());
+					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-25,-25,50,50))));
 					selected = newMapElement;
 					world.addEntity(newMapElement);
 				}
@@ -484,6 +489,12 @@ public class MapSystem
 							dm.setWidth(dm.getWidth() - delta.x);
 							tf.setX(tf.getX() + delta.x / 2);
 							break;
+					}
+					if (colliders.has(entity)) {
+						ColliderComponent colliderComponent = colliders.get(entity);
+						ColliderComponent.Collider collider = colliderComponent.getColliders()
+																			   .get(0);
+						collider.setShape(dm.getWidth(), dm.getHeight());
 					}
 					tf.notifyObservers();
 				}

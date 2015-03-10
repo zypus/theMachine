@@ -15,8 +15,10 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.the.machine.framework.SortedIteratingSystem;
 import com.the.machine.framework.components.CameraComponent;
@@ -25,6 +27,7 @@ import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.physics.Physics2dDebugComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
@@ -33,8 +36,10 @@ import com.the.machine.framework.interfaces.Observer;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +60,7 @@ public class CameraRenderSystem
 	private transient         ComponentMapper<SpriteRenderComponent> spriteRenderers  = ComponentMapper.getFor(SpriteRenderComponent.class);
 	private transient         ComponentMapper<CanvasComponent>       canvas           = ComponentMapper.getFor(CanvasComponent.class);
 	private transient         ComponentMapper<LayerComponent>        layers           = ComponentMapper.getFor(LayerComponent.class);
+	private transient         ComponentMapper<Physics2dDebugComponent>        physic2dDebugs           = ComponentMapper.getFor(Physics2dDebugComponent.class);
 
 	private transient OrthographicCamera orthoCam = new OrthographicCamera();
 	private transient PerspectiveCamera  persCam  = new PerspectiveCamera();
@@ -65,6 +71,7 @@ public class CameraRenderSystem
 	private transient Comparator<Entity>     cameraComparator;
 
 	private transient ShapeRenderer shapeRenderer;
+	private transient Box2DDebugRenderer box2DDebugRenderer;
 
 	private transient Map<Entity, Decal> decalMap = new HashMap<>();
 
@@ -79,7 +86,7 @@ public class CameraRenderSystem
 	}
 
 	public CameraRenderSystem() {
-		super(Family.one(SpriteRenderComponent.class, CanvasComponent.class)
+		super(Family.one(SpriteRenderComponent.class, CanvasComponent.class, Physics2dDebugComponent.class)
 					.get());
 		setComparator(new LayerComparator(this).thenComparing(new OrderComparator(this)));
 
@@ -103,8 +110,11 @@ public class CameraRenderSystem
 		}
 		engine.addEntityListener(this);
 		shapeRenderer = new ShapeRenderer();
+		box2DDebugRenderer = new Box2DDebugRenderer();
 		world.getSortingLayers()
-			 .put("UI", 2);
+			 .put("UI", 3);
+		world.getSortingLayers()
+			 .put("Physics 2d Debug", 2);
 		world.getSortingLayers()
 			 .put("Default", 1);
 	}
@@ -130,7 +140,7 @@ public class CameraRenderSystem
 			if (spriteRenderers.has(entity)) {
 				SpriteRenderComponent spriteRenderComponent = spriteRenderers.get(entity);
 				Decal sprite = Decal.newDecal(1, 1, spriteRenderComponent.getTextureRegion()
-																   .get());
+																		 .get());
 				decalMap.put(entity, sprite);
 				spriteRenderComponent.addObserver(this);
 			}
@@ -245,6 +255,7 @@ public class CameraRenderSystem
 			camera.update();
 
 			// draw all entities
+			List<Entity> onTop = new ArrayList<>();
 			for (int i = 0; i < entities.size(); i++) {
 				Entity entity = entities.get(i);
 				if (EntityUtilities.isEntityEnabled(entity)) {
@@ -305,10 +316,23 @@ public class CameraRenderSystem
 							gl.glScissor(x, y, width, height);
 							gl.glViewport(x, y, width, height);
 						}
+
+						if (physic2dDebugs.has(entity) && physic2dDebugs.get(entity).isEnabled()) {
+							onTop.add(entity);
+						}
 					}
 				}
 			}
 			decalBatch.flush();
+			for (Entity entity : onTop) {
+				if (physic2dDebugs.has(entity)) {
+					Physics2dDebugComponent physics2dDebugComponent = physic2dDebugs.get(entity);
+					Matrix4 projection = camera.combined.cpy();
+					projection.scl(physics2dDebugComponent.getBoxToWorld(), physics2dDebugComponent.getBoxToWorld(), 1f);
+					box2DDebugRenderer.render(physics2dDebugComponent.getBox2dWorld(), projection);
+				}
+			}
+			onTop.clear();
 		}
 
 	}

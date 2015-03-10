@@ -21,7 +21,7 @@ import com.the.machine.framework.components.canvasElements.TableCellComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
-import com.the.machine.framework.systems.basic.PhysicsSystem;
+import com.the.machine.framework.systems.basic.Physics2dSystem;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.canvas.TableCellSystem;
@@ -49,7 +49,7 @@ public class MapEditorSceneBuilder
 		world.addSystem(new TableSystem());
 		world.addSystem(new TableCellSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class);
-		world.addSystem(new PhysicsSystem());
+		world.addSystem(new Physics2dSystem());
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
