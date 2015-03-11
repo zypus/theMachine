@@ -19,7 +19,6 @@ import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.components.CameraComponent;
-import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.DisabledComponent;
 import com.the.machine.framework.components.LayerComponent;
@@ -29,6 +28,7 @@ import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.ButtonComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
+import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.components.physics.Physics2dComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
@@ -37,6 +37,10 @@ import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Utils;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.badlogic.gdx.Input.Keys.*;
 import static com.the.machine.components.AreaComponent.AreaType.*;
@@ -60,7 +64,7 @@ public class MapSystem
 	transient private ComponentMapper<DisabledComponent>     disabled         = ComponentMapper.getFor(DisabledComponent.class);
 	transient private ComponentMapper<ReferenceComponent>    references       = ComponentMapper.getFor(ReferenceComponent.class);
 	transient private ComponentMapper<HandleComponent>       handleComponents = ComponentMapper.getFor(HandleComponent.class);
-	transient private ComponentMapper<ColliderComponent>       colliders = ComponentMapper.getFor(ColliderComponent.class);
+	transient private ComponentMapper<ColliderComponent>     colliders        = ComponentMapper.getFor(ColliderComponent.class);
 
 	transient private final float   DOUBLE_TAP_TIME = 0.3f;
 	transient private       float   lastTap         = -2 * DOUBLE_TAP_TIME;
@@ -73,11 +77,11 @@ public class MapSystem
 
 	transient private Vector2 cameraMovement = new Vector2();
 
-	transient private Entity toDrag       = null;
-	transient private Entity handleToDrag = null;
+	transient private List<Entity> toDrag       = null;
+	transient private Entity       handleToDrag = null;
 
-	transient private Entity selected = null;
-	transient private Vector3 selectionDelta = new Vector3();
+	transient private List<Entity> selected       = new ArrayList<>();
+	transient private Map<Entity, Vector3> selectionDelta = new HashMap<>();
 
 	public MapSystem() {
 		super(Family.all()
@@ -210,14 +214,14 @@ public class MapSystem
 				}
 			}
 		}
-		if (selected != null && handles != null) {
-			TransformComponent transform = EntityUtilities.computeAbsoluteTransform(selected);
-			DimensionComponent dimensionComponent = dimensions.get(selected);
-			float wh = dimensionComponent.getWidth() / 2;
-			float hh = dimensionComponent.getHeight() / 2;
+		if (!selected.isEmpty() && handles != null) {
+			Rectangle bound = computeCommonBound(selected);
+			float wh = bound.getWidth() / 2;
+			float hh = bound.getHeight() / 2;
+			Vector2 center = new Vector2();
+			bound.getCenter(center);
 			for (int i = 0; i < 8; i++) {
-				Vector3 pos = transform.getPosition()
-									   .cpy();
+				Vector3 pos = new Vector3(center.x, center.y, 0);
 				pos.z = 0;
 				switch (i) {
 					case 0:
@@ -248,6 +252,7 @@ public class MapSystem
 				Entity handle = handles.get(i);
 				handleComponents.get(handle)
 								.setReferencePosition(pos.cpy());
+				handleComponents.get(handle).setRect(bound);
 				Vector3 project = getScreenCoordinates(pos, mapCamera.get());
 				references.get(handle)
 						  .setReference(new WeakReference<>(selected));
@@ -266,28 +271,32 @@ public class MapSystem
 
 	@Override
 	public boolean keyDown(int keycode) {
-		if (selected != null) {
-			TransformComponent transformComponent = transforms.get(selected);
-			if (keycode == BACKSPACE) {
-				AreaComponent areaComponent = areas.get(selected);
-				if (areaComponent.getType() != GROUND) {
-					world.removeEntity(selected);
-					selected = null;
+		if (!selected.isEmpty()) {
+			for (Entity entity : selected) {
+				TransformComponent transformComponent = transforms.get(entity);
+				if (keycode == BACKSPACE) {
+					AreaComponent areaComponent = areas.get(entity);
+					if (areaComponent.getType() != GROUND) {
+						world.removeEntity(entity);
+					}
+				} else if (keycode == UP && Gdx.input.isKeyPressed(SHIFT_LEFT)) {
+					transformComponent.setZ(MathUtils.clamp(transformComponent.getZ() + 1, 0, mapElements.size() - 1));
+				} else if (keycode == DOWN && Gdx.input.isKeyPressed(SHIFT_LEFT)) {
+					transformComponent.setZ(MathUtils.clamp(transformComponent.getZ() - 1, 0, mapElements.size() - 1));
+				} else if (keycode == UP) {
+					transformComponent.setY(transformComponent.getY() + 10);
+				} else if (keycode == RIGHT) {
+					transformComponent.setX(transformComponent.getX() + 10);
+				} else if (keycode == DOWN) {
+					transformComponent.setY(transformComponent.getY() - 10);
+				} else if (keycode == LEFT) {
+					transformComponent.setX(transformComponent.getX() - 10);
 				}
-			} else if (keycode == UP && Gdx.input.isKeyPressed(SHIFT_LEFT)) {
-				transformComponent.setZ(MathUtils.clamp(transformComponent.getZ() + 1, 0, mapElements.size() - 1));
-			} else if (keycode == DOWN && Gdx.input.isKeyPressed(SHIFT_LEFT)) {
-				transformComponent.setZ(MathUtils.clamp(transformComponent.getZ() - 1, 0, mapElements.size() - 1));
-			} else if (keycode == UP) {
-				transformComponent.setY(transformComponent.getY() + 10);
-			} else if (keycode == RIGHT) {
-				transformComponent.setX(transformComponent.getX() + 10);
-			} else if (keycode == DOWN) {
-				transformComponent.setY(transformComponent.getY() - 10);
-			} else if (keycode == LEFT) {
-				transformComponent.setX(transformComponent.getX() - 10);
+				transformComponent.notifyObservers();
 			}
-			transformComponent.notifyObservers();
+			if (keycode == BACKSPACE) {
+				selected.clear();
+			}
 		}
 		return false;
 	}
@@ -364,12 +373,17 @@ public class MapSystem
 						}
 						if (tf.getZ() > max) {
 							max = tf.getZ();
-							selected = element;
+							if (Gdx.input.isKeyPressed(SHIFT_LEFT) || Gdx.input.isKeyPressed(SHIFT_RIGHT)) {
+								selected.add(element);
+							} else {
+								selected.clear();
+								selected.add(element);
+							}
 							toDrag = selected;
 							TransformComponent transformComponent = EntityUtilities.computeAbsoluteTransform(element);
-							selectionDelta.set(transformComponent.getPosition()
-																 .cpy()
-																 .sub(unproject));
+							selectionDelta.put(element, transformComponent.getPosition()
+																		  .cpy()
+																		  .sub(unproject));
 						}
 					}
 				}
@@ -386,12 +400,13 @@ public class MapSystem
 					newMapElement.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
 																 .setSortingLayer("Default"));
 					newMapElement.add(new Physics2dComponent());
-					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-25,-25,50,50))));
-					selected = newMapElement;
+					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-25, -25, 50, 50))));
+					selected.clear();
+					selected.add(newMapElement);
 					world.addEntity(newMapElement);
 				}
 				if (!found) {
-					selected = null;
+					selected.clear();
 				}
 			}
 		}
@@ -423,6 +438,27 @@ public class MapSystem
 		return cam.project(pos);
 	}
 
+	private Rectangle computeCommonBound(List<Entity> entities) {
+		Rectangle bound = null;
+		for (Entity entity : entities) {
+
+			TransformComponent transform = EntityUtilities.computeAbsoluteTransform(entity);
+			DimensionComponent dimensionComponent = dimensions.get(entity);
+			float width = dimensionComponent.getWidth();
+			float height = dimensionComponent.getHeight();
+			Rectangle rect = new Rectangle(transform.getX() - width * dimensionComponent.getOriginX(),
+										   transform.getY() - height * dimensionComponent.getOriginY(),
+										   width,
+										   height);
+			if (bound == null) {
+				bound = rect;
+			} else {
+				bound = bound.merge(rect);
+			}
+		}
+		return bound;
+	}
+
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
 		touchDownPoint = null;
@@ -441,68 +477,82 @@ public class MapSystem
 									 .sub(touchDownPoint);
 			if (handleToDrag != null) {
 				HandleComponent handleComponent = handleComponents.get(handleToDrag);
+				Vector3 rp = handleComponent.getReferencePosition();
 				ReferenceComponent referenceComponent = references.get(handleToDrag);
-				Entity entity = referenceComponent.getReference()
-												  .get();
-				if (entity != null) {
-					DimensionComponent dm = dimensions.get(entity);
-					TransformComponent tf = transforms.get(entity);
-					switch (handleComponent.getType()) {
+				List<Entity> entities = (List<Entity>) referenceComponent.getReference()
+														  .get();
+				if (entities != null) {
+					Rectangle rect = handleComponent.getRect();
+					Vector2 center = new Vector2();
+					rect.getCenter(center);
+					for (Entity entity : entities) {
+						DimensionComponent dm = dimensions.get(entity);
+						TransformComponent tf = transforms.get(entity);
+						float widthRatio = dm.getWidth() / rect.getWidth();
+						float heightRatio = dm.getHeight() / rect.getHeight();
+						float dx = delta.x * heightRatio;
+						float dy = delta.y * widthRatio;
+						float dtx = delta.x * (0.5f - (0.5f*Math.abs(center.x - tf.getX()) / rect.getWidth()));
+						float dty = delta.y * (0.5f - (0.5f*Math.abs(center.y - tf.getY()) / rect.getHeight()));
+						switch (handleComponent.getType()) {
 
-						case TOP_LEFT:
-							dm.setHeight(dm.getHeight() + delta.y);
-							tf.setY(tf.getY() + delta.y / 2);
-							dm.setWidth(dm.getWidth() - delta.x);
-							tf.setX(tf.getX() + delta.x / 2);
-							break;
-						case TOP:
-							dm.setHeight(dm.getHeight() + delta.y);
-							tf.setY(tf.getY() + delta.y / 2);
-							break;
-						case TOP_RIGHT:
-							dm.setHeight(dm.getHeight() + delta.y);
-							tf.setY(tf.getY() + delta.y / 2);
-							dm.setWidth(dm.getWidth() + delta.x);
-							tf.setX(tf.getX() + delta.x / 2);
-							break;
-						case RIGHT:
-							dm.setWidth(dm.getWidth() + delta.x);
-							tf.setX(tf.getX() + delta.x / 2);
-							break;
-						case BOTTOM_RIGHT:
-							dm.setWidth(dm.getWidth() + delta.x);
-							tf.setX(tf.getX() + delta.x / 2);
-							dm.setHeight(dm.getHeight() - delta.y);
-							tf.setY(tf.getY() + delta.y / 2);
-							break;
-						case BOTTOM:
-							dm.setHeight(dm.getHeight() - delta.y);
-							tf.setY(tf.getY() + delta.y / 2);
-							break;
-						case BOTTOM_LEFT:
-							dm.setHeight(dm.getHeight() - delta.y);
-							tf.setY(tf.getY() + delta.y / 2);
-							dm.setWidth(dm.getWidth() - delta.x);
-							tf.setX(tf.getX() + delta.x / 2);
-							break;
-						case LEFT:
-							dm.setWidth(dm.getWidth() - delta.x);
-							tf.setX(tf.getX() + delta.x / 2);
-							break;
+							case TOP_LEFT:
+								dm.setHeight(dm.getHeight() + dy);
+								tf.setY(tf.getY() + dty);
+								dm.setWidth(dm.getWidth() - dx);
+								tf.setX(tf.getX() + dtx);
+								break;
+							case TOP:
+								dm.setHeight(dm.getHeight() + dy);
+								tf.setY(tf.getY() + dty);
+								break;
+							case TOP_RIGHT:
+								dm.setHeight(dm.getHeight() + dy);
+								tf.setY(tf.getY() + dty);
+								dm.setWidth(dm.getWidth() + dx);
+								tf.setX(tf.getX() + dtx);
+								break;
+							case RIGHT:
+								dm.setWidth(dm.getWidth() + dx);
+								tf.setX(tf.getX() + dtx);
+								break;
+							case BOTTOM_RIGHT:
+								dm.setWidth(dm.getWidth() + dx);
+								tf.setX(tf.getX() + dtx);
+								dm.setHeight(dm.getHeight() - dy);
+								tf.setY(tf.getY() + dty);
+								break;
+							case BOTTOM:
+								dm.setHeight(dm.getHeight() - dy);
+								tf.setY(tf.getY() + dty);
+								break;
+							case BOTTOM_LEFT:
+								dm.setHeight(dm.getHeight() - dy);
+								tf.setY(tf.getY() + dty);
+								dm.setWidth(dm.getWidth() - dx);
+								tf.setX(tf.getX() + dtx);
+								break;
+							case LEFT:
+								dm.setWidth(dm.getWidth() - dx);
+								tf.setX(tf.getX() + dtx);
+								break;
+						}
+						if (colliders.has(entity)) {
+							ColliderComponent colliderComponent = colliders.get(entity);
+							ColliderComponent.Collider collider = colliderComponent.getColliders()
+																				   .get(0);
+							collider.setShape(dm.getWidth(), dm.getHeight());
+						}
+						tf.notifyObservers();
 					}
-					if (colliders.has(entity)) {
-						ColliderComponent colliderComponent = colliders.get(entity);
-						ColliderComponent.Collider collider = colliderComponent.getColliders()
-																			   .get(0);
-						collider.setShape(dm.getWidth(), dm.getHeight());
-					}
-					tf.notifyObservers();
 				}
 			} else if (toDrag != null) {
-				TransformComponent transformComponent = transforms.get(toDrag);
-				transformComponent.setPosition(unproject.cpy()
-														.add(selectionDelta));
-				transformComponent.notifyObservers();
+				for (Entity entity : toDrag) {
+					TransformComponent transformComponent = transforms.get(entity);
+					transformComponent.setPosition(unproject.cpy()
+															.add(selectionDelta.get(entity)));
+					transformComponent.notifyObservers();
+				}
 			}
 			touchDownPoint = unproject;
 		}

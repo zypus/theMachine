@@ -93,7 +93,7 @@ public class WorldTreeSystem extends IteratingSystem {
 				if (first != null) {
 					Entity selectedEntity = ((WeakReference<Entity>) first.getObject()).get();
 					if (selectedEntity != null) {
-						Entity reference = referenced.get(selectedEntity)
+						Entity reference = (Entity) referenced.get(selectedEntity)
 													 .getReference()
 													 .get();
 						if (reference != null) {

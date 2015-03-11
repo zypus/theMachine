@@ -29,11 +29,14 @@ public class AreaComponent extends AbstractComponent{
 	public static enum AreaType {
 		GROUND(Asset.fetch("floor", TextureRegion.class)),
 		WALL(Asset.fetch("wall", TextureRegion.class)),
-		WINDOW(Asset.fetch("badlogic", TextureRegion.class)),
-		DOOR(Asset.fetch("badlogic", TextureRegion.class)),
-		TARGET(Asset.fetch("badlogic", TextureRegion.class)),
-		TOWER(Asset.fetch("badlogic", TextureRegion.class)),
-		COVER(Asset.fetch("badlogic", TextureRegion.class));
+		WINDOW(Asset.fetch("", TextureRegion.class)),
+		WINDOW_BROKEN(Asset.fetch("", TextureRegion.class)),
+		DOOR_OPEN(Asset.fetch("", TextureRegion.class)),
+		DOOR_CLOSED(Asset.fetch("", TextureRegion.class)),
+		TARGET(Asset.fetch("", TextureRegion.class)),
+		TOWER(Asset.fetch("", TextureRegion.class)),
+		TOWER_USED(Asset.fetch("", TextureRegion.class)),
+		COVER(Asset.fetch("", TextureRegion.class));
 
 		private Asset<TextureRegion> textureRegionAsset;
 

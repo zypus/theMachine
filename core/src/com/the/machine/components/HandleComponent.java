@@ -1,5 +1,6 @@
 package com.the.machine.components;
 
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.the.machine.framework.components.AbstractComponent;
 import lombok.Data;
@@ -18,6 +19,7 @@ import lombok.experimental.Accessors;
 public class HandleComponent extends AbstractComponent {
 
 	private Vector3 referencePosition = new Vector3();
+	private Rectangle rect = new Rectangle();
 	private HandleType type;
 
 	public static enum HandleType {

@@ -1,7 +1,6 @@
 package com.the.machine.framework.components;
 
 import com.badlogic.ashley.core.Component;
-import com.badlogic.ashley.core.Entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -17,6 +16,6 @@ import java.lang.ref.WeakReference;
 @Data
 @NoArgsConstructor
 @Accessors(chain = true)
-public class ReferenceComponent extends Component {
-	transient private WeakReference<Entity> reference;
+public class ReferenceComponent<T> extends Component {
+	transient private WeakReference<T> reference;
 }
