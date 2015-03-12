@@ -25,7 +25,6 @@ public class BehaviourSystem extends IteratingSystem {
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        System.out.println("Processing behaviour system");
         /*
          * The BehaviourSystem controls the
          *  - velocityComponent

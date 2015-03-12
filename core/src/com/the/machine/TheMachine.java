@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.engine.World;
+import com.the.machine.scenes.BasicSimulationScene;
 import com.the.machine.scenes.MapEditorSceneBuilder;
 
 public class TheMachine extends ApplicationAdapter {
@@ -15,7 +16,7 @@ public class TheMachine extends ApplicationAdapter {
 		Asset.initialize();
 		world = new World();
 		world.create();
-		world.buildScene(new MapEditorSceneBuilder());
+		world.buildScene(new BasicSimulationScene());
 		Gdx.input.setInputProcessor(world.getInputMultiplexer());
 //		world.updateActiveScene();
 //		world.saveActiveScene();

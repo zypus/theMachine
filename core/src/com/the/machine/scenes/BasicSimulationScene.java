@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.BehaviourComponent;
+import com.the.machine.components.RandomBehaviourComponent;
 import com.the.machine.components.VelocityComponent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
@@ -16,6 +17,7 @@ import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.systems.BehaviourSystem;
 import com.the.machine.systems.MovementSystem;
+import com.the.machine.systems.RandomBehaviourSystem;
 import com.the.machine.systems.RotationSystem;
 
 /**
@@ -30,6 +32,7 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new MovementSystem());
         world.addSystem(new RotationSystem());
         world.addSystem(new BehaviourSystem());
+        world.addSystem(new RandomBehaviourSystem());
 
 		/*
 		 * Create the entities
@@ -68,10 +71,7 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setZRotation(0)
                 .setScale(0.2f));
         badlogicImageEntity1.add(new NameComponent().setName("Badlogic1"));
-        badlogicImageEntity1.add(new BehaviourComponent(
-                new VelocityComponent().setVelocity(0.5f),
-                new AngularVelocityComponent(90, 180)
-        ));
+        badlogicImageEntity1.add(new RandomBehaviourComponent());
 
 
         Entity badlogicImageEntity2 = new Entity();
@@ -82,10 +82,7 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setZRotation(0)
                 .setScale(0.2f));
         badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
-        badlogicImageEntity2.add(new BehaviourComponent(
-                new VelocityComponent().setVelocity(1f),
-                new AngularVelocityComponent(-90, 360)
-        ));
+        badlogicImageEntity2.add(new RandomBehaviourComponent());
 
         world.addEntity(badlogicImageEntity1);
         world.addEntity(badlogicImageEntity2);

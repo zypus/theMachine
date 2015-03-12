@@ -74,10 +74,6 @@ public class SubEntityTestScene
 										 .setScale(1f));
 		badlogicImageEntity.add(new NameComponent().setName("Badlogic1"));
 		badlogicImageEntity.add(new VelocityComponent().setVelocity(0.1f));
-        badlogicImageEntity.add(new DirectionComponent().setDirection(new Vector3(
-				(float) 0.1,
-				(float) 0.05,
-				(float) 0)));
 		world.addEntity(badlogicImageEntity);
 
 		Entity badlogicImageEntity2 = new Entity();
