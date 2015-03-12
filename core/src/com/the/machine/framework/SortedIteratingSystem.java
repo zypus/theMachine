@@ -18,7 +18,7 @@ import java.util.Comparator;
  * 1@created 14/02/15
  */
 public abstract class SortedIteratingSystem extends AbstractSystem implements EntityListener {
-	transient private       Family                 family;
+	transient protected        Family                 family;
 	transient private       Array<Entity>          sortedEntities;
 	transient private final ImmutableArray<Entity> entities;
 	transient private       boolean                shouldSort;

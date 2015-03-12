@@ -1,4 +1,4 @@
-package com.the.machine.framework.systems.basic;
+package com.the.machine.framework.systems.physics;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
@@ -37,8 +37,6 @@ public class Physics2dSystem
 	transient private ComponentMapper<TransformComponent> transforms    = ComponentMapper.getFor(TransformComponent.class);
 	transient private ComponentMapper<ColliderComponent>  colliders     = ComponentMapper.getFor(ColliderComponent.class);
 
-	transient private World box2dWorld;
-
 	transient private static float BOX_TO_WORLD = 10;
 	transient private static float WORLD_TO_BOX = 1f / BOX_TO_WORLD;
 
@@ -47,7 +45,6 @@ public class Physics2dSystem
 	public Physics2dSystem() {
 		super(Family.all(Physics2dComponent.class, TransformComponent.class)
 					.get());
-		box2dWorld = new World(new Vector2(0, 0), true);
 	}
 
 	@Override
@@ -55,8 +52,11 @@ public class Physics2dSystem
 		super.addedToEngine(engine);
 		engine.addEntityListener(Family.all(Physics2dComponent.class, TransformComponent.class)
 									   .get(), this);
+		if (world.getBox2dWorld() == null) {
+			world.setBox2dWorld(new World(new Vector2(0,0), true));
+		}
 		Entity debugEntity = new Entity();
-		debugEntity.add(new Physics2dDebugComponent().setBox2dWorld(box2dWorld)
+		debugEntity.add(new Physics2dDebugComponent().setBox2dWorld(world.getBox2dWorld())
 													 .setBoxToWorld(BOX_TO_WORLD));
 		debugEntity.add(new LayerComponent(BitBuilder.none(32)
 													 .s(2)
@@ -86,7 +86,7 @@ public class Physics2dSystem
 	public void entityRemoved(Entity entity) {
 		Physics2dComponent physics2dComponent = physicObjects.get(entity);
 		Body body = physics2dComponent.getBody();
-		box2dWorld.destroyBody(body);
+		world.getBox2dWorld().destroyBody(body);
 	}
 
 	@Override
@@ -143,7 +143,7 @@ public class Physics2dSystem
 	public void update(float deltaTime) {
 		updateBodies();
 		// FIXME I don't know yet what are good values for the iterations, for now I set them arbitrarily to 5
-		box2dWorld.step(deltaTime, 5, 5);
+		world.getBox2dWorld().step(deltaTime, 5, 5);
 		updating = true;
 		super.update(deltaTime);
 		updating = false;
@@ -170,7 +170,7 @@ public class Physics2dSystem
 		bodyDef.fixedRotation = true;
 		bodyDef.allowSleep = false;
 
-		Body body = box2dWorld.createBody(bodyDef);
+		Body body = world.getBox2dWorld().createBody(bodyDef);
 		if (colliders.has(entity)) {
 			ColliderComponent colliderComponent = colliders.get(entity);
 			for (ColliderComponent.Collider collider : colliderComponent.getColliders()) {

@@ -117,7 +117,9 @@ public class Asset<T> {
 		ambiguity.clear();
 		ambiguity = null;
 		// clear progress texture
-		progressTexture.dispose();
+		if (progressTexture != null) {
+			progressTexture.dispose();
+		}
 	}
 
 	/**

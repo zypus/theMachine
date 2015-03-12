@@ -2,6 +2,7 @@ package com.the.machine.framework.engine;
 
 import aurelienribon.tweenengine.Timeline;
 import aurelienribon.tweenengine.TweenManager;
+import box2dLight.RayHandler;
 import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
@@ -47,6 +48,7 @@ import com.the.machine.framework.systems.WorldSystem;
 import com.the.machine.framework.utility.ClickEventListenerEventSpawner;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
@@ -92,6 +94,10 @@ public class World implements ApplicationListener {
 
 	@Getter private CameraGroupStrategy cameraGroupStrategy;
 	@Getter private DecalBatch          decalBatch;
+	// physics
+	@Getter @Setter private com.badlogic.gdx.physics.box2d.World box2dWorld = null;
+	// light
+	@Getter @Setter private RayHandler rayHandler = null;
 
 	@Getter private float t        = 0;
 	private         float timeFlow = 1f;
@@ -120,9 +126,9 @@ public class World implements ApplicationListener {
 		FileHandle scene;
 		if (list.length > 0 && list[0].isDirectory()) {
 			FileHandle sceneDir = list[0];
-			scene = findFile(sceneDir, name+".scene");
+			scene = findFile(sceneDir, name + ".scene");
 		} else {
-			scene = findFile(internal, name+".scene");
+			scene = findFile(internal, name + ".scene");
 		}
 		return scene;
 	}
@@ -141,7 +147,7 @@ public class World implements ApplicationListener {
 		setActiveScene(loadedData);
 	}
 
-	public void savePrefab(String name, Entity ... entities) {
+	public void savePrefab(String name, Entity... entities) {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		Output output = new Output(outputStream);
 		kryo.writeObject(output, entities);
@@ -174,9 +180,9 @@ public class World implements ApplicationListener {
 		FileHandle prefab;
 		if (list.length > 0 && list[0].isDirectory()) {
 			FileHandle prefabDir = list[0];
-			prefab = findFile(prefabDir, name+".prefab");
+			prefab = findFile(prefabDir, name + ".prefab");
 		} else {
-			prefab = findFile(internal, name+".prefab");
+			prefab = findFile(internal, name + ".prefab");
 		}
 		return prefab;
 	}
@@ -237,7 +243,7 @@ public class World implements ApplicationListener {
 			FileHandle scenes = Gdx.files.local("scenes");
 			scenes.mkdirs();
 		}
-		return Gdx.files.local("scenes/" + name+".scene");
+		return Gdx.files.local("scenes/" + name + ".scene");
 	}
 
 	public void saveActiveScene() {
@@ -297,7 +303,7 @@ public class World implements ApplicationListener {
 	public void buildScene(SceneBuilder builder) {
 		WorldState previousState = worldState;
 		worldState = WorldState.FULL_PAUSED;
-		setup();
+//		setup();
 		builder.createScene(this);
 		worldState = previousState;
 //		updateActiveScene();
