@@ -73,20 +73,7 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setScale(1f));
         badlogicImageEntity.add(new NameComponent().setName("Badlogic1"));
         badlogicImageEntity.add(new VelocityComponent().setVelocity(0.1f));
+        badlogicImageEntity.add(new AngularVelocityComponent((float) 1, 180));
         world.addEntity(badlogicImageEntity);
-
-        Entity badlogicImageEntity2 = new Entity();
-        badlogicImageEntity2.add(new LayerComponent(BitBuilder.none(32)
-                .s(1)
-                .get()));
-        badlogicImageEntity2.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
-                .setSortingLayer("Default"));
-        badlogicImageEntity2.add(new TransformComponent().setPosition(new Vector3(0, 1, 0))
-                .setZRotation(0)
-                .setScale(1f));
-        badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
-        badlogicImageEntity2.add(new AngularVelocityComponent(2, 12));
-        EntityUtilities.relate(badlogicImageEntity, badlogicImageEntity2);
-        world.addEntity(badlogicImageEntity2);
     }
 }
