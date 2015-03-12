@@ -13,15 +13,11 @@ public class AngularVelocityComponent extends AbstractComponent {
     }
 
     public void setAngularVelocity(float newAngularVelocity) {
-        if (newAngularVelocity > maxAngularVelocity) {
-            this.angularVelocity = maxAngularVelocity;
-        }
-        else if (newAngularVelocity < -maxAngularVelocity) {
-            this.angularVelocity = -maxAngularVelocity;
-        }
-        else {
-            this.angularVelocity = newAngularVelocity;
-        }
+        // Make sure that
+        // -maxVelocity <= velocity <= maxVelocity
+        float maxAngularVelocityAbs = Math.abs(maxAngularVelocity);
+        this.angularVelocity = Math.min(newAngularVelocity, maxAngularVelocityAbs);
+        this.angularVelocity = Math.max(newAngularVelocity, -maxAngularVelocityAbs);
     }
 
     public void setMaxAngularVelocity(float maxAngularVelocity) {

@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.the.machine.components.VelocityComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.AngularVelocityComponent;
+import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 /**
@@ -28,7 +29,13 @@ public class RotationSystem extends IteratingSystem {
         AngularVelocityComponent angularVelocityComponent = angularvelocities.get(entity);
 
         float oldRotation = transformComponent.getZRotation(); // Rotation in degrees
-        float newRotation = oldRotation + deltaTime * angularVelocityComponent.getAngularVelocity();
+        float newRotation = oldRotation + (deltaTime * angularVelocityComponent.getAngularVelocity());
+
+        if (newRotation >= 0)
+            newRotation = newRotation % 360;
+        else
+            newRotation += 360;
+
         transformComponent.setZRotation(newRotation);
     }
 }
