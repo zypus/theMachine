@@ -19,7 +19,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class SpriteRenderComponent
 		extends AbstractComponent implements LayerSortable {
-	private String sortingLayer = null;
+	private String sortingLayer = "Default";
 	private int sortingOrder = 0;
 	private Asset<TextureRegion>
 	textureRegion = Asset.fetch("", TextureRegion.class);

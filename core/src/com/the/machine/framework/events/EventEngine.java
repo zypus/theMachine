@@ -72,21 +72,23 @@ public class EventEngine {
      */
     public void update() {
         // runs as long as there are events in the queue
-        while (!eventQueue.isEmpty()) {
-            // get next event from queue
-            Event event = eventQueue.remove();
-            List<EventListener> listeners = eventMap.get(event.getClass());
-            if (listeners != null) {
-                // forward events to there designated listeners
-                for (EventListener listener : listeners) {
-                    listener.handleEvent(event);
-                    // check if the previous listener wants that the event is dropped. Therefore the event is not handled by following listeners.
-                    if (event.isDrop()) {
-                        return;
-                    }
-                }
-            }
-        }
+		synchronized (this) {
+			while (!eventQueue.isEmpty()) {
+				// get next event from queue
+				Event event = eventQueue.remove();
+				List<EventListener> listeners = eventMap.get(event.getClass());
+				if (listeners != null) {
+					// forward events to there designated listeners
+					for (EventListener listener : listeners) {
+						listener.handleEvent(event);
+						// check if the previous listener wants that the event is dropped. Therefore the event is not handled by following listeners.
+						if (event.isDrop()) {
+							return;
+						}
+					}
+				}
+			}
+		}
     }
 
     public void reset() {

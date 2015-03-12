@@ -205,7 +205,7 @@ public class CameraRenderSystem
 
 	@Override
 	public void update(float deltaTime) {
-		ImmutableArray<Entity> entities = getEntities();
+		Array<Entity> entities = sortedEntities;
 		for (int c = 0; c < cameras.size(); c++) {
 			Entity cameraEntity = sortedCameras.get(c);
 			CameraComponent cameraComponent = cameraComponents.get(cameraEntity);
@@ -260,7 +260,7 @@ public class CameraRenderSystem
 
 			// draw all entities
 			List<Entity> onTop = new ArrayList<>();
-			for (int i = 0; i < entities.size(); i++) {
+			for (int i = 0; i < entities.size; i++) {
 				Entity entity = entities.get(i);
 				if (EntityUtilities.isEntityEnabled(entity)) {
 					LayerComponent layerComponent = null;
@@ -332,7 +332,8 @@ public class CameraRenderSystem
 				}
 			}
 			decalBatch.flush();
-			for (Entity entity : onTop) {
+			for (int i = onTop.size()-1; i >= 0; i--) {
+				Entity entity = onTop.get(i);
 				if (physic2dDebugs.has(entity)) {
 					Physics2dDebugComponent physics2dDebugComponent = physic2dDebugs.get(entity);
 					Matrix4 projection = camera.combined.cpy();
@@ -340,13 +341,18 @@ public class CameraRenderSystem
 					box2DDebugRenderer.render(physics2dDebugComponent.getBox2dWorld(), projection);
 				}
 				if (lights.has(entity)) {
-					RayHandler rayHandler = world.getRayHandler();
-					if (rayHandler != null) {
-						Matrix4 projection = camera.combined.cpy();
-						projection.scl(10, 10, 1f);
-						rayHandler.setCombinedMatrix(projection);
-						rayHandler.render();
-					}
+					Light2dRenderComponent lc = lights.get(entity);
+					RayHandler rayHandler = lc.getRayHandler();
+					RayHandler.setGammaCorrection(lc.isGammaCorrection());
+					RayHandler.useDiffuseLight(lc.isUseDiffuseLights());
+					Color ambientLight = lc.getAmbientLight();
+					rayHandler.setAmbientLight(ambientLight.r, ambientLight.g, ambientLight.b, ambientLight.a);
+					rayHandler.setBlur(lc.isBlur());
+					rayHandler.setBlurNum(lc.getBlurNum());
+					Matrix4 projection = camera.combined.cpy();
+					projection.scl(10, 10, 1f);
+					rayHandler.setCombinedMatrix(projection);
+					rayHandler.render();
 				}
 			}
 			onTop.clear();

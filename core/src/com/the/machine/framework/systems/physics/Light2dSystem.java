@@ -12,6 +12,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import com.the.machine.framework.IteratingSystem;
@@ -35,6 +36,8 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 	private transient ComponentMapper<Light2dComponent> lights = ComponentMapper.getFor(Light2dComponent.class);
 	private transient ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
 
+	private transient RayHandler rayHandler;
+
 	public Light2dSystem() {
 		super(Family.all(Light2dComponent.class)
 					.get());
@@ -47,17 +50,9 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		if (world.getBox2dWorld() == null) {
 			world.setBox2dWorld(new World(new Vector2(0,0), true));
 		}
-		if (world.getRayHandler() == null) {
-			RayHandler.setGammaCorrection(true);
-			RayHandler.useDiffuseLight(true);
-			RayHandler rayHandler = new RayHandler(world.getBox2dWorld());
-			rayHandler.setAmbientLight(0.5f,0.5f,0.5f,0.5f);
-			rayHandler.setBlur(true);
-			rayHandler.setBlurNum(3);
-			world.setRayHandler(rayHandler);
-		}
 		Entity lightRenderer = new Entity();
-		lightRenderer.add(new Light2dRenderComponent());
+		rayHandler = new RayHandler(world.getBox2dWorld());
+		lightRenderer.add(new Light2dRenderComponent().setRayHandler(rayHandler).setGammaCorrection(true).setUseDiffuseLights(true).setAmbientLight(new Color(0.5f,0.5f,0.5f,0.5f)).setBlur(true).setBlurNum(3));
 		lightRenderer.add(new LayerComponent(BitBuilder.none(32)
 													 .s(1)
 													 .get()));
@@ -83,8 +78,12 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 
 	@Override
 	public void entityRemoved(Entity entity) {
-		lights.get(entity).deleteObserver(this);
-		lights.get(entity).getLight().dispose();
+		Light2dComponent light2dComponent = lights.get(entity);
+		light2dComponent.deleteObserver(this);
+		light2dComponent
+			  .getLight().remove();
+		light2dComponent.getLight().dispose();
+		light2dComponent.setLight(null);
 	}
 
 	@Override
@@ -105,7 +104,7 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 	@Override
 	public void update(float deltaTime) {
 		super.update(deltaTime);
-		world.getRayHandler().update();
+		rayHandler.update();
 	}
 
 	@Override
@@ -137,6 +136,7 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		Light2dComponent lc = lights.get(entity);
 		if (lc.getLight() != null) {
 			System.out.println("Disposing light");
+			lc.getLight().remove();
 			lc.getLight().dispose();
 			lc.setLight(null);
 		}
@@ -144,16 +144,16 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		Light light = null;
 		switch (lc.getType()) {
 			case POINT:
-				light = new PointLight(world.getRayHandler(), lc.getRays(), lc.getColor(), lc.getDistance(), tf.getX(), tf.getY());
+				light = new PointLight(rayHandler, lc.getRays(), lc.getColor(), lc.getDistance(), tf.getX(), tf.getY());
 				break;
 			case DIRECTIONAL:
-				light = new DirectionalLight(world.getRayHandler(), lc.getRays(), lc.getColor(), tf.getZRotation());
+				light = new DirectionalLight(rayHandler, lc.getRays(), lc.getColor(), tf.getZRotation());
 				break;
 			case CONE:
-				light = new ConeLight(world.getRayHandler(), lc.getRays(), lc.getColor(), lc.getDistance(), tf.getX(), tf.getY(), tf.getZRotation(), lc.getAngle());
+				light = new ConeLight(rayHandler, lc.getRays(), lc.getColor(), lc.getDistance(), tf.getX(), tf.getY(), tf.getZRotation(), lc.getAngle());
 				break;
 			case CHAIN:
-				light = new ChainLight(world.getRayHandler(), lc.getRays(), lc.getColor(), lc.getDistance(), lc.getDirection(), lc.getChain());
+				light = new ChainLight(rayHandler, lc.getRays(), lc.getColor(), lc.getDistance(), lc.getDirection(), lc.getChain());
 				break;
 		}
 		light.setPosition(tf.get2DPosition());

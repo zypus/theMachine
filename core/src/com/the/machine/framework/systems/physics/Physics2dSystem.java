@@ -111,6 +111,7 @@ public class Physics2dSystem
 		for (Entity entity : getEntities()) {
 			Physics2dComponent physics2dComponent = physicObjects.get(entity);
 			Body body = physics2dComponent.getBody();
+			body.setType(physics2dComponent.getType());
 			if (colliders.has(entity)) {
 				ColliderComponent colliderComponent = colliders.get(entity);
 				for (ColliderComponent.Collider collider : colliderComponent.getColliders()) {
@@ -166,7 +167,7 @@ public class Physics2dSystem
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.position.set(transformComponent.get2DPosition().scl(WORLD_TO_BOX));
 		bodyDef.angle = transformComponent.getZRotation();
-		bodyDef.type = BodyDef.BodyType.DynamicBody;
+		bodyDef.type = physics2dComponent.getType();
 		bodyDef.fixedRotation = true;
 		bodyDef.allowSleep = false;
 
@@ -188,7 +189,7 @@ public class Physics2dSystem
 		fixtureDef.filter.maskBits = collider.getFilter().maskBits;
 		fixtureDef.friction = collider.getFriction();
 		fixtureDef.isSensor = collider.isSensor();
-		fixtureDef.shape = collider.getShape();
+		fixtureDef.shape = collider.getShape().createShape();
 		Fixture fixture = body.createFixture(fixtureDef);
 		collider.setFixture(fixture);
 	}

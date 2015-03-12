@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.HandleComponent;
 import com.the.machine.events.MapEditorLoadEvent;
@@ -34,7 +35,6 @@ import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
-import com.the.machine.framework.utility.Utils;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -65,6 +65,7 @@ public class MapSystem
 	transient private ComponentMapper<ReferenceComponent>    references       = ComponentMapper.getFor(ReferenceComponent.class);
 	transient private ComponentMapper<HandleComponent>       handleComponents = ComponentMapper.getFor(HandleComponent.class);
 	transient private ComponentMapper<ColliderComponent>     colliders        = ComponentMapper.getFor(ColliderComponent.class);
+	transient private ComponentMapper<Physics2dComponent> bodies = ComponentMapper.getFor(Physics2dComponent.class);
 
 	transient private final float   DOUBLE_TAP_TIME = 0.3f;
 	transient private       float   lastTap         = -2 * DOUBLE_TAP_TIME;
@@ -80,7 +81,7 @@ public class MapSystem
 	transient private List<Entity> toDrag       = null;
 	transient private Entity       handleToDrag = null;
 
-	transient private List<Entity> selected       = new ArrayList<>();
+	transient private List<Entity>         selected       = new ArrayList<>();
 	transient private Map<Entity, Vector3> selectionDelta = new HashMap<>();
 
 	public MapSystem() {
@@ -153,10 +154,12 @@ public class MapSystem
 				array[index] = element;
 				index++;
 			}
-			for (Entity entity : array) {
-				world.removeEntity(entity);
+			Entity[] newEntities = world.loadPrefab("TestMap");
+			if (newEntities != null && newEntities.length > 0) {
+				for (Entity entity : array) {
+					world.removeEntity(entity);
+				}
 			}
-			world.loadPrefab("TestMap");
 		}
 	}
 
@@ -399,7 +402,7 @@ public class MapSystem
 																   .get()));
 					newMapElement.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
 																 .setSortingLayer("Default"));
-					newMapElement.add(new Physics2dComponent());
+					newMapElement.add(new Physics2dComponent().setType(BodyDef.BodyType.StaticBody));
 					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-25, -25, 50, 50))));
 					selected.clear();
 					selected.add(newMapElement);
@@ -407,6 +410,16 @@ public class MapSystem
 				}
 				if (!found) {
 					selected.clear();
+				}
+			}
+		}
+		for (Entity entity : mapElements) {
+			Physics2dComponent physics2dComponent = bodies.get(entity);
+			if (physics2dComponent != null) {
+				if (selected.contains(entity)) {
+					physics2dComponent.setType(BodyDef.BodyType.DynamicBody);
+				} else {
+					physics2dComponent.setType(BodyDef.BodyType.StaticBody);
 				}
 			}
 		}
@@ -495,46 +508,69 @@ public class MapSystem
 						float dtx = delta.x * (0.5f - (0.5f*Math.abs(center.x - tf.getX()) / rect.getWidth()));
 						float dty = delta.y * (0.5f - (0.5f*Math.abs(center.y - tf.getY()) / rect.getHeight()));
 						switch (handleComponent.getType()) {
-
 							case TOP_LEFT:
-								dm.setHeight(dm.getHeight() + dy);
-								tf.setY(tf.getY() + dty);
-								dm.setWidth(dm.getWidth() - dx);
-								tf.setX(tf.getX() + dtx);
+								if (dm.getHeight() + dy >= 1) {
+									dm.setHeight(dm.getHeight() + dy);
+									tf.setY(tf.getY() + dty);
+								}
+								if (dm.getWidth() + dx >= 1) {
+									dm.setWidth(dm.getWidth() - dx);
+									tf.setX(tf.getX() + dtx);
+								}
 								break;
 							case TOP:
-								dm.setHeight(dm.getHeight() + dy);
-								tf.setY(tf.getY() + dty);
+								if (dm.getHeight() + dy >= 1) {
+									dm.setHeight(dm.getHeight() + dy);
+									tf.setY(tf.getY() + dty);
+								}
 								break;
 							case TOP_RIGHT:
-								dm.setHeight(dm.getHeight() + dy);
-								tf.setY(tf.getY() + dty);
-								dm.setWidth(dm.getWidth() + dx);
-								tf.setX(tf.getX() + dtx);
+								if (dm.getHeight() + dy >= 1) {
+									dm.setHeight(dm.getHeight() + dy);
+									tf.setY(tf.getY() + dty);
+								}
+								if (dm.getWidth() + dx >= 1) {
+									dm.setWidth(dm.getWidth() + dx);
+									tf.setX(tf.getX() + dtx);
+								}
 								break;
 							case RIGHT:
-								dm.setWidth(dm.getWidth() + dx);
-								tf.setX(tf.getX() + dtx);
+								if (dm.getWidth() + dx >= 1) {
+									dm.setWidth(dm.getWidth() + dx);
+									tf.setX(tf.getX() + dtx);
+								}
 								break;
 							case BOTTOM_RIGHT:
-								dm.setWidth(dm.getWidth() + dx);
-								tf.setX(tf.getX() + dtx);
-								dm.setHeight(dm.getHeight() - dy);
-								tf.setY(tf.getY() + dty);
+								if (dm.getWidth() + dx >= 1) {
+									dm.setWidth(dm.getWidth() + dx);
+									tf.setX(tf.getX() + dtx);
+								}
+								if (dm.getHeight() - dy >= 1) {
+									dm.setHeight(dm.getHeight() - dy);
+									tf.setY(tf.getY() + dty);
+								}
 								break;
 							case BOTTOM:
-								dm.setHeight(dm.getHeight() - dy);
-								tf.setY(tf.getY() + dty);
+								if (dm.getHeight() - dy >= 1) {
+									dm.setHeight(dm.getHeight() - dy);
+									tf.setY(tf.getY() + dty);
+								}
 								break;
 							case BOTTOM_LEFT:
-								dm.setHeight(dm.getHeight() - dy);
-								tf.setY(tf.getY() + dty);
-								dm.setWidth(dm.getWidth() - dx);
-								tf.setX(tf.getX() + dtx);
+								if (dm.getHeight() - dy >= 1) {
+									dm.setHeight(dm.getHeight() - dy);
+									tf.setY(tf.getY() + dty);
+								}
+								if (dm.getWidth() - dx >= 1) {
+									dm.setWidth(dm.getWidth() - dx);
+									tf.setX(tf.getX() + dtx);
+								}
 								break;
 							case LEFT:
-								dm.setWidth(dm.getWidth() - dx);
-								tf.setX(tf.getX() + dtx);
+								if (dm.getWidth() - dx >= 1) {
+									dm.setWidth(dm.getWidth() - dx);
+									tf.setX(tf.getX() + dtx);
+								}
 								break;
 						}
 						if (colliders.has(entity)) {
@@ -562,20 +598,6 @@ public class MapSystem
 
 	@Override
 	public boolean mouseMoved(int screenX, int screenY) {
-		if (screenX >= 0 && Utils.isInboundY(screenY, world.getY(), world.getHeight()) && screenX - world.getX() < 20) {
-			cameraMovement.x = -1;
-		} else if (screenX <= world.getWidth() && Utils.isInboundY(screenY, world.getX(), world.getHeight()) && world.getX() + world.getWidth() - screenX < 20) {
-			cameraMovement.x = 1;
-		} else {
-			cameraMovement.x = 0;
-		}
-		if (screenY >= 0 && Utils.isInboundX(screenX, world.getX(), world.getWidth()) && screenY - world.getY() < 20) {
-			cameraMovement.y = 1;
-		} else if (screenY <= world.getHeight() && Utils.isInboundX(screenX, world.getX(), world.getWidth()) && world.getY() + world.getHeight() - screenY < 20) {
-			cameraMovement.y = -1;
-		} else {
-			cameraMovement.y = 0;
-		}
 		return false;
 	}
 

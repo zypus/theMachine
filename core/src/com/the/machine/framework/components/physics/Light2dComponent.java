@@ -23,7 +23,7 @@ import java.util.Arrays;
 @Getter
 @NoArgsConstructor
 public class Light2dComponent extends AbstractComponent {
-	@Setter Light light = null;
+	transient @Setter Light light = null;
 	LightType type = LightType.POINT;
 	float distance = 100;
 	Color color = Color.WHITE;

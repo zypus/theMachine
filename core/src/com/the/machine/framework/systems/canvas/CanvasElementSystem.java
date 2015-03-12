@@ -150,9 +150,9 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 			actor.setRotation(transform.getZRotation());
 			//			actor.setRotation(actor.getRotation()+1); // just continuously rotating the actor for testing
 			actor.setVisible(elementComponent.isEnabled());
-			for (EventListener listener : elementComponent.getListeners()) {
-				actor.addListener(listener);
-			}
+		}
+		for (EventListener listener : elementComponent.getListeners()) {
+			actor.addListener(listener);
 		}
 	}
 
