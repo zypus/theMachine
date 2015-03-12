@@ -3,10 +3,12 @@ package com.the.machine.scenes;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.ui.Value;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.ControlComponent;
 import com.the.machine.components.DirectionalVelocityComponent;
+import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.framework.SceneBuilder;
@@ -30,7 +32,6 @@ import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.canvas.TableCellSystem;
 import com.the.machine.framework.systems.canvas.TableSystem;
-import com.the.machine.framework.systems.physics.Light2dSystem;
 import com.the.machine.framework.systems.physics.Physics2dSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
@@ -63,9 +64,9 @@ public class MapEditorSceneBuilder
 		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new TableSystem());
 		world.addSystem(new TableCellSystem());
-		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class);
+		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class);
 		world.addSystem(new Physics2dSystem());
-		world.addSystem(new Light2dSystem());
+//		world.addSystem(new Light2dSystem());
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
@@ -139,7 +140,7 @@ public class MapEditorSceneBuilder
 		Entity saveButton = new Entity();
 		CanvasElementComponent elementComponent = new CanvasElementComponent();
 		elementComponent.getListeners()
-						.add(new ClickEventListenerEventSpawner(world, MapEditorSaveEvent.class));
+						.add(new ClickEventListenerEventSpawner(world, new MapEditorSaveEvent()));
 		saveButton.add(elementComponent);
 		saveButton.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT).setVerticalAlignment(Enums.VerticalAlignment.TOP).setExpandY(1));
 		saveButton.add(new ButtonComponent());
@@ -155,9 +156,13 @@ public class MapEditorSceneBuilder
 		Entity loadButton = new Entity();
 		CanvasElementComponent loadComponent = new CanvasElementComponent();
 		loadComponent.getListeners()
-						.add(new ClickEventListenerEventSpawner(world, MapEditorLoadEvent.class));
+						.add(new ClickEventListenerEventSpawner(world, new MapEditorLoadEvent()));
 		loadButton.add(loadComponent);
-		loadButton.add(new TableCellComponent().setExpandX(1).setHorizontalAlignment(Enums.HorizontalAlignment.LEFT).setVerticalAlignment(Enums.VerticalAlignment.TOP));
+		loadButton.add(new TableCellComponent().setExpandX(1)
+											   .setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+											   .setVerticalAlignment(Enums.VerticalAlignment.TOP)
+											   .setColspan(6)
+											   .setRowEnd(true));
 		loadButton.add(new ButtonComponent());
 		loadButton.add(new TransformComponent().setPosition(110, 0, 0));
 		loadButton.add(new DimensionComponent().setDimension(100, 40)
@@ -169,6 +174,32 @@ public class MapEditorSceneBuilder
 												.add(new TableCellComponent());
 		EntityUtilities.relate(loadButton, loadButtonLabel);
 		world.addEntity(loadButtonLabel);
+
+		// make hot bar buttons for switching between the different area types
+		int hotbarCount = 7;
+		for (int i = 0; i < hotbarCount; i++) {
+			Entity hbb = new Entity();
+			CanvasElementComponent cec = new CanvasElementComponent();
+			cec.getListeners()
+							.add(new ClickEventListenerEventSpawner(world, new MapEditorHotbarEvent(i)));
+			hbb.add(cec);
+			TableCellComponent tcc = new TableCellComponent().setVerticalAlignment(Enums.VerticalAlignment.BOTTOM).setPrefWidth(new Value.Fixed(50)).setPrefHeight(new Value.Fixed(50));
+			if (i == hotbarCount-1) {
+				tcc.setRowEnd(true);
+			}
+			hbb.add(tcc);
+			hbb.add(new ButtonComponent());
+			hbb.add(new TransformComponent());
+			hbb.add(new DimensionComponent().setDimension(100, 100)
+												   .setOrigin(0, 0));
+			EntityUtilities.relate(GUITable, hbb);
+			world.addEntity(hbb);
+			String text = (i == 0) ? "Wall" : (i == 1) ? "Window(T)" : (i == 2) ? "Door(T)" : (i == 3) ? "Cover" : (i == 4) ? "Tower(T)" : (i == 6) ? "Target" : "Agent";
+			Entity hbbLabel = EntityUtilities.makeLabel(text)
+													.add(new TableCellComponent());
+			EntityUtilities.relate(hbb, hbbLabel);
+			world.addEntity(hbbLabel);
+		}
 
 	}
 }

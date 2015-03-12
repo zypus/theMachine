@@ -147,7 +147,7 @@ public class ColliderComponent extends AbstractComponent {
 		}
 
 		public Collider setShape(float width, float height) {
-			this.shape = new RectangleCollider(width, height);
+			this.shape = new RectangleCollider(width/10, height/10);
 			changed = true;
 			shapeChanged = true;
 			return this;
@@ -187,7 +187,7 @@ public class ColliderComponent extends AbstractComponent {
 			}
 
 			private RectangleCollider(float width, float height) {
-				this.rectangle = new Rectangle(-width/2, -height/2, width/2, height/2);
+				this.rectangle = new Rectangle(-width/2, -height/2, width, height);
 			}
 
 			@Override

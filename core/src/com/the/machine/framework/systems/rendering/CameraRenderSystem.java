@@ -144,7 +144,7 @@ public class CameraRenderSystem
 			if (spriteRenderers.has(entity)) {
 				SpriteRenderComponent spriteRenderComponent = spriteRenderers.get(entity);
 				Decal sprite = Decal.newDecal(1, 1, spriteRenderComponent.getTextureRegion()
-																		 .get());
+																		 .get(), true);
 				decalMap.put(entity, sprite);
 				spriteRenderComponent.addObserver(this);
 			}

@@ -14,8 +14,10 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.HandleComponent;
+import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.framework.AbstractSystem;
@@ -103,7 +105,7 @@ public class MapSystem
 			handle.add(new HandleComponent().setType(handleTypes[i]));
 			handle.add(new DisabledComponent());
 			handle.add(new DimensionComponent().setDimension(20, 20));
-			handle.add(new CanvasElementComponent());
+			handle.add(new CanvasElementComponent().setTouchable(Touchable.disabled));
 			//			handle.add(new LabelComponent().setText("h"+i));
 			handle.add(new ButtonComponent());
 			handle.add(new TransformComponent());
@@ -158,6 +160,50 @@ public class MapSystem
 			if (newEntities != null && newEntities.length > 0) {
 				for (Entity entity : array) {
 					world.removeEntity(entity);
+				}
+			}
+		} else if (event instanceof MapEditorHotbarEvent) {
+			int index = ((MapEditorHotbarEvent) event).getHotbarIndex();
+			for (Entity entity : selected) {
+				AreaComponent areaComponent = areas.get(entity);
+				if (areaComponent.getType() != GROUND) {
+					switch (index) {
+						case 0:
+							areaComponent.setType(WALL);
+							break;
+						case 1:
+							if (areaComponent.getType() == WINDOW) {
+								areaComponent.setType(WINDOW_BROKEN);
+							} else {
+								areaComponent.setType(WINDOW);
+							}
+							break;
+						case 2:
+							if (areaComponent.getType() == DOOR_CLOSED) {
+								areaComponent.setType(DOOR_OPEN);
+							} else {
+								areaComponent.setType(DOOR_CLOSED);
+							}
+							break;
+						case 3:
+							areaComponent.setType(COVER);
+							break;
+						case 4:
+							if (areaComponent.getType() == TOWER) {
+								areaComponent.setType(TOWER_USED);
+							} else {
+								areaComponent.setType(TOWER);
+							}
+							break;
+						case 5:
+							areaComponent.setType(TARGET);
+							break;
+						case 6:
+							// TODO agent / intruder
+							break;
+						default:
+							System.out.println("Unsupported hotbar index of "+index);
+					}
 				}
 			}
 		}
@@ -299,6 +345,30 @@ public class MapSystem
 			}
 			if (keycode == BACKSPACE) {
 				selected.clear();
+			}
+			switch (keycode) {
+				case NUM_1:
+					world.dispatchEvent(new MapEditorHotbarEvent(0));
+					break;
+				case NUM_2:
+					world.dispatchEvent(new MapEditorHotbarEvent(1));
+					break;
+				case NUM_3:
+					world.dispatchEvent(new MapEditorHotbarEvent(2));
+					break;
+				case NUM_4:
+					world.dispatchEvent(new MapEditorHotbarEvent(3));
+					break;
+				case NUM_5:
+					world.dispatchEvent(new MapEditorHotbarEvent(4));
+					break;
+				case NUM_6:
+					world.dispatchEvent(new MapEditorHotbarEvent(5));
+					break;
+				case NUM_7:
+					world.dispatchEvent(new MapEditorHotbarEvent(6));
+					break;
+				default:
 			}
 		}
 		return false;
@@ -582,6 +652,7 @@ public class MapSystem
 						tf.notifyObservers();
 					}
 				}
+				touchDownPoint = unproject;
 			} else if (toDrag != null) {
 				for (Entity entity : toDrag) {
 					TransformComponent transformComponent = transforms.get(entity);
@@ -590,7 +661,6 @@ public class MapSystem
 					transformComponent.notifyObservers();
 				}
 			}
-			touchDownPoint = unproject;
 		}
 
 		return false;

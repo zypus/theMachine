@@ -154,6 +154,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 		for (EventListener listener : elementComponent.getListeners()) {
 			actor.addListener(listener);
 		}
+		actor.setTouchable(elementComponent.getTouchable());
 	}
 
 	protected void updateCanvasElement(Entity entity) {

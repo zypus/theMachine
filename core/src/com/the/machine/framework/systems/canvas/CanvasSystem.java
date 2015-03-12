@@ -60,7 +60,7 @@ public class CanvasSystem extends IteratingSystem
 			canvasComponent.setBatch(new SpriteBatch());
 			Stage stage = new Stage();
 			world.getInputMultiplexer()
-				 .addProcessor(stage);
+				 .addProcessor(0, stage);
 			canvasComponent.setStage(stage);
 
 			CanvasElementComponent elementComponent = canvasElements.get(entity);

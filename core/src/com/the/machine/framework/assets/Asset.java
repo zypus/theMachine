@@ -149,7 +149,15 @@ public class Asset<T> {
 	 */
 	public T get() {
 		if (!fetched) {
-			manager.load(name, type);
+			SmartFileHandleResolver.NAME_CHECK check = resolver.check(name);
+			if (check == SmartFileHandleResolver.NAME_CHECK.EXISTS) {
+				if (!manager.isLoaded(name, type)) {
+					manager.load(name, type);
+				}
+			}
+			if (check == SmartFileHandleResolver.NAME_CHECK.AMBIGUOUS) {
+				ambiguous = true;
+			}
 			fetched = true;
 		}
 		if (cachedAsset == null) {
@@ -168,9 +176,6 @@ public class Asset<T> {
 					} else {
 						return (T) placeholders.get(type);
 					}
-				} else if (progressTexture != null) {
-					progressTexture.dispose();
-					progressTexture = null;
 				}
 				return (T) placeholders.get(type);
 			}

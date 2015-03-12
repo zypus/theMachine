@@ -18,23 +18,18 @@ import com.the.machine.framework.events.Event;
 public class ClickEventListenerEventSpawner extends ClickListener {
 
 	transient private World                  world;
-	private                   Class<? extends Event> eventClass;
+	private                   Event event;
 
-	public ClickEventListenerEventSpawner(World world, Class<? extends Event> eventClass) {
+	public ClickEventListenerEventSpawner(World world, Event event) {
 		super();
 		this.world = world;
-		this.eventClass = eventClass;
+		this.event = event;
 	}
 
 	@Override
 	public void clicked(InputEvent event, float x, float y) {
-		try {
-			world.dispatchEvent(eventClass.newInstance());
-		} catch (InstantiationException e) {
-			//			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			//			e.printStackTrace();
-		}
+		world.dispatchEvent(this.event);
+		event.handle();
 	}
 
 	public static class ClickEventListenerEventSpawnerSerializer

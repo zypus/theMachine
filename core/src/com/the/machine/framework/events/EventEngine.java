@@ -76,6 +76,7 @@ public class EventEngine {
 			while (!eventQueue.isEmpty()) {
 				// get next event from queue
 				Event event = eventQueue.remove();
+				event.setDrop(false);
 				List<EventListener> listeners = eventMap.get(event.getClass());
 				if (listeners != null) {
 					// forward events to there designated listeners
