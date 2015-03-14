@@ -69,7 +69,7 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setSortingLayer("Default"));
         badlogicImageEntity1.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
                 .setZRotation(0)
-                .setScale(0.2f));
+                .setScale(0.1f));
         badlogicImageEntity1.add(new NameComponent().setName("Badlogic1"));
         badlogicImageEntity1.add(new RandomBehaviourComponent());
 
@@ -80,11 +80,22 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setSortingLayer("Default"));
         badlogicImageEntity2.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
                 .setZRotation(0)
-                .setScale(0.2f));
+                .setScale(0.1f));
         badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
         badlogicImageEntity2.add(new RandomBehaviourComponent());
 
+        Entity badlogicImageEntity3 = new Entity();
+        // Use same texture as the first badlogicImageEntity
+        badlogicImageEntity3.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
+                .setSortingLayer("Default"));
+        badlogicImageEntity3.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
+                .setZRotation(0)
+                .setScale(0.1f));
+        badlogicImageEntity3.add(new NameComponent().setName("Badlogic2"));
+        badlogicImageEntity3.add(new RandomBehaviourComponent());
+
         world.addEntity(badlogicImageEntity1);
         world.addEntity(badlogicImageEntity2);
+        world.addEntity(badlogicImageEntity3);
     }
 }
