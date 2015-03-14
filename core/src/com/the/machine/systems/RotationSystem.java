@@ -3,12 +3,8 @@ package com.the.machine.systems;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
-import com.the.machine.components.VelocityComponent;
 import com.the.machine.framework.IteratingSystem;
-import com.the.machine.framework.components.AngularVelocityComponent;
-import com.the.machine.framework.components.NameComponent;
+import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 /**

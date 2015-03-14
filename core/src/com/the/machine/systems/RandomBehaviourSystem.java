@@ -6,9 +6,8 @@ import com.badlogic.ashley.core.Family;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.RandomBehaviourComponent;
 import com.the.machine.components.VelocityComponent;
-import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.IteratingSystem;
-import com.the.machine.framework.components.AngularVelocityComponent;
+import com.the.machine.components.AngularVelocityComponent;
 
 /**
  * Created by Frans on 12-3-2015.

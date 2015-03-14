@@ -1,4 +1,6 @@
-package com.the.machine.framework.components;
+package com.the.machine.components;
+
+import com.the.machine.framework.components.AbstractComponent;
 
 /**
  * Created by Frans on 12-3-2015.
