@@ -65,9 +65,6 @@ public class CameraRenderSystem
 	private transient         ComponentMapper<Physics2dDebugComponent>        physic2dDebugs           = ComponentMapper.getFor(Physics2dDebugComponent.class);
 	private transient         ComponentMapper<Light2dRenderComponent> lights = ComponentMapper.getFor(Light2dRenderComponent.class);
 
-	private transient OrthographicCamera orthoCam = new OrthographicCamera();
-	private transient PerspectiveCamera  persCam  = new PerspectiveCamera();
-
 	private transient Family                 cameraFamily;
 	private transient ImmutableArray<Entity> cameras;
 	private transient Array<Entity>          sortedCameras;
@@ -135,8 +132,15 @@ public class CameraRenderSystem
 	public void entityAdded(Entity entity) {
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponents.has(entity)) {
-				cameraComponents.get(entity)
-								.addObserver(this);
+				CameraComponent cameraComponent = cameraComponents.get(entity);
+				if (cameraComponent.getCamera() == null) {
+					if (cameraComponent.getProjection() == CameraComponent.Projection.ORTHOGRAPHIC) {
+						cameraComponent.setCamera(new OrthographicCamera());
+					} else {
+						cameraComponent.setCamera(new PerspectiveCamera());
+					}
+				}
+				cameraComponent.addObserver(this);
 			}
 			sortedCameras.add(entity);
 			sortedCameras.sort(cameraComparator);
@@ -211,11 +215,13 @@ public class CameraRenderSystem
 			CameraComponent cameraComponent = cameraComponents.get(cameraEntity);
 			Camera camera;
 			if (cameraComponent.getProjection() == CameraComponent.Projection.ORTHOGRAPHIC) {
+				OrthographicCamera orthoCam = (OrthographicCamera) cameraComponent.getCamera();
 				camera = orthoCam;
 				orthoCam.zoom = cameraComponent.getZoom();
 				camera.near = cameraComponent.getClippingPlanes()
 											 .getNear();
 			} else {
+				PerspectiveCamera persCam = (PerspectiveCamera) cameraComponent.getCamera();
 				camera = persCam;
 				persCam.fieldOfView = cameraComponent.getFieldOfView();
 				if (cameraComponent.getClippingPlanes()

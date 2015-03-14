@@ -25,9 +25,9 @@ import java.util.Arrays;
 public class Light2dComponent extends AbstractComponent {
 	transient @Setter Light light = null;
 	LightType type = LightType.POINT;
-	float distance = 100;
+	float distance = 10;
 	Color color = Color.WHITE;
-	int rays = 25;
+	int rays = 50;
 	boolean soft = false;
 	float softnessLength = 0f;
 	boolean staticLight = false;

@@ -73,7 +73,10 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 	@Override
 	public void entityAdded(Entity entity) {
 //		createLight(entity);
-		lights.get(entity).addObserver(this);
+		Light2dComponent light2dComponent = lights.get(entity);
+		light2dComponent.addObserver(this);
+		light2dComponent.forceChanged();
+		light2dComponent.notifyObservers();
 	}
 
 	@Override

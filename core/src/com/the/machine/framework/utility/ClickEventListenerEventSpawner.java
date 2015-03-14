@@ -8,6 +8,9 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.Event;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * TODO Add description
@@ -15,10 +18,12 @@ import com.the.machine.framework.events.Event;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 07/03/15
  */
+@Accessors(chain = true)
 public class ClickEventListenerEventSpawner extends ClickListener {
 
 	transient private World                  world;
 	private                   Event event;
+	@Getter @Setter private boolean setHandled = true;
 
 	public ClickEventListenerEventSpawner(World world, Event event) {
 		super();
@@ -29,7 +34,9 @@ public class ClickEventListenerEventSpawner extends ClickListener {
 	@Override
 	public void clicked(InputEvent event, float x, float y) {
 		world.dispatchEvent(this.event);
-		event.handle();
+		if (setHandled) {
+			event.handle();
+		}
 	}
 
 	public static class ClickEventListenerEventSpawnerSerializer
@@ -43,7 +50,8 @@ public class ClickEventListenerEventSpawner extends ClickListener {
 
 		@Override
 		public void write(Kryo kryo, Output output, ClickEventListenerEventSpawner object) {
-			kryo.getDefaultSerializer(Object.class).write(kryo, output, object);
+			kryo.getDefaultSerializer(Object.class)
+				.write(kryo, output, object);
 		}
 
 		@Override

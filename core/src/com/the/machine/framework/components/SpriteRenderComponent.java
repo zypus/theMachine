@@ -27,13 +27,14 @@ public class SpriteRenderComponent
 
 	public SpriteRenderComponent setTextureRegion(Asset<TextureRegion> textureRegion) {
 		this.textureRegion = textureRegion;
+		setChanged();
 		notifyObservers();
 		return this;
 	}
 
 	public SpriteRenderComponent setTint(Color tint) {
 		this.tint = tint;
-		notifyObservers();
+		setChanged();
 		return this;
 	}
 

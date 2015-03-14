@@ -1,7 +1,6 @@
 package com.the.machine.framework;
 
 import com.badlogic.ashley.core.EntitySystem;
-import com.badlogic.ashley.core.Family;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.Event;
 import lombok.Data;
@@ -16,7 +15,7 @@ import lombok.Data;
 public abstract class AbstractSystem
 		extends EntitySystem {
 
-	public AbstractSystem(Family family) {
+	public AbstractSystem() {
 		super(0);
 	}
 

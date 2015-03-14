@@ -3,11 +3,17 @@ package com.the.machine.scenes;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Value;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.ControlComponent;
 import com.the.machine.components.DirectionalVelocityComponent;
+import com.the.machine.components.DraggableComponent;
+import com.the.machine.components.ResizableComponent;
+import com.the.machine.components.SelectableComponent;
+import com.the.machine.components.SelectorComponent;
+import com.the.machine.components.ZoomableComponent;
 import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorSaveEvent;
@@ -28,19 +34,28 @@ import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
 import com.the.machine.framework.events.input.KeyDownEvent;
 import com.the.machine.framework.events.input.KeyUpEvent;
+import com.the.machine.framework.events.input.ScrolledEvent;
+import com.the.machine.framework.events.input.TouchDownEvent;
+import com.the.machine.framework.events.input.TouchDraggedEvent;
+import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.canvas.TableCellSystem;
 import com.the.machine.framework.systems.canvas.TableSystem;
+import com.the.machine.framework.systems.physics.Light2dSystem;
 import com.the.machine.framework.systems.physics.Physics2dSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.ClickEventListenerEventSpawner;
 import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Enums;
+import com.the.machine.systems.CameraZoomSystem;
 import com.the.machine.systems.DirectionalMovementSystem;
+import com.the.machine.systems.DraggingSystem;
 import com.the.machine.systems.InputControlledMovementSystem;
 import com.the.machine.systems.MapSystem;
+import com.the.machine.systems.ResizeHandleSystem;
+import com.the.machine.systems.SelectionSystem;
 
 import java.util.HashMap;
 
@@ -60,13 +75,17 @@ public class MapEditorSceneBuilder
 		world.addSystem(new DirectionalMovementSystem());
 		world.addSystem(new InputControlledMovementSystem(), KeyDownEvent.class, KeyUpEvent.class);
 		world.addSystem(new CameraRenderSystem(), AssetLoadingFinishedEvent.class);
-		world.addSystem(new CanvasSystem(), ResizeEvent.class);
-		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new TableSystem());
 		world.addSystem(new TableCellSystem());
-		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class);
+		world.addSystem(new CameraZoomSystem(), ScrolledEvent.class);
+		world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
+		world.addSystem(new SelectionSystem(), TouchUpEvent.class);
+		world.addSystem(new ResizeHandleSystem());
+		world.addSystem(new CanvasSystem(), ResizeEvent.class);
+		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new Physics2dSystem());
-//		world.addSystem(new Light2dSystem());
+		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class);
+		world.addSystem(new Light2dSystem());
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
@@ -88,6 +107,8 @@ public class MapEditorSceneBuilder
 		controlMap.put(S, InputControlledMovementSystem.Control.LEFT);
 		controlMap.put(A, InputControlledMovementSystem.Control.DOWN);
 		mapCamera.add(new ControlComponent().setControlMap(controlMap));
+		mapCamera.add(new SelectorComponent());
+		mapCamera.add(new ZoomableComponent());
 		world.addEntity(mapCamera);
 
 		Entity uiCamera = new Entity();
@@ -105,6 +126,7 @@ public class MapEditorSceneBuilder
 		uiCamera.add(uiCameraComponent);
 		uiCamera.add(new TransformComponent().setPosition(0, 0, 0));
 		uiCamera.add(new NameComponent().setName("UI Camera"));
+		uiCamera.add(new SelectorComponent());
 		world.addEntity(uiCamera);
 
 		Entity canvas = new Entity();
@@ -128,10 +150,13 @@ public class MapEditorSceneBuilder
 											 .get()));
 		map.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
 										   .setSortingLayer("Default"));
+		map.add(new DraggableComponent());
+		map.add(new SelectableComponent());
+		map.add(new ResizableComponent());
 		world.addEntity(map);
 
 		Entity GUITable = new Entity();
-		GUITable.add(new CanvasElementComponent());
+		GUITable.add(new CanvasElementComponent().setTouchable(Touchable.childrenOnly));
 		GUITable.add(new TableComponent().setFillParent(true));
 		GUITable.add(new TransformComponent());
 		GUITable.add(new DimensionComponent());
@@ -156,12 +181,37 @@ public class MapEditorSceneBuilder
 		Entity loadButton = new Entity();
 		CanvasElementComponent loadComponent = new CanvasElementComponent();
 		loadComponent.getListeners()
-						.add(new ClickEventListenerEventSpawner(world, new MapEditorLoadEvent()));
+					 .add(new ClickEventListenerEventSpawner(world, new MapEditorLoadEvent()));
+		// Experiment for a loading dialog
+/*		loadComponent.getListeners()
+						.add(new ClickEventListenerExecuter(() -> {
+							Entity loadDialog = new Entity();
+							loadDialog.add(new CanvasElementComponent());
+							loadDialog.add(new TableComponent().setFillParent(true));
+							loadDialog.add(new TransformComponent());
+							loadDialog.add(new DimensionComponent());
+							EntityUtilities.relate(canvas, loadDialog);
+							world.addEntity(loadDialog);
+
+							CanvasElementComponent cancel = new CanvasElementComponent();
+							cancel.getListeners().add(new ClickEventListenerExecuter(() -> {
+								world.removeEntity(loadDialog);
+								return true;
+							}));
+							Entity cancelButton = EntityUtilities.makeButton(cancel);
+							cancelButton.add(new TableCellComponent());
+							Entity cancelLabel = EntityUtilities.makeLabel("Cancel").add(new TableCellComponent());
+							EntityUtilities.relate(cancelButton, cancelLabel);
+							world.addEntity(cancelLabel);
+							EntityUtilities.relate(loadDialog, cancelButton);
+							world.addEntity(cancelButton, true);
+							return true;
+						}));*/
 		loadButton.add(loadComponent);
 		loadButton.add(new TableCellComponent().setExpandX(1)
 											   .setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
 											   .setVerticalAlignment(Enums.VerticalAlignment.TOP)
-											   .setColspan(6)
+											   .setColspan(5)
 											   .setRowEnd(true));
 		loadButton.add(new ButtonComponent());
 		loadButton.add(new TransformComponent().setPosition(110, 0, 0));

@@ -21,8 +21,8 @@ public abstract class ObservableComponent
 	transient @Getter @Setter protected WeakReference<Entity>
 	owner=null;
 
-	private boolean          changed = false;
-	private Vector<Observer> obs     = new Vector<>();
+	transient private boolean          changed = false;
+	transient private Vector<Observer> obs     = new Vector<>();
 
 	/**
 	 * Adds an observer to the set of observers for this object, provided
