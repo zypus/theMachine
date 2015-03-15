@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -74,12 +75,14 @@ public class ResizeHandleSystem
 			DraggableComponent draggableComponent = new DraggableComponent();
 			if (i == 1 || i == 5) {
 				draggableComponent.setXAxis(false);
-				handle.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("handle_edge", TextureRegion.class)).setSortingLayer("World UI"));
+				handle.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("handle_edge", TextureRegion.class)).setSortingLayer("World UI")
+													  .setTint(Color.CYAN));
 			} else if (i == 3 || i == 7) {
 				draggableComponent.setYAxis(false);
-				handle.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("handle_edge", TextureRegion.class)).setSortingLayer("World UI"));
+				handle.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("handle_edge", TextureRegion.class)).setSortingLayer("World UI")
+													  .setTint(Color.CYAN));
 			} else {
-				handle.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("handle_corner", TextureRegion.class)).setSortingLayer("World UI"));
+				handle.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("handle_corner", TextureRegion.class)).setSortingLayer("World UI").setTint(Color.CYAN));
 			}
 			handle.add(draggableComponent);
 			handle.add(new LayerComponent(BitBuilder.all(32)

@@ -20,6 +20,9 @@ import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.physics.Light2dComponent;
 import com.the.machine.framework.components.physics.Light2dRenderComponent;
+import com.the.machine.framework.events.Event;
+import com.the.machine.framework.events.EventListener;
+import com.the.machine.framework.events.physics.Light2dToggleEvent;
 import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
 import com.the.machine.framework.utility.BitBuilder;
@@ -31,10 +34,11 @@ import com.the.machine.framework.utility.EntityUtilities;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 12/03/15
  */
-public class Light2dSystem extends IteratingSystem implements Observer, EntityListener {
+public class Light2dSystem extends IteratingSystem implements Observer, EntityListener, EventListener {
 
 	private transient ComponentMapper<Light2dComponent> lights = ComponentMapper.getFor(Light2dComponent.class);
 	private transient ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
+	private transient ComponentMapper<Light2dRenderComponent> lightRenderers = ComponentMapper.getFor(Light2dRenderComponent.class);
 
 	private transient RayHandler rayHandler;
 
@@ -46,16 +50,22 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		engine.addEntityListener(Family.all(Light2dComponent.class).get(), this);
+		engine.addEntityListener(Family.all(Light2dComponent.class)
+									   .get(), this);
 		if (world.getBox2dWorld() == null) {
-			world.setBox2dWorld(new World(new Vector2(0,0), true));
+			world.setBox2dWorld(new World(new Vector2(0, 0), true));
 		}
 		Entity lightRenderer = new Entity();
 		rayHandler = new RayHandler(world.getBox2dWorld());
-		lightRenderer.add(new Light2dRenderComponent().setRayHandler(rayHandler).setGammaCorrection(true).setUseDiffuseLights(true).setAmbientLight(new Color(0.5f,0.5f,0.5f,0.5f)).setBlur(true).setBlurNum(3));
+		lightRenderer.add(new Light2dRenderComponent().setRayHandler(rayHandler)
+													  .setGammaCorrection(true)
+													  .setUseDiffuseLights(true)
+													  .setAmbientLight(new Color(0.5f, 0.5f, 0.5f, 0.5f))
+													  .setBlur(true)
+													  .setBlurNum(3));
 		lightRenderer.add(new LayerComponent(BitBuilder.none(32)
-													 .s(1)
-													 .get()));
+													   .s(1)
+													   .get()));
 		world.addEntity(lightRenderer);
 	}
 
@@ -72,7 +82,7 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 
 	@Override
 	public void entityAdded(Entity entity) {
-//		createLight(entity);
+		//		createLight(entity);
 		Light2dComponent light2dComponent = lights.get(entity);
 		light2dComponent.addObserver(this);
 		light2dComponent.forceChanged();
@@ -84,9 +94,23 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		Light2dComponent light2dComponent = lights.get(entity);
 		light2dComponent.deleteObserver(this);
 		light2dComponent
-			  .getLight().remove();
-		light2dComponent.getLight().dispose();
+				.getLight()
+				.remove();
+		light2dComponent.getLight()
+						.dispose();
 		light2dComponent.setLight(null);
+	}
+
+	@Override
+	public void handleEvent(Event event) {
+		if (event instanceof Light2dToggleEvent) {
+			ImmutableArray<Entity> renderers = world.getEntitiesFor(Family.all(Light2dRenderComponent.class)
+																		  .get());
+			for (Entity renderer : renderers) {
+				Light2dRenderComponent renderComponent = lightRenderers.get(renderer);
+				renderComponent.setEnabled(!renderComponent.isEnabled());
+			}
+		}
 	}
 
 	@Override

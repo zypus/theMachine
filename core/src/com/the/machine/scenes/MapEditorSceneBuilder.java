@@ -54,6 +54,7 @@ import com.the.machine.framework.events.input.ScrolledEvent;
 import com.the.machine.framework.events.input.TouchDownEvent;
 import com.the.machine.framework.events.input.TouchDraggedEvent;
 import com.the.machine.framework.events.input.TouchUpEvent;
+import com.the.machine.framework.events.physics.Light2dToggleEvent;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.canvas.TableCellSystem;
@@ -108,7 +109,7 @@ public class MapEditorSceneBuilder
 		world.addSystem(new MovementSystem());
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);
-		world.addSystem(new Light2dSystem());
+		world.addSystem(new Light2dSystem(), Light2dToggleEvent.class);
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
@@ -242,7 +243,6 @@ public class MapEditorSceneBuilder
 			saveButton.add(elementComponent);
 			saveButton.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
 												   .setVerticalAlignment(Enums.VerticalAlignment.TOP)
-												   .setExpandY(1)
 												   .setSpace(new Value.Fixed(spacing)));
 			saveButton.add(new ButtonComponent());
 			saveButton.add(new TransformComponent());
@@ -349,8 +349,7 @@ public class MapEditorSceneBuilder
 			saveButton.add(elementComponent);
 			saveButton.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.RIGHT)
 												   .setVerticalAlignment(Enums.VerticalAlignment.TOP)
-												   .setSpace(new Value.Fixed(spacing))
-												   .setExpandY(1));
+												   .setSpace(new Value.Fixed(spacing)));
 			saveButton.add(new ButtonComponent());
 			saveButton.add(new TransformComponent());
 			saveButton.add(new DimensionComponent().setDimension(100, 40)
@@ -403,11 +402,37 @@ public class MapEditorSceneBuilder
 			EntityUtilities.relate(loadButton, loadButtonLabel);
 			world.addEntity(loadButtonLabel);
 		}
-
+		// some special options
+		Entity lightSwitch = new Entity();
+		CanvasElementComponent lcec = new CanvasElementComponent().setStyleValue("toggle");
+		lcec.getListeners()
+		   .add(new ClickEventListenerEventSpawner(world, new Light2dToggleEvent()));
+		lightSwitch.add(lcec);
+		TableCellComponent ltcc = new TableCellComponent().setVerticalAlignment(Enums.VerticalAlignment.CENTER)
+														 .setHorizontalAlignment(Enums.HorizontalAlignment.RIGHT)
+														 .setPrefWidth(new Value.Fixed(50))
+														 .setPrefHeight(new Value.Fixed(50))
+														 .setSpace(new Value.Fixed(spacing))
+				.setColspan(8).setExpandY(1)
+														 .setExpandX(1)
+				.setRowEnd(true);
+		lightSwitch.add(ltcc);
+		lightSwitch.add(new ButtonComponent());
+		lightSwitch.add(new TransformComponent());
+		lightSwitch.add(new DimensionComponent().setDimension(100, 100)
+												.setOrigin(0, 0));
+		EntityUtilities.relate(GUITable, lightSwitch);
+		world.addEntity(lightSwitch);
+		Entity lightLabel = EntityUtilities.makeLabel("Light")
+										 .add(new TableCellComponent());
+		EntityUtilities.relate(lightSwitch, lightLabel);
+		world.addEntity(lightLabel);
 
 		// make hot bar buttons for switching between the different area types
 		Entity hotbar = new Entity();
-		hotbar.add(new TableCellComponent().setExpandX(1).setColspan(8));
+		hotbar.add(new TableCellComponent().setExpandX(1)
+										   .setFillX(1)
+										   .setColspan(8));
 		hotbar.add(new TableComponent());
 		hotbar.add(new CanvasElementComponent());
 		hotbar.add(new TransformComponent());
@@ -427,9 +452,13 @@ public class MapEditorSceneBuilder
 			hbb.add(cec);
 			TableCellComponent tcc = new TableCellComponent().setVerticalAlignment(Enums.VerticalAlignment.BOTTOM).setPrefWidth(new Value.Fixed(50)).setPrefHeight(new Value.Fixed(50))
 															 .setSpace(new Value.Fixed(spacing));
-			if (i == buttonNames.length-1) {
+			if (i == buttonNames.length -1) {
 				tcc.setRowEnd(true);
 			}
+//			if (i == 0) {
+//				tcc.setExpandX(2);
+//				tcc.setHorizontalAlignment(Enums.HorizontalAlignment.RIGHT);
+//			}
 			hbb.add(tcc);
 			ButtonComponent buttonComponent = new ButtonComponent().setButtonGroup(buttonGroup);
 			hbb.add(buttonComponent);

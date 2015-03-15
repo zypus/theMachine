@@ -158,7 +158,7 @@ public class SelectionSystem
 		entity.add(new SelectionComponent());
 		if (sprites.has(entity)) {
 			sprites.get(entity)
-				   .setTint(Color.CYAN);
+				   .setTint(new Color(0.3f, 0.9f, 0.9f, 1.0f));
 			sprites.get(entity)
 				   .notifyObservers();
 		}
