@@ -15,6 +15,7 @@ import com.the.machine.framework.components.canvasElements.CanvasElementComponen
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.ResizeEvent;
+import com.the.machine.framework.events.canvas.CanvasKeyboardFocusEvent;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
 
@@ -26,12 +27,13 @@ import java.awt.Dimension;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 17/02/15
  */
-public class CanvasSystem extends IteratingSystem
+public class CanvasSystem
+		extends IteratingSystem
 		implements EntityListener, EventListener {
 
-	transient private ComponentMapper<CanvasComponent> canvasComponents = ComponentMapper.getFor(CanvasComponent.class);
-	transient private ComponentMapper<CanvasElementComponent> canvasElements = ComponentMapper.getFor(CanvasElementComponent.class);
-	transient private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
+	transient private ComponentMapper<CanvasComponent>        canvasComponents = ComponentMapper.getFor(CanvasComponent.class);
+	transient private ComponentMapper<CanvasElementComponent> canvasElements   = ComponentMapper.getFor(CanvasElementComponent.class);
+	transient private ComponentMapper<ParentComponent>        parents          = ComponentMapper.getFor(ParentComponent.class);
 
 	@Getter transient private Array<Entity> elementsToAdd = new Array<>();
 
@@ -97,6 +99,14 @@ public class CanvasSystem extends IteratingSystem
 								   .setWorldSize(newSize.width, newSize.height);
 				}
 			}
+		} else if (event instanceof CanvasKeyboardFocusEvent) {
+			if (getEntities() != null) {
+				for (Entity entity : getEntities()) {
+					CanvasComponent canvasComponent = canvasComponents.get(entity);
+					canvasComponent.getStage()
+								   .setKeyboardFocus(((CanvasKeyboardFocusEvent) event).getActor());
+				}
+			}
 		}
 	}
 
@@ -109,6 +119,7 @@ public class CanvasSystem extends IteratingSystem
 			elementsToAdd.clear();
 		}
 		CanvasComponent canvasComponent = canvasComponents.get(entity);
-		canvasComponent.getStage().act(deltaTime);
+		canvasComponent.getStage()
+					   .act(deltaTime);
 	}
 }

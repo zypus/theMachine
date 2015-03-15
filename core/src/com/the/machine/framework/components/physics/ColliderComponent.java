@@ -3,6 +3,7 @@ package com.the.machine.framework.components.physics;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.EdgeShape;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
@@ -153,6 +154,15 @@ public class ColliderComponent extends AbstractComponent {
 			return this;
 		}
 
+		public Collider setShape(Vector2 first, Vector2 second) {
+			first.scl(0.1f);
+			second.scl(0.1f);
+			this.shape = new EdgeCollider(first, second);
+			changed = true;
+			shapeChanged = true;
+			return this;
+		}
+
 		public static interface ColliderShape {
 
 			public Shape createShape();
@@ -213,6 +223,25 @@ public class ColliderComponent extends AbstractComponent {
 				PolygonShape poly = new PolygonShape();
 				poly.set(vector2s.toArray(new Vector2[vector2s.size()]));
 				return poly;
+			}
+		}
+
+		public static class EdgeCollider
+				implements ColliderShape {
+
+			Vector2 first;
+			Vector2 second;
+
+			public EdgeCollider(Vector2 first, Vector2 second) {
+				this.first = first;
+				this.second = second;
+			}
+
+			@Override
+			public Shape createShape() {
+				EdgeShape edge = new EdgeShape();
+				edge.set(first, second);
+				return edge;
 			}
 		}
 

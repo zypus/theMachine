@@ -1,6 +1,7 @@
 package com.the.machine.framework.systems.rendering;
 
 import box2dLight.RayHandler;
+import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -112,13 +113,15 @@ public class CameraRenderSystem
 		shapeRenderer = new ShapeRenderer();
 		box2DDebugRenderer = new Box2DDebugRenderer();
 		world.getSortingLayers()
-			 .put("UI", 1);
+			 .put("UI", 5);
 		world.getSortingLayers()
-			 .put("Physics 2d Debug", 2);
+			 .put("Physics 2d Debug", 4);
 		world.getSortingLayers()
-			 .put("Lights 2d", 3);
+			 .put("World UI", 3);
 		world.getSortingLayers()
-			 .put("Default", 4);
+			 .put("Lights 2d", 2);
+		world.getSortingLayers()
+			 .put("Default", 1);
 	}
 
 	@Override
@@ -266,6 +269,7 @@ public class CameraRenderSystem
 
 			// draw all entities
 			List<Entity> onTop = new ArrayList<>();
+			String lastLayer = null;
 			for (int i = 0; i < entities.size; i++) {
 				Entity entity = entities.get(i);
 				if (EntityUtilities.isEntityEnabled(entity)) {
@@ -275,6 +279,11 @@ public class CameraRenderSystem
 					}
 					if (layerComponent == null || cameraComponent.getCullingMask() == null || cameraComponent.getCullingMask()
 																											 .containsAll(layerComponent.getLayer())) {
+						String layer = getSortable(entity).getSortingLayer();
+						if (lastLayer != null && !layer.equals(lastLayer)) {
+							decalBatch.flush();
+						}
+						lastLayer = layer;
 						if (spriteRenderers.has(entity) && spriteRenderers.get(entity)
 																		  .isEnabled()) {
 							gl.glEnable(GL20.GL_DEPTH_TEST);
@@ -327,17 +336,33 @@ public class CameraRenderSystem
 						}
 
 						if (physic2dDebugs.has(entity) && physic2dDebugs.get(entity).isEnabled()) {
-							onTop.add(entity);
+							Physics2dDebugComponent physics2dDebugComponent = physic2dDebugs.get(entity);
+							Matrix4 projection = camera.combined.cpy();
+							projection.scl(physics2dDebugComponent.getBoxToWorld(), physics2dDebugComponent.getBoxToWorld(), 1f);
+							box2DDebugRenderer.render(physics2dDebugComponent.getBox2dWorld(), projection);
+//							onTop.add(entity);
 						}
 
 						if (lights.has(entity) && lights.get(entity)
 														.isEnabled()) {
-							onTop.add(entity);
+							Light2dRenderComponent lc = lights.get(entity);
+							RayHandler rayHandler = lc.getRayHandler();
+							RayHandler.setGammaCorrection(lc.isGammaCorrection());
+							RayHandler.useDiffuseLight(lc.isUseDiffuseLights());
+							Color ambientLight = lc.getAmbientLight();
+							rayHandler.setAmbientLight(ambientLight.r, ambientLight.g, ambientLight.b, ambientLight.a);
+							rayHandler.setBlur(lc.isBlur());
+							rayHandler.setBlurNum(lc.getBlurNum());
+							Matrix4 projection = camera.combined.cpy();
+							projection.scl(10, 10, 1f);
+							rayHandler.setCombinedMatrix(projection);
+							rayHandler.render();
+//							onTop.add(entity);
 						}
 					}
 				}
 			}
-			decalBatch.flush();
+//			decalBatch.flush();
 			for (int i = onTop.size()-1; i >= 0; i--) {
 				Entity entity = onTop.get(i);
 				if (physic2dDebugs.has(entity)) {
@@ -397,8 +422,10 @@ public class CameraRenderSystem
 	}
 
 	private LayerSortable getSortable(Entity o1) {
-		if (spriteRenderers.has(o1)) {
-			return spriteRenderers.get(o1);
+		for (Component component : o1.getComponents()) {
+			if (component instanceof LayerSortable) {
+				return (LayerSortable) component;
+			}
 		}
 		return null;
 	}

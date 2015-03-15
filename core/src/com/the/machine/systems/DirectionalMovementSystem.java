@@ -33,7 +33,7 @@ public class DirectionalMovementSystem extends IteratingSystem {
 		Quaternion rotation = transformComponent.getRotation();
 		Vector3 deltaPosition = velocity.scl(deltaTime);
 		rotation.transform(deltaPosition);
-		transformComponent.getPosition()
-						  .add(deltaPosition);
+		transformComponent.setPosition(transformComponent.getPosition().cpy().add(deltaPosition));
+		transformComponent.notifyObservers();
 	}
 }

@@ -27,6 +27,7 @@ public class CanvasElementComponent extends AbstractComponent {
 	transient private boolean enableTransform = false;
 	private List<EventListener> listeners = new ArrayList<>();
 	private Touchable touchable = Touchable.enabled;
+	private String styleValue = "default";
 
 	public Group getGroup() {
 		if (group) {

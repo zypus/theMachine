@@ -118,12 +118,18 @@ public class DraggingSystem
 				}
 				if (!hit.isEmpty()) {
 					Entity topEntity = hit.get(0);
+					Vector3 worldCoords = coords.get(topEntity);
 					if (selected.has(topEntity)) {
 						for (Entity entity : selectedEntities) {
-							entity.add(new DragComponent().setDeltaToDragPoint(EntityUtilities.inLocalCoordinates(entity, coords.get(topEntity))));
+							Vector3 point = EntityUtilities.computeAbsoluteTransform(entity)
+														   .getPosition();
+							entity.add(new DragComponent().setDeltaToDragPoint(worldCoords.cpy().sub(point)).setDragPoint(worldCoords));
 						}
 					} else {
-						topEntity.add(new DragComponent().setDeltaToDragPoint(EntityUtilities.inLocalCoordinates(topEntity, coords.get(topEntity))));
+						Vector3 point = EntityUtilities.computeAbsoluteTransform(topEntity).getPosition();
+						topEntity.add(new DragComponent().setDeltaToDragPoint(worldCoords.cpy()
+																						 .sub(point))
+														 .setDragPoint(worldCoords));
 					}
 				}
 			}
@@ -143,7 +149,10 @@ public class DraggingSystem
 						}
 						if (layerComponent == null || cameraComponent.getCullingMask() == null || cameraComponent.getCullingMask()
 																												 .containsAll(layerComponent.getLayer())) {
-							Vector3 coordinates = EntityUtilities.inLocalCoordinates(entity, EntityUtilities.getWorldCoordinates(screenX, screenY, selectorEntity, world));
+							Vector3 worldCoordinates = EntityUtilities.getWorldCoordinates(screenX, screenY, selectorEntity, world);
+							Vector3 point = EntityUtilities.computeAbsoluteTransform(entity).getPosition();
+							Vector3 coordinates = worldCoordinates.cpy().sub(point);
+							dragComponent.setDragPoint(worldCoordinates);
 							Vector3 dragPoint = dragComponent.getDeltaToDragPoint();
 							Vector3 delta = coordinates.cpy()
 													   .sub(dragPoint);

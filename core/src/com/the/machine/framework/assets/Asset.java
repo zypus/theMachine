@@ -212,7 +212,7 @@ public class Asset<T> {
 	 * all file names with or without extension and partial paths will be considered too. Yeah I really like it if the code can correct
 	 * all my laziness.
 	 */
-	private static class SmartFileHandleResolver
+	public static class SmartFileHandleResolver
 			implements FileHandleResolver {
 
 		/**
@@ -269,7 +269,7 @@ public class Asset<T> {
 		 * @param name The name of the requested file.
 		 * @return The file handle to the file, if any.
 		 */
-		private FileHandle findFile(FileHandle origin, String name) {
+		public FileHandle findFile(FileHandle origin, String name) {
 			if (origin.name().equals(name)
 				|| origin.nameWithoutExtension().equals(name)
 				|| origin.path().startsWith(name)) {
@@ -291,14 +291,15 @@ public class Asset<T> {
 		 * @param name The name of the file.
 		 * @return All files found.
 		 */
-		private List<FileHandle> findFiles(FileHandle origin, String name) {
+		public List<FileHandle> findFiles(FileHandle origin, String name) {
 			List<FileHandle> list = new ArrayList<>();
 			if (origin.name()
 					  .equals(name)
 				|| origin.nameWithoutExtension()
 						 .equals(name)
 				|| origin.path()
-						 .startsWith(name)) {
+						 .startsWith(name) || origin.path()
+													.endsWith(name)) {
 				list.add(origin);
 				return list;
 			} else {

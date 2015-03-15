@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
@@ -78,7 +79,8 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		engine.addEntityListener(Family.all(CanvasElementComponent.class, DimensionComponent.class).get(), this);
+		engine.addEntityListener(Family.all(CanvasElementComponent.class, DimensionComponent.class)
+									   .get(), this);
 	}
 
 	@Override
@@ -95,7 +97,8 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 	@Override
 	public void entityRemoved(Entity entity) {
 		CanvasElementComponent elementComponent = canvasElements.get(entity);
-		elementComponent.getUnwrappedActor().remove();
+		elementComponent.getUnwrappedActor()
+						.remove();
 		elementComponent.setAdded(false);
 	}
 
@@ -104,8 +107,13 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 		updateCanvasElement(entity);
 		CanvasElementComponent elementComponent = canvasElements.get(entity);
 		// handle children
-		if (parents.has(entity) && !canvases.has(entity) && parents.get(entity).getParent().get() == world.getWorldEntityRef().get()) {
-			world.getSystem(CanvasSystem.class).getElementsToAdd().add(entity);
+		if (parents.has(entity) && !canvases.has(entity) && parents.get(entity)
+																   .getParent()
+																   .get() == world.getWorldEntityRef()
+																				  .get()) {
+			world.getSystem(CanvasSystem.class)
+				 .getElementsToAdd()
+				 .add(entity);
 		}
 		if (subs.has(entity) && elementComponent.getGroup() != null) {
 			SubEntityComponent children = subs.get(entity);
@@ -194,14 +202,29 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 			Button button;
 			if (elementComponent.getActor() == null) {
 				button = new Button(findSkin(entity).get());
+				if (buttonComponent.getButtonGroup() != null) {
+					buttonComponent.getButtonGroup().add(button);
+					buttonComponent.setDirty(false);
+				}
+				buttonComponent.setButton(button);
 				wrap(elementComponent, button);
 				elementComponent.setGroup(true);
 			} else {
 				button = (Button) elementComponent.getUnwrappedActor();
 			}
+			if (buttonComponent.isDirty()) {
+				ButtonGroup group = button.getButtonGroup();
+				if (group != null) {
+					group.remove(button);
+				}
+				if (buttonComponent.getButtonGroup() != null) {
+					buttonComponent.getButtonGroup()
+								   .add(button);
+				}
+			}
 			button.setSkin(findSkin(entity).get());
 			button.setStyle(findSkin(entity).get()
-											.get("default", Button.ButtonStyle.class));
+											.get(elementComponent.getStyleValue(), Button.ButtonStyle.class));
 			button.setDisabled(!elementComponent.isEnabled());
 			hasMain = true;
 		} else if (labels.has(entity)) {
@@ -216,7 +239,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 				label = (Label) elementComponent.getUnwrappedActor();
 			}
 			label.setStyle(findSkin(entity).get()
-										   .get("default", Label.LabelStyle.class));
+										   .get(elementComponent.getStyleValue(), Label.LabelStyle.class));
 			if (labelComponent.isDirty()) {
 				label.setText(labelComponent.getText());
 				label.setColor(labelComponent.getColor());
@@ -237,7 +260,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 				textField = (TextField) elementComponent.getUnwrappedActor();
 			}
 			textField.setStyle(findSkin(entity).get()
-										   .get("default", TextField.TextFieldStyle.class));
+										   .get(elementComponent.getStyleValue(), TextField.TextFieldStyle.class));
 			if (textFieldComponent.isDirty()) {
 				textField.setText(textFieldComponent.getText());
 				textField.setMaxLength(textFieldComponent.getMaxLength());
@@ -252,6 +275,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 			SelectBox selectBox;
 			if (elementComponent.getActor() == null) {
 				selectBox = new SelectBox(findSkin(entity).get());
+				selectBoxComponent.setSelectBox(selectBox);
 				wrap(elementComponent, selectBox);
 				elementComponent.setGroup(false);
 			} else {
@@ -259,11 +283,11 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 			}
 			Skin skin = findSkin(entity).get();
 			SelectBox.SelectBoxStyle style = skin
-																.get("default", SelectBox.SelectBoxStyle.class);
+																.get(elementComponent.getStyleValue(), SelectBox.SelectBoxStyle.class);
 			if (selectBox.getStyle() != style) {
 				selectBox.setStyle(style);
 				ScrollPane pane = selectBox.getScrollPane();
-				pane.setStyle(skin.get("default", ScrollPane.ScrollPaneStyle.class));
+				pane.setStyle(skin.get(elementComponent.getStyleValue(), ScrollPane.ScrollPaneStyle.class));
 				for (Actor actor : pane.getChildren()) {
 					if (actor instanceof List) {
 						((List) actor).setStyle(skin.get(List.ListStyle.class));
@@ -288,7 +312,7 @@ public class CanvasElementSystem extends IteratingSystem implements EntityListen
 			}
 			Skin skin = findSkin(entity).get();
 			Tree.TreeStyle style = skin
-					.get("default", Tree.TreeStyle.class);
+					.get(elementComponent.getStyleValue(), Tree.TreeStyle.class);
 			if (tree.getStyle() != style) {
 				tree.setStyle(style);
 			}

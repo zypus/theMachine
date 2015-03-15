@@ -16,5 +16,6 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class DragComponent extends AbstractComponent {
+	transient Vector3 dragPoint        = new Vector3();
 	transient Vector3 deltaToDragPoint = new Vector3();
 }

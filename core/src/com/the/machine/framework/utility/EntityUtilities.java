@@ -219,8 +219,7 @@ public class EntityUtilities {
 		return new Rectangle(transform.getX() - width / 2, transform.getY() - height / 2, width, height);
 	}
 
-	public static Vector3 getWorldCoordinates(int screenX, int screenY, Entity camera, World world) {
-		TransformComponent absoluteTransform = EntityUtilities.computeAbsoluteTransform(camera);
+	public static Vector3 getWorldCoordinates(float screenX, float screenY, Entity camera, World world) {
 		CameraComponent cameraComponent = cameraComponents.get(camera);
 		Camera cam = cameraComponent.getCamera();
 		Vector3 unproject = cam.unproject(new Vector3(screenX, screenY, 0), world.getX(), world.getY(), world.getWidth(), world.getHeight());
@@ -228,13 +227,9 @@ public class EntityUtilities {
 	}
 
 	public static Vector3 getScreenCoordinates(Vector3 pos, Entity camera, World world) {
-		TransformComponent absoluteTransform = EntityUtilities.computeAbsoluteTransform(camera);
 		CameraComponent cameraComponent = cameraComponents.get(camera);
 		Camera cam = cameraComponent.getCamera();
-//		pos.sub(absoluteTransform.getPosition())
-//		   .scl(2f / world.getWidth(), 2f / world.getHeight(), 1)
-//		   .scl(1f / cameraComponent.getZoom());
-		return cam.project(pos);
+		return cam.project(pos.cpy());
 	}
 
 	public static Rectangle computeCommonBound(Iterable<Entity> entities) {
@@ -261,7 +256,6 @@ public class EntityUtilities {
 	public static Rectangle toScreenRect(Rectangle rect, Entity camera, World world) {
 		Vector2 center = new Vector2();
 		rect.getCenter(center);
-		Vector3 centerProject = getScreenCoordinates(new Vector3(center, 0), camera, world);
 		Vector3 posProject = getScreenCoordinates(new Vector3(center.cpy()
 																	.sub(rect.getWidth()/2, rect.getHeight() / 2), 0), camera, world);
 		Vector3 conProject = getScreenCoordinates(new Vector3(center.cpy()
