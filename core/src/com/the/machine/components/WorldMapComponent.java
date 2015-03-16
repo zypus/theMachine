@@ -15,8 +15,8 @@ import java.util.Set;
  * Created by Frans on 15-3-2015.
  */
 public class WorldMapComponent {
-    private static final int cols = 50;   // Horizontal resolution
-    private static final int rows = 50;   // Vertical resolution
+    private static final int cols = 30;   // Horizontal resolution
+    private static final int rows = 30;   // Vertical resolution
 
     // The area that will be mapped
     public static final float x_start = -2;

@@ -2,11 +2,13 @@ package com.the.machine.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.google.common.collect.BiMap;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
+import com.the.machine.framework.assets.Asset;
+import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 import java.awt.*;
@@ -60,8 +62,8 @@ public class WorldMappingSystem extends IteratingSystem {
             for (int row = startRow; row <= endRow; row++) {
                 for (int col = startCol; col <= endCol; col++) {
                     coordinatesOfEntity.add(new Vector2(
-                            row * WorldMapComponent.row_height,
-                            col * WorldMapComponent.col_width));
+                            col * WorldMapComponent.col_width,
+                            row * WorldMapComponent.row_height));
                 }
             }
 
@@ -74,6 +76,12 @@ public class WorldMappingSystem extends IteratingSystem {
                  */
                 if (!worldMap.containsKey(coordinate)) {
                     worldMap.put(coordinate, entity);
+
+                    // For debugging. Add a white pixel to areas that are on the map
+                    Entity white = new Entity();
+                    white.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1));
+                    white.add(new TransformComponent().set2DPosition(coordinate).setScale(0.01f));
+                    getWorld().addEntity(white);
                 }
             }
         }
