@@ -56,7 +56,8 @@ public class AgentSightSystem extends IteratingSystem {
             System.out.print(entity.getComponent(NameComponent.class).getName() + " can see the following objects: ");
             if (!agentSightComponent.areaMapping.isEmpty()) {
                 for (Entity e : agentSightComponent.areaMapping.values()) {
-                    System.out.print(e.getComponent(NameComponent.class).getName() + " ");
+                    float distance = agentPosition.dst(worldMap.inverse().get(e));
+                    System.out.print(e.getComponent(NameComponent.class).getName() + " (dst=" + distance + ") ");
                 }
                 System.out.println();
             }
