@@ -32,8 +32,6 @@ public class WorldMappingSystem extends IteratingSystem {
          * not directly stored, but is required to distinguish between different entity types
          */
         TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
-
-        BiMap<Set<Vector2>, Entity> worldBiMap = WorldMapComponent.worldBiMap;
         Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
 
         /*
@@ -45,7 +43,7 @@ public class WorldMappingSystem extends IteratingSystem {
          * If the AreaType of an entity is changed, the map doesn't need to change, because the coordinates are mapped to
          * entities, not AreaComponents.
          */
-        if (!worldBiMap.containsValue(entity)) {
+        if (!worldMap.containsValue(entity)) {
             Vector2 bottomLeft = new Vector2(
                     (float) (transformComponent.getX() - 0.5 * transformComponent.getXScale()),
                     (float) (transformComponent.getY() - 0.5 * transformComponent.getYScale()));
@@ -66,8 +64,6 @@ public class WorldMappingSystem extends IteratingSystem {
                             col * WorldMapComponent.col_width));
                 }
             }
-
-            worldBiMap.put(coordinatesOfEntity, entity);
 
             // Also put the coordinates on the worldmap (so we can look up entities based on their coordinate)
             for (Vector2 coordinate : coordinatesOfEntity) {

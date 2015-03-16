@@ -48,16 +48,7 @@ public class AgentSightSystem extends IteratingSystem {
         // Only display debug info every 2 seconds
         if (agentSightComponent.timeSinceLastDebugOutput >= 2) {
             agentSightComponent.timeSinceLastDebugOutput = 0;
-            System.out.print(entity.getComponent(NameComponent.class).getName() + " can see the following objects: ");
-            if (!agentSightComponent.areaMapping.isEmpty()) {
-                for (Entity e : agentSightComponent.areaMapping.values()) {
-                    System.out.print(e.getComponent(NameComponent.class).getName() + " ");
-                }
-                System.out.println();
-            }
-            else {
-                System.out.println("None");
-            }
+            System.out.println(entity.getComponent(NameComponent.class).getName() + "'s sight component contains " + agentSightComponent.areaMapping.size() + " coordinates");
         }
         else {
             agentSightComponent.timeSinceLastDebugOutput += deltaTime;
