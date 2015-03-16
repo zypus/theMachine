@@ -94,12 +94,12 @@ public class BasicSimulationScene implements SceneBuilder {
         tower1.add(new AreaComponent().setType(AreaComponent.AreaType.TOWER));
 
         door_open_1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("door_open", TextureRegion.class)));
-        door_open_1.add(new TransformComponent().set2DPosition(new Vector2(2, 2)).setScale(0.5f));
+        door_open_1.add(new TransformComponent().set2DPosition(new Vector2(1.5f, 1.5f)).setScale(1, 0.3f, 1));
         door_open_1.add(new NameComponent().setName("DoorOpen1"));
         door_open_1.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));
 
         target.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("target", TextureRegion.class)));
-        target.add(new TransformComponent().set2DPosition(new Vector2(-1, 1)).setScale(0.5f));
+        target.add(new TransformComponent().set2DPosition(new Vector2(-1, 1)).setScale(0.5f, 3, 1));
         target.add(new NameComponent().setName("Target1"));
         target.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));
 
