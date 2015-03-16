@@ -27,9 +27,9 @@ public class RandomBehaviourSystem extends IteratingSystem {
 
         if (randomBehaviourComponent.getTimeSinceLastRandomBehaviour() < 0) {
             // Time for a new random behaviour
-            float newAngle = (float) ((Math.random() * 45) - 22.5);
+            float newAngle = (float) ((Math.random() * 180) - 90);
 
-            float newSpeed = (float) (Math.random() - 0.5);
+            float newSpeed = (float) (Math.random() * 0.5);
 
             BehaviourComponent behaviourComponent = new BehaviourComponent(
                     new AngularVelocityComponent(newAngle, 360),
