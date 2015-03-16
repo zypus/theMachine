@@ -9,7 +9,10 @@ import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.TransformComponent;
 
+import java.awt.*;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Frans on 15-3-2015.
@@ -30,14 +33,53 @@ public class WorldMappingSystem extends IteratingSystem {
          */
         TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
 
-        BiMap<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
+        BiMap<Set<Vector2>, Entity> worldBiMap = WorldMapComponent.worldBiMap;
+        Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
 
-        // If the entity is already on the map
-        if (worldMap.containsValue(entity)) {
-            worldMap.inverse().remove(entity);
+        /*
+         * If the entity is not yet on the map, add it.
+         *
+         * This means that the WorldMappingSystem only adds new Entities (if they have an AreaComponent and
+         * TransformComponent). The system won't delete entities that are removed, and won't update them if they are
+         * resized or moved.
+         * If the AreaType of an entity is changed, the map doesn't need to change, because the coordinates are mapped to
+         * entities, not AreaComponents.
+         */
+        if (!worldBiMap.containsValue(entity)) {
+            Vector2 bottomLeft = new Vector2(
+                    (float) (transformComponent.getX() - 0.5 * transformComponent.getXScale()),
+                    (float) (transformComponent.getY() - 0.5 * transformComponent.getYScale()));
+
+            Rectangle.Float entitySurface = new Rectangle.Float(bottomLeft.x, bottomLeft.y, transformComponent.getXScale(), transformComponent.getYScale());
+
+            // Areas are non-overlapping, so we can put the coordinates within the rectangle on the WorldMap
+            Set<Vector2> coordinatesOfEntity = new HashSet<>();
+            int startRow = (int) (Math.round(entitySurface.y / WorldMapComponent.row_height));
+            int endRow   = (int) (Math.round((entitySurface.y + entitySurface.height) / WorldMapComponent.row_height));
+            int startCol = (int) (Math.round(entitySurface.x / WorldMapComponent.col_width));
+            int endCol   = (int) (Math.round((entitySurface.x + entitySurface.width) / WorldMapComponent.col_width));
+
+            for (int row = startRow; row <= endRow; row++) {
+                for (int col = startCol; col <= endCol; col++) {
+                    coordinatesOfEntity.add(new Vector2(
+                            row * WorldMapComponent.row_height,
+                            col * WorldMapComponent.col_width));
+                }
+            }
+
+            worldBiMap.put(coordinatesOfEntity, entity);
+
+            // Also put the coordinates on the worldmap (so we can look up entities based on their coordinate)
+            for (Vector2 coordinate : coordinatesOfEntity) {
+                /*
+                 * Due to rounding, one coordinate can be close to multiple entities. If so, the resolution should be
+                 * increased in WorldMapComponent.
+                 * To avoid this, we check if the WorldMap already contains the coordinate.
+                 */
+                if (!worldMap.containsKey(coordinate)) {
+                    worldMap.put(coordinate, entity);
+                }
+            }
         }
-
-        // Add the entity to the bimap (and to entitiesOnMap)
-        worldMap.put(transformComponent.get2DPosition(), entity);
     }
 }

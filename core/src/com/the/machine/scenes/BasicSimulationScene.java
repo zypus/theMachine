@@ -64,7 +64,7 @@ public class BasicSimulationScene implements SceneBuilder {
         guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)));
         guard1.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
         guard1.add(new NameComponent().setName("Guard1"));
-        guard1.add(new AgentSightComponent().setMaximumSightDistance(1));
+        guard1.add(new AgentSightComponent().setMaximumSightDistance(2));
         guard1.add(new RandomBehaviourComponent());
 
         guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)));
@@ -76,7 +76,7 @@ public class BasicSimulationScene implements SceneBuilder {
         guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)));
         guard3.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
         guard3.add(new NameComponent().setName("Guard3"));
-        guard3.add(new AgentSightComponent().setMaximumSightDistance(3));
+        guard3.add(new AgentSightComponent().setMaximumSightDistance(2));
         guard3.add(new RandomBehaviourComponent());
 
         world.addEntity(guard1);

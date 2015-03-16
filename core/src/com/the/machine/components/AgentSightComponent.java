@@ -7,12 +7,13 @@ import com.google.common.collect.HashBiMap;
 import com.the.machine.framework.components.ObservableComponent;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Frans on 15-3-2015.
  */
 public class AgentSightComponent extends ObservableComponent {
-    public BiMap<Vector2, Entity> areaMapping;
+    public Map<Vector2, Entity> areaMapping = new HashMap<>();
 
     public float getMaximumSightDistance() {
         return maximumSightDistance;
@@ -27,7 +28,6 @@ public class AgentSightComponent extends ObservableComponent {
     public float maximumSightDistance;
 
     public AgentSightComponent() {
-        areaMapping = HashBiMap.create();
         maximumSightDistance = 1;
     }
 

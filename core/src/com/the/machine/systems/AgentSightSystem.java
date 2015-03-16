@@ -1,14 +1,10 @@
 package com.the.machine.systems;
 
-import com.badlogic.ashley.core.ComponentMapper;
-import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.math.Vector2;
 import com.google.common.collect.BiMap;
 import com.the.machine.components.AgentSightComponent;
-import com.the.machine.components.AreaComponent;
-import com.the.machine.components.VelocityComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.NameComponent;
@@ -28,24 +24,23 @@ public class AgentSightSystem extends IteratingSystem {
     }
 
     @Override
+    /*
+     * Update the SightComponent for this Entity.
+     */
     protected void processEntity(Entity entity, float deltaTime) {
         AgentSightComponent agentSightComponent = entity.getComponent(AgentSightComponent.class);
         TransformComponent agentTransformComponent = entity.getComponent(TransformComponent.class);
 
         agentSightComponent.areaMapping.clear();
         Vector2 agentPosition = agentTransformComponent.get2DPosition();
-        BiMap<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
+        Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
         float maximumSightDistance = agentSightComponent.maximumSightDistance;
 
         for (Vector2 areaPosition : worldMap.keySet()) {
             if (agentPosition.dst(areaPosition) <= maximumSightDistance ) {
 
                 // TODO take viewing angle into account
-
-                // Don't add the entity itself to its SightComponent
-                if (!worldMap.get(areaPosition).equals(entity)) {
-                    agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
-                }
+                agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
             }
         }
 
@@ -56,8 +51,7 @@ public class AgentSightSystem extends IteratingSystem {
             System.out.print(entity.getComponent(NameComponent.class).getName() + " can see the following objects: ");
             if (!agentSightComponent.areaMapping.isEmpty()) {
                 for (Entity e : agentSightComponent.areaMapping.values()) {
-                    float distance = agentPosition.dst(worldMap.inverse().get(e));
-                    System.out.print(e.getComponent(NameComponent.class).getName() + " (dst=" + distance + ") ");
+                    System.out.print(e.getComponent(NameComponent.class).getName() + " ");
                 }
                 System.out.println();
             }
