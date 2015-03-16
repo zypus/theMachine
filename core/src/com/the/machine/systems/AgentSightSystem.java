@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.math.Vector2;
+import com.google.common.collect.BiMap;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.VelocityComponent;
@@ -33,8 +34,7 @@ public class AgentSightSystem extends IteratingSystem {
 
         agentSightComponent.areaMapping.clear();
         Vector2 agentPosition = agentTransformComponent.get2DPosition();
-        Map<Vector2, AreaComponent.AreaType> worldMap = WorldMapComponent.worldMap;
-        Map<Entity, Vector2> entitiesOnMap = WorldMapComponent.entitiesOnMap;
+        BiMap<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
         float maximumSightDistance = agentSightComponent.maximumSightDistance;
 
         for (Vector2 areaPosition : worldMap.keySet()) {
@@ -43,7 +43,7 @@ public class AgentSightSystem extends IteratingSystem {
                 // TODO take viewing angle into account
 
                 // Don't add the entity itself to its SightComponent
-                if (!(entitiesOnMap.get(entity).equals(areaPosition))) {
+                if (!worldMap.get(areaPosition).equals(entity)) {
                     agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
                 }
             }
@@ -55,10 +55,13 @@ public class AgentSightSystem extends IteratingSystem {
             agentSightComponent.timeSinceLastDebugOutput = 0;
             System.out.print(entity.getComponent(NameComponent.class).getName() + " can see the following objects: ");
             if (!agentSightComponent.areaMapping.isEmpty()) {
-                System.out.println("  " + agentSightComponent.areaMapping);
+                for (Entity e : agentSightComponent.areaMapping.values()) {
+                    System.out.print(e.getComponent(NameComponent.class).getName() + " ");
+                }
+                System.out.println();
             }
             else {
-                System.out.println("  None");
+                System.out.println("None");
             }
         }
         else {

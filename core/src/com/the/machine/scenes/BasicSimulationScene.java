@@ -69,7 +69,7 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setScale(0.1f));
         badlogicImageEntity1.add(new NameComponent().setName("Badlogic1"));
         badlogicImageEntity1.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));   // This agent has the target area type
-        badlogicImageEntity1.add(new AgentSightComponent());
+        badlogicImageEntity1.add(new AgentSightComponent().setMaximumSightDistance(1));
         badlogicImageEntity1.add(new RandomBehaviourComponent());
 
 
@@ -82,23 +82,23 @@ public class BasicSimulationScene implements SceneBuilder {
                 .setScale(0.1f));
         badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
         badlogicImageEntity2.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));    // This agent has the door open area type
-        badlogicImageEntity2.add(new AgentSightComponent());
+        badlogicImageEntity2.add(new AgentSightComponent().setMaximumSightDistance(2));
         badlogicImageEntity2.add(new RandomBehaviourComponent());
-//
-//        Entity badlogicImageEntity3 = new Entity();
-//        // Use same texture as the first badlogicImageEntity
-//        badlogicImageEntity3.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
-//                .setSortingLayer("Default"));
-//        badlogicImageEntity3.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
-//                .setZRotation(0)
-//                .setScale(0.1f));
-//        badlogicImageEntity3.add(new NameComponent().setName("Badlogic3"));
-//        badlogicImageEntity3.add(new AreaComponent().setType(AreaComponent.AreaType.TOWER));    // This agent has the tower area type
-//        badlogicImageEntity3.add(new AgentSightComponent());
-//        badlogicImageEntity3.add(new RandomBehaviourComponent());
+
+        Entity badlogicImageEntity3 = new Entity();
+        // Use same texture as the first badlogicImageEntity
+        badlogicImageEntity3.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
+                .setSortingLayer("Default"));
+        badlogicImageEntity3.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
+                .setZRotation(0)
+                .setScale(0.1f));
+        badlogicImageEntity3.add(new NameComponent().setName("Badlogic3"));
+        badlogicImageEntity3.add(new AreaComponent().setType(AreaComponent.AreaType.TOWER));    // This agent has the tower area type
+        badlogicImageEntity3.add(new AgentSightComponent().setMaximumSightDistance(3));
+        badlogicImageEntity3.add(new RandomBehaviourComponent());
 
         world.addEntity(badlogicImageEntity1);
         world.addEntity(badlogicImageEntity2);
-//        world.addEntity(badlogicImageEntity3);
+        world.addEntity(badlogicImageEntity3);
     }
 }

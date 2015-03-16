@@ -3,6 +3,7 @@ package com.the.machine.systems;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.math.Vector2;
+import com.google.common.collect.BiMap;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
@@ -23,20 +24,20 @@ public class WorldMappingSystem extends IteratingSystem {
     
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        AreaComponent areaComponent = entity.getComponent(AreaComponent.class);
+        /*
+         * The map only contains elements that contain an AreaComponent and a TransformComponent. The AreaComponent is
+         * not directly stored, but is required to distinguish between different entity types
+         */
         TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
 
-        Map<Vector2, AreaComponent.AreaType> worldMap = WorldMapComponent.worldMap;
-        Map<Entity, Vector2> entitiesOnMap = WorldMapComponent.entitiesOnMap;
+        BiMap<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
 
         // If the entity is already on the map
-        if (entitiesOnMap.containsKey(entity)) {
-            worldMap.remove(entitiesOnMap.get(entity));
-            entitiesOnMap.remove(entity);
+        if (worldMap.containsValue(entity)) {
+            worldMap.inverse().remove(entity);
         }
 
-        // Add the entity to the map (and to entitiesOnMap)
-        worldMap.put(transformComponent.get2DPosition(), areaComponent.getType());
-        entitiesOnMap.put(entity, transformComponent.get2DPosition());
+        // Add the entity to the bimap (and to entitiesOnMap)
+        worldMap.put(transformComponent.get2DPosition(), entity);
     }
 }
