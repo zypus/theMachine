@@ -50,9 +50,20 @@ public class AgentSightSystem extends IteratingSystem {
         }
 
 
-        if (!agentSightComponent.areaMapping.isEmpty()) {
-            System.out.println(entity.getComponent(NameComponent.class).getName() + " can see the following objects: ");
-            System.out.println(agentSightComponent.areaMapping);
+        // Only display debug info every 2 seconds
+        if (agentSightComponent.timeSinceLastDebugOutput >= 2) {
+            agentSightComponent.timeSinceLastDebugOutput = 0;
+            System.out.print(entity.getComponent(NameComponent.class).getName() + " can see the following objects: ");
+            if (!agentSightComponent.areaMapping.isEmpty()) {
+                System.out.println("  " + agentSightComponent.areaMapping);
+            }
+            else {
+                System.out.println("  None");
+            }
         }
+        else {
+            agentSightComponent.timeSinceLastDebugOutput += deltaTime;
+        }
+
     }
 }
