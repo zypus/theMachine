@@ -2,6 +2,7 @@ package com.the.machine.scenes;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.*;
@@ -55,50 +56,55 @@ public class BasicSimulationScene implements SceneBuilder {
         camera.add(new NameComponent().setName("Main Camera"));
         world.addEntity(camera);
 
+        // Create the guards
+        Entity guard1 = new Entity();
+        Entity guard2 = new Entity();
+        Entity guard3 = new Entity();
 
+        guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)));
+        guard1.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
+        guard1.add(new NameComponent().setName("Guard1"));
+        guard1.add(new AgentSightComponent().setMaximumSightDistance(1));
+        guard1.add(new RandomBehaviourComponent());
 
-        Entity badlogicImageEntity1 = new Entity();
-        Asset<TextureRegion> textureRegion = Asset.fetch("badlogic", TextureRegion.class);
-        badlogicImageEntity1.add(new LayerComponent(BitBuilder.none(32)
-                .s(1)
-                .get()));
-        badlogicImageEntity1.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
-                .setSortingLayer("Default"));
-        badlogicImageEntity1.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
-                .setZRotation(0)
-                .setScale(0.1f));
-        badlogicImageEntity1.add(new NameComponent().setName("Badlogic1"));
-        badlogicImageEntity1.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));   // This agent has the target area type
-        badlogicImageEntity1.add(new AgentSightComponent().setMaximumSightDistance(1));
-        badlogicImageEntity1.add(new RandomBehaviourComponent());
+        guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)));
+        guard2.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
+        guard2.add(new NameComponent().setName("Guard2"));
+        guard2.add(new AgentSightComponent().setMaximumSightDistance(2));
+        guard2.add(new RandomBehaviourComponent());
 
+        guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)));
+        guard3.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
+        guard3.add(new NameComponent().setName("Guard3"));
+        guard3.add(new AgentSightComponent().setMaximumSightDistance(3));
+        guard3.add(new RandomBehaviourComponent());
 
-        Entity badlogicImageEntity2 = new Entity();
-        // Use same texture as the first badlogicImageEntity
-        badlogicImageEntity2.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
-                .setSortingLayer("Default"));
-        badlogicImageEntity2.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
-                .setZRotation(0)
-                .setScale(0.1f));
-        badlogicImageEntity2.add(new NameComponent().setName("Badlogic2"));
-        badlogicImageEntity2.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));    // This agent has the door open area type
-        badlogicImageEntity2.add(new AgentSightComponent().setMaximumSightDistance(2));
-        badlogicImageEntity2.add(new RandomBehaviourComponent());
+        world.addEntity(guard1);
+        world.addEntity(guard2);
+        world.addEntity(guard3);
 
-        Entity badlogicImageEntity3 = new Entity();
-        // Use same texture as the first badlogicImageEntity
-        badlogicImageEntity3.add(new SpriteRenderComponent().setTextureRegion(textureRegion)
-                .setSortingLayer("Default"));
-        badlogicImageEntity3.add(new TransformComponent().setPosition(new Vector3(0, 0, 0))
-                .setZRotation(0)
-                .setScale(0.1f));
-        badlogicImageEntity3.add(new NameComponent().setName("Badlogic3"));
-        badlogicImageEntity3.add(new AreaComponent().setType(AreaComponent.AreaType.TOWER));    // This agent has the tower area type
-        badlogicImageEntity3.add(new AgentSightComponent().setMaximumSightDistance(3));
-        badlogicImageEntity3.add(new RandomBehaviourComponent());
+        // And create some entities which can be seen by the guards
+        Entity tower1 = new Entity();
+        Entity door_open_1 = new Entity();
+        Entity target = new Entity();
 
-        world.addEntity(badlogicImageEntity1);
-        world.addEntity(badlogicImageEntity2);
-        world.addEntity(badlogicImageEntity3);
+        tower1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("tower", TextureRegion.class)));
+        tower1.add(new TransformComponent().set2DPosition(new Vector2(-1, -1)).setScale(0.5f));
+        tower1.add(new NameComponent().setName("Tower1"));
+        tower1.add(new AreaComponent().setType(AreaComponent.AreaType.TOWER));
+
+        door_open_1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("door_open", TextureRegion.class)));
+        door_open_1.add(new TransformComponent().set2DPosition(new Vector2(2, 2)).setScale(0.5f));
+        door_open_1.add(new NameComponent().setName("DoorOpen1"));
+        door_open_1.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));
+
+        target.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("target", TextureRegion.class)));
+        target.add(new TransformComponent().set2DPosition(new Vector2(-1, 1)).setScale(0.5f));
+        target.add(new NameComponent().setName("Target1"));
+        target.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));
+
+        world.addEntity(tower1);
+        world.addEntity(door_open_1);
+        world.addEntity(target);
     }
 }
