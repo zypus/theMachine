@@ -23,11 +23,10 @@ public class RandomBehaviourSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime) {
         RandomBehaviourComponent randomBehaviourComponent = randomBehaviours.get(entity);
 
-        randomBehaviourComponent.timeSinceLastRandomBehaviour -= deltaTime;
+        randomBehaviourComponent.increaseTimeSinceLastRandomBehaviourWith(-deltaTime);
 
-        if (randomBehaviourComponent.timeSinceLastRandomBehaviour < 0) {
+        if (randomBehaviourComponent.getTimeSinceLastRandomBehaviour() < 0) {
             // Time for a new random behaviour
-            System.out.println("New behaviour");
             float newAngle = (float) ((Math.random() * 45) - 22.5);
 
             float newSpeed = (float) (Math.random() - 0.5);
@@ -38,7 +37,7 @@ public class RandomBehaviourSystem extends IteratingSystem {
             );
             entity.add(behaviourComponent);
 
-            randomBehaviourComponent.timeSinceLastRandomBehaviour += randomBehaviourComponent.timeBetweenRandomBehaviours;
+            randomBehaviourComponent.increaseTimeSinceLastRandomBehaviourWith(randomBehaviourComponent.getTimeBetweenRandomBehaviours());
         }
     }
 }
