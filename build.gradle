@@ -24,6 +24,7 @@ allprojects {
         jamaVersion = '1.0.2'
         reflectionsVersion = '0.9.9'
         kryoVersion = '3.0.0'
+        guavaVersion = '18.0'
     }
 
     repositories {
@@ -84,6 +85,7 @@ project(":core") {
         compile "gov.nist.math:jama:$jamaVersion"
         compile "org.reflections:reflections:$reflectionsVersion"
         compile "com.esotericsoftware:kryo:$kryoVersion"
+        compile "com.google.guava:guava:$guavaVersion"
         compile fileTree(dir: '../libs', include: '*.jar')
     }
 }
