@@ -77,11 +77,11 @@ public class WorldMappingSystem extends IteratingSystem {
                 if (!worldMap.containsKey(coordinate)) {
                     worldMap.put(coordinate, entity);
 
-                    // For debugging. Add a white pixel to areas that are on the map
-                    Entity white = new Entity();
-                    white.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1));
-                    white.add(new TransformComponent().set2DPosition(coordinate).setScale(0.01f));
-                    getWorld().addEntity(white);
+//                    // For debugging. Add a white pixel to areas that are on the map
+//                    Entity white = new Entity();
+//                    white.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1));
+//                    white.add(new TransformComponent().set2DPosition(coordinate).setScale(0.01f));
+//                    getWorld().addEntity(white);
                 }
             }
         }

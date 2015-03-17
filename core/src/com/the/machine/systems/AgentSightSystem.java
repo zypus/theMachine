@@ -2,12 +2,15 @@ package com.the.machine.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.google.common.collect.BiMap;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
+import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.NameComponent;
+import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 import java.util.Map;
@@ -33,14 +36,29 @@ public class AgentSightSystem extends IteratingSystem {
 
         agentSightComponent.areaMapping.clear();
         Vector2 agentPosition = agentTransformComponent.get2DPosition();
+        float agentAngle = -agentTransformComponent.getZRotation();
+
         Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
         float maximumSightDistance = agentSightComponent.maximumSightDistance;
 
         for (Vector2 areaPosition : worldMap.keySet()) {
             if (agentPosition.dst(areaPosition) <= maximumSightDistance ) {
+                float minAngle = normalizeAngle(agentAngle - (float) (0.5 * agentSightComponent.degreesOfSight));
+                float maxAngle = normalizeAngle(agentAngle + (float) (0.5 * agentSightComponent.degreesOfSight));
+                float angleOfArea = (new Vector2(areaPosition).sub(agentPosition)).angle();
+                if (isAngleBetween(minAngle, angleOfArea, maxAngle)) {
+                    agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
 
-                // TODO take viewing angle into account
-                agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
+                    // For debugging, add a small white dot if an agent has seen the area
+                    // For debugging. Add a white pixel to areas that are on the map
+                    if (!agentSightComponent.areasBeingSeen.contains(areaPosition)) {
+                        Entity white = new Entity();
+                        white.add(AgentSightComponent.whiteSprite);
+                        white.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.02f));
+                        getWorld().addEntity(white);
+                        agentSightComponent.areasBeingSeen.add(areaPosition);  // Makes the simulation much faster
+                    }
+                }
             }
         }
 
@@ -54,5 +72,19 @@ public class AgentSightSystem extends IteratingSystem {
             agentSightComponent.timeSinceLastDebugOutput += deltaTime;
         }
 
+    }
+
+    private static boolean isAngleBetween(float lowestAngle, float angleToMeasure, float highestAngle) {
+        if (highestAngle <= lowestAngle) {
+            return lowestAngle <= angleToMeasure || angleToMeasure <= highestAngle;
+        }
+        else {
+            return lowestAngle <= angleToMeasure && angleToMeasure <= highestAngle;
+        }
+    }
+
+    private static float normalizeAngle(float angle) {
+        // Make sure that angle is between 0 and 360
+        return ((angle % 360) + 360) % 360;
     }
 }

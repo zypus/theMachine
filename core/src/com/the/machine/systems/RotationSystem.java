@@ -27,11 +27,6 @@ public class RotationSystem extends IteratingSystem {
         float oldRotation = transformComponent.getZRotation(); // Rotation in degrees
         float newRotation = oldRotation + (deltaTime * angularVelocityComponent.getAngularVelocity());
 
-        if (newRotation >= 0)
-            newRotation = newRotation % 360;
-        else
-            newRotation += 360;
-
-        transformComponent.setZRotation(newRotation);
+        transformComponent.setZRotation(((newRotation % 360) + 360) % 360);
     }
 }

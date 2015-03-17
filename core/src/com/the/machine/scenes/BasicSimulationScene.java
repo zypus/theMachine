@@ -32,14 +32,6 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
         world.addSystem(new AgentSightSystem(1));
 
-		/*
-		 * Create the entities
-		 *
-		 * Atm it has a
-		 *   - main camera
-		 *   - badlogicImageEntity
-		 */
-
         // Camera
         Entity camera = new Entity();
         CameraComponent cameraComponent = new CameraComponent();
@@ -61,22 +53,22 @@ public class BasicSimulationScene implements SceneBuilder {
         Entity guard2 = new Entity();
         Entity guard3 = new Entity();
 
-        guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)));
+        guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)).setSortingOrder(-2));
         guard1.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
         guard1.add(new NameComponent().setName("Guard1"));
-        guard1.add(new AgentSightComponent().setMaximumSightDistance(2));
+        guard1.add(new AgentSightComponent());
         guard1.add(new RandomBehaviourComponent());
 
-        guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)));
+        guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)).setSortingOrder(-2));
         guard2.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
         guard2.add(new NameComponent().setName("Guard2"));
-        guard2.add(new AgentSightComponent().setMaximumSightDistance(2));
+        guard2.add(new AgentSightComponent());
         guard2.add(new RandomBehaviourComponent());
 
-        guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)));
+        guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)).setSortingOrder(-2));
         guard3.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
         guard3.add(new NameComponent().setName("Guard3"));
-        guard3.add(new AgentSightComponent().setMaximumSightDistance(2));
+        guard3.add(new AgentSightComponent());
         guard3.add(new RandomBehaviourComponent());
 
         world.addEntity(guard1);
@@ -99,7 +91,7 @@ public class BasicSimulationScene implements SceneBuilder {
         door_open_1.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));
 
         target.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("target", TextureRegion.class)));
-        target.add(new TransformComponent().set2DPosition(new Vector2(-1, 1)).setScale(0.5f, 3, 1));
+        target.add(new TransformComponent().set2DPosition(new Vector2(1, -.5f)).setScale(2f, 2, 1));
         target.add(new NameComponent().setName("Target1"));
         target.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));
 
