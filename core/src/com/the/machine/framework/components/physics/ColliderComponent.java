@@ -3,6 +3,7 @@ package com.the.machine.framework.components.physics;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.EdgeShape;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
@@ -44,16 +45,16 @@ public class ColliderComponent extends AbstractComponent {
 
 	@Getter
 	public static class Collider {
-		@Setter Fixture fixture;
+		transient @Setter Fixture fixture;
 		float   density = 1;
 		Filter  filter = new Filter();
 		float   friction = 0;
 		boolean sensor = false;
 		float   restitution = 0;
-		Shape   shape = new CircleShape();
+		ColliderShape   shape = new CircleCollider(new Vector2(), 10);
 
-		boolean changed;
-		boolean shapeChanged;
+		boolean changed      = false;
+		boolean shapeChanged = false;
 
 		public boolean isChanged() {
 			boolean temp = changed;
@@ -107,7 +108,7 @@ public class ColliderComponent extends AbstractComponent {
 			return this;
 		}
 
-		public Collider setShape(Shape shape) {
+		public Collider setShape(ColliderShape shape) {
 			if (!this.shape.equals(shape)) {
 				changed = true;
 				shapeChanged = true;
@@ -117,47 +118,131 @@ public class ColliderComponent extends AbstractComponent {
 		}
 
 		public Collider setShape(List<Vector2> vector2s) {
-			PolygonShape poly = new PolygonShape();
 			for (Vector2 vector2 : vector2s) {
 				vector2.scl(0.1f);
 			}
-			poly.set(vector2s.toArray(new Vector2[vector2s.size()]));
-			this.shape = poly;
+			this.shape = new PolygonCollider(vector2s);
 			changed = true;
 			shapeChanged = true;
 			return this;
 		}
 
 		public Collider setShape(Vector2 center, float radius) {
-			CircleShape circle = new CircleShape();
 			center.scl(0.1f);
-			circle.setPosition(center);
-			circle.setRadius(radius*0.1f);
-			this.shape = circle;
+			this.shape = new CircleCollider(center, radius*0.1f);
 			changed = true;
 			shapeChanged = true;
 			return this;
 		}
 
 		public Collider setShape(Rectangle rectangle) {
-			PolygonShape poly = new PolygonShape();
 			Vector2 center = new Vector2();
 			rectangle.getCenter(center);
-			center.scl(0.1f);
-			poly.setAsBox(rectangle.getWidth()*0.05f, rectangle.getHeight()*0.05f, center, 0);
-			this.shape = poly;
+			rectangle.setWidth(rectangle.getWidth() / 10);
+			rectangle.setHeight(rectangle.getHeight() / 10);
+			rectangle.setCenter(center);
+			this.shape = new RectangleCollider(rectangle);
 			changed = true;
 			shapeChanged = true;
 			return this;
 		}
 
 		public Collider setShape(float width, float height) {
-			PolygonShape poly = new PolygonShape();
-			poly.setAsBox(width * 0.05f, height * 0.05f, new Vector2(), 0);
-			this.shape = poly;
+			this.shape = new RectangleCollider(width/10, height/10);
 			changed = true;
 			shapeChanged = true;
 			return this;
+		}
+
+		public Collider setShape(Vector2 first, Vector2 second) {
+			first.scl(0.1f);
+			second.scl(0.1f);
+			this.shape = new EdgeCollider(first, second);
+			changed = true;
+			shapeChanged = true;
+			return this;
+		}
+
+		public static interface ColliderShape {
+
+			public Shape createShape();
+
+		}
+
+		public static class CircleCollider implements ColliderShape {
+
+			Vector2 center;
+			float radius;
+
+			private CircleCollider(Vector2 center, float radius) {
+				this.center = center;
+				this.radius = radius;
+			}
+
+			@Override
+			public Shape createShape() {
+				CircleShape circle = new CircleShape();
+				circle.setPosition(center);
+				circle.setRadius(radius);
+				return circle;
+			}
+		}
+
+		public static class RectangleCollider implements ColliderShape {
+
+			Rectangle rectangle;
+
+			private RectangleCollider(Rectangle rectangle) {
+				this.rectangle = rectangle;
+			}
+
+			private RectangleCollider(float width, float height) {
+				this.rectangle = new Rectangle(-width/2, -height/2, width, height);
+			}
+
+			@Override
+			public Shape createShape() {
+				PolygonShape poly = new PolygonShape();
+				Vector2 center = new Vector2();
+				rectangle.getCenter(center);
+				poly.setAsBox(rectangle.getWidth()/2, rectangle.getHeight()/2, center, 0);
+				return poly;
+			}
+		}
+
+		public static class PolygonCollider implements ColliderShape {
+
+			List<Vector2> vector2s;
+
+			public PolygonCollider(List<Vector2> vector2s) {
+				this.vector2s = vector2s;
+			}
+
+			@Override
+			public Shape createShape() {
+				PolygonShape poly = new PolygonShape();
+				poly.set(vector2s.toArray(new Vector2[vector2s.size()]));
+				return poly;
+			}
+		}
+
+		public static class EdgeCollider
+				implements ColliderShape {
+
+			Vector2 first;
+			Vector2 second;
+
+			public EdgeCollider(Vector2 first, Vector2 second) {
+				this.first = first;
+				this.second = second;
+			}
+
+			@Override
+			public Shape createShape() {
+				EdgeShape edge = new EdgeShape();
+				edge.set(first, second);
+				return edge;
+			}
 		}
 
 	}

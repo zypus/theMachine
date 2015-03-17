@@ -2,17 +2,23 @@ package com.the.machine.framework.utility;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.DisabledComponent;
 import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.SubEntityComponent;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.canvasElements.ButtonComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
 import com.the.machine.framework.components.canvasElements.LabelComponent;
 import com.the.machine.framework.components.canvasElements.SelectBoxComponent;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
+import com.the.machine.framework.engine.World;
 import lombok.Getter;
 
 import java.lang.ref.WeakReference;
@@ -31,9 +37,11 @@ public class EntityUtilities {
 	private static ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
 	private static ComponentMapper<DisabledComponent> disabled = ComponentMapper.getFor(DisabledComponent.class);
 	private static ComponentMapper<TransformComponent>   transforms  = ComponentMapper.getFor(TransformComponent.class);
+	private static ComponentMapper<DimensionComponent>   dimensions  = ComponentMapper.getFor(DimensionComponent.class);
+	private static ComponentMapper<CameraComponent> cameraComponents = ComponentMapper.getFor(CameraComponent.class);
 
-	private static Map<Entity, SubEntityComponent> relationMemory = new HashMap<>();
-	@Getter private static Map<Entity, ParentComponent> parentMemory = new HashMap<>();
+	private static         Map<Entity, SubEntityComponent> relationMemory = new HashMap<>();
+	@Getter private static Map<Entity, ParentComponent>    parentMemory   = new HashMap<>();
 
 	public static Entity makeLabel(String text) {
 		return makeLabel(text, 100, 20);
@@ -78,6 +86,20 @@ public class EntityUtilities {
 		selectBox.add(new CanvasElementComponent());
 		selectBox.add(selectBoxComponent);
 		return selectBox;
+	}
+
+	public static Entity makeButton() {
+		return makeButton(new CanvasElementComponent());
+	}
+
+	public static Entity makeButton(CanvasElementComponent canvasElementComponent) {
+		Entity button = new Entity();
+		button.add(new TransformComponent());
+		button.add(new DimensionComponent());
+		button.add(canvasElementComponent);
+		button.add(new ButtonComponent());
+
+		return button;
 	}
 
 	public static Entity relate(Entity parent, Entity child) {
@@ -177,5 +199,70 @@ public class EntityUtilities {
 		return new TransformComponent(position, rotation, scale);
 	}
 
+	public static Vector3 inLocalCoordinates(Entity entity, Vector3 coords) {
+		TransformComponent at = computeAbsoluteTransform(entity);
+		Vector3 localCoords = coords.cpy()
+							.sub(at.getPosition());
+		localCoords.scl(1f/at.getXScale(), 1f / at.getYScale(), 1f / at.getZScale());
+		Quaternion inverseRotation = at.getRotation()
+						   .cpy()
+						   .mul(-1);
+		inverseRotation.transform(localCoords);
+		return localCoords;
+	}
+
+	public static Rectangle getWorldBoundingBox(Entity entity) {
+		TransformComponent transform = EntityUtilities.computeAbsoluteTransform(entity);
+		DimensionComponent dimensionComponent = dimensions.get(entity);
+		float width = dimensionComponent.getWidth() * transform.getXScale();
+		float height = dimensionComponent.getHeight() * transform.getYScale();
+		return new Rectangle(transform.getX() - width / 2, transform.getY() - height / 2, width, height);
+	}
+
+	public static Vector3 getWorldCoordinates(float screenX, float screenY, Entity camera, World world) {
+		CameraComponent cameraComponent = cameraComponents.get(camera);
+		Camera cam = cameraComponent.getCamera();
+		Vector3 unproject = cam.unproject(new Vector3(screenX, screenY, 0), world.getX(), world.getY(), world.getWidth(), world.getHeight());
+		return unproject;
+	}
+
+	public static Vector3 getScreenCoordinates(Vector3 pos, Entity camera, World world) {
+		CameraComponent cameraComponent = cameraComponents.get(camera);
+		Camera cam = cameraComponent.getCamera();
+		return cam.project(pos.cpy());
+	}
+
+	public static Rectangle computeCommonBound(Iterable<Entity> entities) {
+		Rectangle bound = null;
+		for (Entity entity : entities) {
+
+			TransformComponent transform = EntityUtilities.computeAbsoluteTransform(entity);
+			DimensionComponent dimensionComponent = dimensions.get(entity);
+			float width = dimensionComponent.getWidth();
+			float height = dimensionComponent.getHeight();
+			Rectangle rect = new Rectangle(transform.getX() - width * dimensionComponent.getOriginX(),
+										   transform.getY() - height * dimensionComponent.getOriginY(),
+										   width,
+										   height);
+			if (bound == null) {
+				bound = rect;
+			} else {
+				bound = bound.merge(rect);
+			}
+		}
+		return bound;
+	}
+
+	public static Rectangle toScreenRect(Rectangle rect, Entity camera, World world) {
+		Vector2 center = new Vector2();
+		rect.getCenter(center);
+		Vector3 posProject = getScreenCoordinates(new Vector3(center.cpy()
+																	.sub(rect.getWidth()/2, rect.getHeight() / 2), 0), camera, world);
+		Vector3 conProject = getScreenCoordinates(new Vector3(center.cpy()
+																	.add(rect.getWidth() / 2, rect.getHeight() / 2), 0), camera, world);
+		float width = conProject.x - posProject.x;
+		float height = conProject.y - posProject.y;
+		return new Rectangle(posProject.x, posProject.y, width, height);
+	}
 
 }

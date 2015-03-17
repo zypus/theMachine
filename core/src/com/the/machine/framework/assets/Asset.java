@@ -117,7 +117,9 @@ public class Asset<T> {
 		ambiguity.clear();
 		ambiguity = null;
 		// clear progress texture
-		progressTexture.dispose();
+		if (progressTexture != null) {
+			progressTexture.dispose();
+		}
 	}
 
 	/**
@@ -147,7 +149,15 @@ public class Asset<T> {
 	 */
 	public T get() {
 		if (!fetched) {
-			manager.load(name, type);
+			SmartFileHandleResolver.NAME_CHECK check = resolver.check(name);
+			if (check == SmartFileHandleResolver.NAME_CHECK.EXISTS) {
+				if (!manager.isLoaded(name, type)) {
+					manager.load(name, type);
+				}
+			}
+			if (check == SmartFileHandleResolver.NAME_CHECK.AMBIGUOUS) {
+				ambiguous = true;
+			}
 			fetched = true;
 		}
 		if (cachedAsset == null) {
@@ -166,9 +176,6 @@ public class Asset<T> {
 					} else {
 						return (T) placeholders.get(type);
 					}
-				} else if (progressTexture != null) {
-					progressTexture.dispose();
-					progressTexture = null;
 				}
 				return (T) placeholders.get(type);
 			}
@@ -205,7 +212,7 @@ public class Asset<T> {
 	 * all file names with or without extension and partial paths will be considered too. Yeah I really like it if the code can correct
 	 * all my laziness.
 	 */
-	private static class SmartFileHandleResolver
+	public static class SmartFileHandleResolver
 			implements FileHandleResolver {
 
 		/**
@@ -262,7 +269,7 @@ public class Asset<T> {
 		 * @param name The name of the requested file.
 		 * @return The file handle to the file, if any.
 		 */
-		private FileHandle findFile(FileHandle origin, String name) {
+		public FileHandle findFile(FileHandle origin, String name) {
 			if (origin.name().equals(name)
 				|| origin.nameWithoutExtension().equals(name)
 				|| origin.path().startsWith(name)) {
@@ -284,14 +291,15 @@ public class Asset<T> {
 		 * @param name The name of the file.
 		 * @return All files found.
 		 */
-		private List<FileHandle> findFiles(FileHandle origin, String name) {
+		public List<FileHandle> findFiles(FileHandle origin, String name) {
 			List<FileHandle> list = new ArrayList<>();
 			if (origin.name()
 					  .equals(name)
 				|| origin.nameWithoutExtension()
 						 .equals(name)
 				|| origin.path()
-						 .startsWith(name)) {
+						 .startsWith(name) || origin.path()
+													.endsWith(name)) {
 				list.add(origin);
 				return list;
 			} else {
