@@ -1,6 +1,7 @@
 package com.the.machine.framework.components.physics;
 
 import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.the.machine.framework.components.AbstractComponent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,6 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Physics2dComponent
 		extends AbstractComponent {
-		Body body;
+		transient Body body;
+		BodyDef.BodyType type = BodyDef.BodyType.DynamicBody;
 }

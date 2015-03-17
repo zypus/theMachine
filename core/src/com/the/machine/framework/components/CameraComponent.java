@@ -1,5 +1,6 @@
 package com.the.machine.framework.components;
 
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -21,6 +22,7 @@ import java.lang.reflect.Field;
 @Data
 @Accessors(chain = true)
 public class CameraComponent extends AbstractComponent {
+	transient private Camera camera = null;
 	private Integer clearFlag = new Integer(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT);
 	private Color      background     = Color.BLACK;
 	private Bits       cullingMask    = null;

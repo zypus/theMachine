@@ -1,5 +1,7 @@
 package com.the.machine.framework.systems.rendering;
 
+import box2dLight.RayHandler;
+import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -27,6 +29,7 @@ import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.physics.Light2dRenderComponent;
 import com.the.machine.framework.components.physics.Physics2dDebugComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
@@ -61,16 +64,14 @@ public class CameraRenderSystem
 	private transient         ComponentMapper<CanvasComponent>       canvas           = ComponentMapper.getFor(CanvasComponent.class);
 	private transient         ComponentMapper<LayerComponent>        layers           = ComponentMapper.getFor(LayerComponent.class);
 	private transient         ComponentMapper<Physics2dDebugComponent>        physic2dDebugs           = ComponentMapper.getFor(Physics2dDebugComponent.class);
-
-	private transient OrthographicCamera orthoCam = new OrthographicCamera();
-	private transient PerspectiveCamera  persCam  = new PerspectiveCamera();
+	private transient         ComponentMapper<Light2dRenderComponent> lights = ComponentMapper.getFor(Light2dRenderComponent.class);
 
 	private transient Family                 cameraFamily;
 	private transient ImmutableArray<Entity> cameras;
 	private transient Array<Entity>          sortedCameras;
 	private transient Comparator<Entity>     cameraComparator;
 
-	private transient ShapeRenderer shapeRenderer;
+	private transient ShapeRenderer      shapeRenderer;
 	private transient Box2DDebugRenderer box2DDebugRenderer;
 
 	private transient Map<Entity, Decal> decalMap = new HashMap<>();
@@ -86,7 +87,7 @@ public class CameraRenderSystem
 	}
 
 	public CameraRenderSystem() {
-		super(Family.one(SpriteRenderComponent.class, CanvasComponent.class, Physics2dDebugComponent.class)
+		super(Family.one(SpriteRenderComponent.class, CanvasComponent.class, Physics2dDebugComponent.class, Light2dRenderComponent.class)
 					.get());
 		setComparator(new LayerComparator(this).thenComparing(new OrderComparator(this)));
 
@@ -112,9 +113,13 @@ public class CameraRenderSystem
 		shapeRenderer = new ShapeRenderer();
 		box2DDebugRenderer = new Box2DDebugRenderer();
 		world.getSortingLayers()
-			 .put("UI", 3);
+			 .put("UI", 5);
 		world.getSortingLayers()
-			 .put("Physics 2d Debug", 2);
+			 .put("Physics 2d Debug", 4);
+		world.getSortingLayers()
+			 .put("World UI", 3);
+		world.getSortingLayers()
+			 .put("Lights 2d", 2);
 		world.getSortingLayers()
 			 .put("Default", 1);
 	}
@@ -128,19 +133,25 @@ public class CameraRenderSystem
 
 	@Override
 	public void entityAdded(Entity entity) {
-		super.entityAdded(entity);
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponents.has(entity)) {
-				cameraComponents.get(entity)
-								.addObserver(this);
+				CameraComponent cameraComponent = cameraComponents.get(entity);
+				if (cameraComponent.getCamera() == null) {
+					if (cameraComponent.getProjection() == CameraComponent.Projection.ORTHOGRAPHIC) {
+						cameraComponent.setCamera(new OrthographicCamera());
+					} else {
+						cameraComponent.setCamera(new PerspectiveCamera());
+					}
+				}
+				cameraComponent.addObserver(this);
 			}
 			sortedCameras.add(entity);
 			sortedCameras.sort(cameraComparator);
-		} else {
+		} else if (family.matches(entity)) {
 			if (spriteRenderers.has(entity)) {
 				SpriteRenderComponent spriteRenderComponent = spriteRenderers.get(entity);
 				Decal sprite = Decal.newDecal(1, 1, spriteRenderComponent.getTextureRegion()
-																		 .get());
+																		 .get(), true);
 				decalMap.put(entity, sprite);
 				spriteRenderComponent.addObserver(this);
 			}
@@ -150,19 +161,19 @@ public class CameraRenderSystem
 
 	@Override
 	public void entityRemoved(Entity entity) {
-		super.entityRemoved(entity);
 		if (cameraFamily.matches(entity)) {
 			if (cameraComponents.has(entity)) {
 				cameraComponents.get(entity)
 								.deleteObserver(this);
 			}
 			sortedCameras.removeValue(entity, true);
-		} else {
+		} else if (family.matches(entity)) {
 			if (spriteRenderers.has(entity)) {
 				spriteRenderers.get(entity)
 							   .deleteObserver(this);
 			}
 			decalMap.remove(entity);
+			super.entityRemoved(entity);
 		}
 	}
 
@@ -201,17 +212,19 @@ public class CameraRenderSystem
 
 	@Override
 	public void update(float deltaTime) {
-		ImmutableArray<Entity> entities = getEntities();
+		Array<Entity> entities = sortedEntities;
 		for (int c = 0; c < cameras.size(); c++) {
 			Entity cameraEntity = sortedCameras.get(c);
 			CameraComponent cameraComponent = cameraComponents.get(cameraEntity);
 			Camera camera;
 			if (cameraComponent.getProjection() == CameraComponent.Projection.ORTHOGRAPHIC) {
+				OrthographicCamera orthoCam = (OrthographicCamera) cameraComponent.getCamera();
 				camera = orthoCam;
 				orthoCam.zoom = cameraComponent.getZoom();
 				camera.near = cameraComponent.getClippingPlanes()
 											 .getNear();
 			} else {
+				PerspectiveCamera persCam = (PerspectiveCamera) cameraComponent.getCamera();
 				camera = persCam;
 				persCam.fieldOfView = cameraComponent.getFieldOfView();
 				if (cameraComponent.getClippingPlanes()
@@ -256,16 +269,21 @@ public class CameraRenderSystem
 
 			// draw all entities
 			List<Entity> onTop = new ArrayList<>();
-			for (int i = 0; i < entities.size(); i++) {
+			String lastLayer = null;
+			for (int i = 0; i < entities.size; i++) {
 				Entity entity = entities.get(i);
 				if (EntityUtilities.isEntityEnabled(entity)) {
 					LayerComponent layerComponent = null;
 					if (layers.has(entity)) {
 						layerComponent = layers.get(entity);
 					}
-					//System.out.println("Camera: "+ BitBuilder.sprint(cameraComponent.getCullingMask())+" Entity: "+BitBuilder.sprint(layerComponent.getLayer()));
 					if (layerComponent == null || cameraComponent.getCullingMask() == null || cameraComponent.getCullingMask()
 																											 .containsAll(layerComponent.getLayer())) {
+						String layer = getSortable(entity).getSortingLayer();
+						if (lastLayer != null && !layer.equals(lastLayer)) {
+							decalBatch.flush();
+						}
+						lastLayer = layer;
 						if (spriteRenderers.has(entity) && spriteRenderers.get(entity)
 																		  .isEnabled()) {
 							gl.glEnable(GL20.GL_DEPTH_TEST);
@@ -318,18 +336,54 @@ public class CameraRenderSystem
 						}
 
 						if (physic2dDebugs.has(entity) && physic2dDebugs.get(entity).isEnabled()) {
-							onTop.add(entity);
+							Physics2dDebugComponent physics2dDebugComponent = physic2dDebugs.get(entity);
+							Matrix4 projection = camera.combined.cpy();
+							projection.scl(physics2dDebugComponent.getBoxToWorld(), physics2dDebugComponent.getBoxToWorld(), 1f);
+							box2DDebugRenderer.render(physics2dDebugComponent.getBox2dWorld(), projection);
+//							onTop.add(entity);
+						}
+
+						if (lights.has(entity) && lights.get(entity)
+														.isEnabled()) {
+							Light2dRenderComponent lc = lights.get(entity);
+							RayHandler rayHandler = lc.getRayHandler();
+							RayHandler.setGammaCorrection(lc.isGammaCorrection());
+							RayHandler.useDiffuseLight(lc.isUseDiffuseLights());
+							Color ambientLight = lc.getAmbientLight();
+							rayHandler.setAmbientLight(ambientLight.r, ambientLight.g, ambientLight.b, ambientLight.a);
+							rayHandler.setBlur(lc.isBlur());
+							rayHandler.setBlurNum(lc.getBlurNum());
+							Matrix4 projection = camera.combined.cpy();
+							projection.scl(10, 10, 1f);
+							rayHandler.setCombinedMatrix(projection);
+							rayHandler.render();
+//							onTop.add(entity);
 						}
 					}
 				}
 			}
-			decalBatch.flush();
-			for (Entity entity : onTop) {
+//			decalBatch.flush();
+			for (int i = onTop.size()-1; i >= 0; i--) {
+				Entity entity = onTop.get(i);
 				if (physic2dDebugs.has(entity)) {
 					Physics2dDebugComponent physics2dDebugComponent = physic2dDebugs.get(entity);
 					Matrix4 projection = camera.combined.cpy();
 					projection.scl(physics2dDebugComponent.getBoxToWorld(), physics2dDebugComponent.getBoxToWorld(), 1f);
 					box2DDebugRenderer.render(physics2dDebugComponent.getBox2dWorld(), projection);
+				}
+				if (lights.has(entity)) {
+					Light2dRenderComponent lc = lights.get(entity);
+					RayHandler rayHandler = lc.getRayHandler();
+					RayHandler.setGammaCorrection(lc.isGammaCorrection());
+					RayHandler.useDiffuseLight(lc.isUseDiffuseLights());
+					Color ambientLight = lc.getAmbientLight();
+					rayHandler.setAmbientLight(ambientLight.r, ambientLight.g, ambientLight.b, ambientLight.a);
+					rayHandler.setBlur(lc.isBlur());
+					rayHandler.setBlurNum(lc.getBlurNum());
+					Matrix4 projection = camera.combined.cpy();
+					projection.scl(10, 10, 1f);
+					rayHandler.setCombinedMatrix(projection);
+					rayHandler.render();
 				}
 			}
 			onTop.clear();
@@ -368,8 +422,10 @@ public class CameraRenderSystem
 	}
 
 	private LayerSortable getSortable(Entity o1) {
-		if (spriteRenderers.has(o1)) {
-			return spriteRenderers.get(o1);
+		for (Component component : o1.getComponents()) {
+			if (component instanceof LayerSortable) {
+				return (LayerSortable) component;
+			}
 		}
 		return null;
 	}

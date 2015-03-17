@@ -26,16 +26,19 @@ public class DimensionComponent
 
 	public DimensionComponent setDimension(float width, float height) {
 		dimension.setSize(width, height);
+		setChanged();
 		return this;
 	}
 
 	public DimensionComponent setWidth(float width) {
 		dimension.setWidth(width);
+		setChanged();
 		return this;
 	}
 
 	public DimensionComponent setHeight(float height) {
 		dimension.setHeight(height);
+		setChanged();
 		return this;
 	}
 

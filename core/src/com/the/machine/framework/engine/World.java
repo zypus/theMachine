@@ -13,6 +13,7 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -29,12 +30,10 @@ import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.assets.LoadingTexture;
-import com.the.machine.framework.components.DisabledComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.ObservableComponent;
 import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.SubEntityComponent;
-import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.WorldComponent;
 import com.the.machine.framework.container.Scene;
 import com.the.machine.framework.events.Event;
@@ -42,11 +41,20 @@ import com.the.machine.framework.events.EventEngine;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.events.basic.ResizeEvent;
+import com.the.machine.framework.events.input.KeyDownEvent;
+import com.the.machine.framework.events.input.KeyTypedEvent;
+import com.the.machine.framework.events.input.KeyUpEvent;
+import com.the.machine.framework.events.input.MouseMovedEvent;
+import com.the.machine.framework.events.input.ScrolledEvent;
+import com.the.machine.framework.events.input.TouchDownEvent;
+import com.the.machine.framework.events.input.TouchDraggedEvent;
+import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.serialization.EntitySerializer;
 import com.the.machine.framework.systems.WorldSystem;
 import com.the.machine.framework.utility.ClickEventListenerEventSpawner;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
@@ -62,7 +70,7 @@ import java.util.Map;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created $(DATE)
  */
-public class World implements ApplicationListener {
+public class World implements ApplicationListener, InputProcessor {
 
 	private EventEngine  eventEngine;
 	private Engine       engine;
@@ -84,14 +92,14 @@ public class World implements ApplicationListener {
 	@Getter private ImmutableArray<Bits> layers;
 	@Getter private Map<String, Integer> sortingLayers = new HashMap<>();
 
-	private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
 	private ComponentMapper<ParentComponent>    parents    = ComponentMapper.getFor(ParentComponent.class);
 	private ComponentMapper<SubEntityComponent> subs       = ComponentMapper.getFor(SubEntityComponent.class);
-	private ComponentMapper<DisabledComponent>  disableds  = ComponentMapper.getFor(DisabledComponent.class);
 	private ComponentMapper<WorldComponent> worlds = ComponentMapper.getFor(WorldComponent.class);
 
 	@Getter private CameraGroupStrategy cameraGroupStrategy;
 	@Getter private DecalBatch          decalBatch;
+	// physics
+	@Getter @Setter private com.badlogic.gdx.physics.box2d.World box2dWorld = null;
 
 	@Getter private float t        = 0;
 	private         float timeFlow = 1f;
@@ -120,9 +128,9 @@ public class World implements ApplicationListener {
 		FileHandle scene;
 		if (list.length > 0 && list[0].isDirectory()) {
 			FileHandle sceneDir = list[0];
-			scene = findFile(sceneDir, name+".scene");
+			scene = findFile(sceneDir, name + ".scene");
 		} else {
-			scene = findFile(internal, name+".scene");
+			scene = findFile(internal, name + ".scene");
 		}
 		return scene;
 	}
@@ -141,7 +149,7 @@ public class World implements ApplicationListener {
 		setActiveScene(loadedData);
 	}
 
-	public void savePrefab(String name, Entity ... entities) {
+	public void savePrefab(String name, Entity... entities) {
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		Output output = new Output(outputStream);
 		kryo.writeObject(output, entities);
@@ -174,9 +182,9 @@ public class World implements ApplicationListener {
 		FileHandle prefab;
 		if (list.length > 0 && list[0].isDirectory()) {
 			FileHandle prefabDir = list[0];
-			prefab = findFile(prefabDir, name+".prefab");
+			prefab = findFile(prefabDir, name + ".prefab");
 		} else {
-			prefab = findFile(internal, name+".prefab");
+			prefab = findFile(internal, name + ".prefab");
 		}
 		return prefab;
 	}
@@ -237,7 +245,7 @@ public class World implements ApplicationListener {
 			FileHandle scenes = Gdx.files.local("scenes");
 			scenes.mkdirs();
 		}
-		return Gdx.files.local("scenes/" + name+".scene");
+		return Gdx.files.local("scenes/" + name + ".scene");
 	}
 
 	public void saveActiveScene() {
@@ -297,7 +305,7 @@ public class World implements ApplicationListener {
 	public void buildScene(SceneBuilder builder) {
 		WorldState previousState = worldState;
 		worldState = WorldState.FULL_PAUSED;
-		setup();
+//		setup();
 		builder.createScene(this);
 		worldState = previousState;
 //		updateActiveScene();
@@ -311,6 +319,8 @@ public class World implements ApplicationListener {
 		if (worldBounds == null) {
 			new Rectangle(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		}
+
+		inputMultiplexer.addProcessor(this);
 
 		cameraGroupStrategy = new CameraGroupStrategy(new OrthographicCamera());
 		decalBatch = new DecalBatch(cameraGroupStrategy);
@@ -587,4 +597,55 @@ public class World implements ApplicationListener {
 		timeline.start(tweenManager);
 	}
 
+	/**-------------------------------------------------------------------------------------------------------------------------------**/
+	/** input to event system translation																						      **/
+	/**-------------------------------------------------------------------------------------------------------------------------------**/
+
+	@Override
+	public boolean keyDown(int keycode) {
+		dispatchEvent(new KeyDownEvent(keycode));
+		return false;
+	}
+
+	@Override
+	public boolean keyUp(int keycode) {
+		dispatchEvent(new KeyUpEvent(keycode));
+		return false;
+	}
+
+	@Override
+	public boolean keyTyped(char character) {
+		dispatchEvent(new KeyTypedEvent(character));
+		return false;
+	}
+
+	@Override
+	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		dispatchEvent(new TouchDownEvent(screenX, screenY, pointer, button));
+		return false;
+	}
+
+	@Override
+	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+		dispatchEvent(new TouchUpEvent(screenX, screenY, pointer, button));
+		return false;
+	}
+
+	@Override
+	public boolean touchDragged(int screenX, int screenY, int pointer) {
+		dispatchEvent(new TouchDraggedEvent(screenX, screenY, pointer));
+		return false;
+	}
+
+	@Override
+	public boolean mouseMoved(int screenX, int screenY) {
+		dispatchEvent(new MouseMovedEvent(screenX, screenY));
+		return false;
+	}
+
+	@Override
+	public boolean scrolled(int amount) {
+		dispatchEvent(new ScrolledEvent(amount));
+		return false;
+	}
 }

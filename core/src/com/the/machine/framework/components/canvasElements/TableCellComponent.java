@@ -207,6 +207,14 @@ public class TableCellComponent extends AbstractComponent {
 		return this;
 	}
 
+	public TableCellComponent setSpace(Value value) {
+		setSpaceBottom(value);
+		setSpaceLeft(value);
+		setSpaceTop(value);
+		setSpaceRight(value);
+		return this;
+	}
+
 	public TableCellComponent setPadTop(Value padTop) {
 		if (!padTop.equals(this.padTop)) {
 			this.padTop = padTop;

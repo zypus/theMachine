@@ -3,8 +3,10 @@ package com.the.machine.framework.components.canvasElements;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.the.machine.framework.components.AbstractComponent;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.List;
  * @created 17/02/15
  */
 @Data
+@Accessors(chain = true)
 public class CanvasElementComponent extends AbstractComponent {
 	transient private Actor   actor = null;
 	transient private boolean group = false;
@@ -23,6 +26,8 @@ public class CanvasElementComponent extends AbstractComponent {
 	transient private Actor unwrappedActor = null;
 	transient private boolean enableTransform = false;
 	private List<EventListener> listeners = new ArrayList<>();
+	private Touchable touchable = Touchable.enabled;
+	private String styleValue = "default";
 
 	public Group getGroup() {
 		if (group) {
