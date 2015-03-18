@@ -109,7 +109,7 @@ public class TransformComponent extends ObservableComponent {
 	}
 
 	public TransformComponent setRotation(float x, float y, float z) {
-		rotation.setEulerAngles(-y, x, -z);
+		rotation.setEulerAngles(-y, x, z);
 		setChanged();
 		return this;
 	}
@@ -127,7 +127,7 @@ public class TransformComponent extends ObservableComponent {
 	}
 
 	public TransformComponent setZRotation(float z) {
-		rotation.setEulerAngles(getXRotation(), getYRotation(), -z);
+		rotation.setEulerAngles(getXRotation(), getYRotation(), z);
 		setChanged();
 		return this;
 	}

@@ -1,6 +1,8 @@
 package com.the.machine.scenes;
 
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.math.Vector2;
@@ -18,6 +20,7 @@ import com.the.machine.components.DirectionalVelocityComponent;
 import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.ResizableComponent;
 import com.the.machine.components.SelectableComponent;
+import com.the.machine.components.SelectionComponent;
 import com.the.machine.components.SelectorComponent;
 import com.the.machine.components.ZoomableComponent;
 import com.the.machine.events.AudioEvent;
@@ -34,15 +37,18 @@ import com.the.machine.framework.components.CanvasComponent;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.NameComponent;
+import com.the.machine.framework.components.RemovalComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.canvasElements.ButtonComponent;
 import com.the.machine.framework.components.canvasElements.CanvasElementComponent;
+import com.the.machine.framework.components.canvasElements.LabelComponent;
 import com.the.machine.framework.components.canvasElements.SelectBoxComponent;
 import com.the.machine.framework.components.canvasElements.TableCellComponent;
 import com.the.machine.framework.components.canvasElements.TableComponent;
 import com.the.machine.framework.components.canvasElements.TextFieldComponent;
 import com.the.machine.framework.components.physics.ColliderComponent;
+import com.the.machine.framework.components.physics.Light2dComponent;
 import com.the.machine.framework.components.physics.Physics2dComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.EventListener;
@@ -57,6 +63,7 @@ import com.the.machine.framework.events.input.TouchDraggedEvent;
 import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.events.physics.Light2dToggleEvent;
 import com.the.machine.framework.systems.DelayedRemovalSystem;
+import com.the.machine.framework.systems.RemovalSystem;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.canvas.TableCellSystem;
@@ -65,13 +72,16 @@ import com.the.machine.framework.systems.physics.Light2dSystem;
 import com.the.machine.framework.systems.physics.Physics2dSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
+import com.the.machine.framework.utility.BoolContainer;
 import com.the.machine.framework.utility.ClickEventListenerEventSpawner;
 import com.the.machine.framework.utility.ClickEventListenerExecuter;
 import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Enums;
 import com.the.machine.framework.utility.Executable;
+import com.the.machine.systems.AgentSightSystem;
 import com.the.machine.systems.AudioIndicatorSystem;
 import com.the.machine.systems.AudioListeningSystem;
+import com.the.machine.systems.BehaviourSystem;
 import com.the.machine.systems.CameraZoomSystem;
 import com.the.machine.systems.DirectionalMovementSystem;
 import com.the.machine.systems.DraggingSystem;
@@ -79,10 +89,13 @@ import com.the.machine.systems.GrowthSystem;
 import com.the.machine.systems.InputControlledMovementSystem;
 import com.the.machine.systems.MapSystem;
 import com.the.machine.systems.MovementSystem;
+import com.the.machine.systems.RandomBehaviourSystem;
 import com.the.machine.systems.RandomNoiseSystem;
 import com.the.machine.systems.ResizeHandleSystem;
+import com.the.machine.systems.RotationSystem;
 import com.the.machine.systems.SelectionSystem;
 import com.the.machine.systems.SoundDirectionDebugSystem;
+import com.the.machine.systems.WorldMappingSystem;
 import com.the.machine.systems.ZoomIndependenceSystem;
 
 import java.util.HashMap;
@@ -101,6 +114,7 @@ public class MapEditorSceneBuilder
 
 	@Override
 	public void createScene(World world) {
+		world.addSystem(new RemovalSystem());
 		world.addSystem(new DelayedRemovalSystem());
 		world.addSystem(new GrowthSystem());
 		world.addSystem(new DirectionalMovementSystem());
@@ -113,6 +127,11 @@ public class MapEditorSceneBuilder
 		world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
 		world.addSystem(new SelectionSystem(), TouchUpEvent.class);
 		world.addSystem(new ResizeHandleSystem());
+		world.addSystem(new RotationSystem());
+		world.addSystem(new BehaviourSystem());
+		world.addSystem(new RandomBehaviourSystem());
+		world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
+		world.addSystem(new AgentSightSystem(1));
 		world.addSystem(new CanvasSystem(), ResizeEvent.class, CanvasKeyboardFocusEvent.class);
 		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new MovementSystem());
@@ -123,6 +142,8 @@ public class MapEditorSceneBuilder
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);
 		world.addSystem(new Light2dSystem(), Light2dToggleEvent.class);
+
+		toggleSimulationSystems(world, false);
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
@@ -218,7 +239,6 @@ public class MapEditorSceneBuilder
 			SelectBoxComponent selectBoxComponent = new SelectBoxComponent();
 			Entity loadName = EntityUtilities.makeSelectBox(selectBoxComponent);
 			loadName.add(new TableCellComponent()
-								 .setExpandX(1)
 								 .setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
 								 .setVerticalAlignment(Enums.VerticalAlignment.TOP)
 								 .setSpace(new Value.Fixed(spacing)));
@@ -308,6 +328,112 @@ public class MapEditorSceneBuilder
 													.add(new TableCellComponent());
 			EntityUtilities.relate(loadButton, loadButtonLabel);
 			world.addEntity(loadButtonLabel);
+		}
+
+		/**========================================================================================**/
+
+		// play / pause / reset button
+		{
+			LabelComponent playLabelComponent = new LabelComponent().setText("Play");
+			Entity playButtonLabel = EntityUtilities.makeLabel(playLabelComponent)
+													.add(new TableCellComponent());
+
+			Entity playButton = new Entity();
+			CanvasElementComponent playComponent = new CanvasElementComponent();
+			//		resetComponent.getListeners()
+			//					 .add(new ClickEventListenerEventSpawner(world, new MapEditorLoadEvent()));
+			// Experiment for a loading dialog
+			final BoolContainer resetted = new BoolContainer();
+			resetted.setBool(true);
+			playComponent.getListeners()
+						 .add(new ClickEventListenerExecuter(() -> {
+							 String text = playLabelComponent.getText();
+							 if (text.equals("Play")) {
+								 if (resetted.isBool()) {
+									 ImmutableArray<Entity> mapElements = world.getEntitiesFor(Family.one(AreaComponent.class, Light2dComponent.class)
+																									 .get());
+									 Entity[] array = new Entity[mapElements.size()];
+									 int index = 0;
+									 for (Entity element : mapElements) {
+										 element.remove(SelectionComponent.class);
+										 array[index] = element;
+										 index++;
+									 }
+									 world.savePrefab("active_map", array);
+									 resetted.setBool(false);
+								 }
+								 toggleSimulationSystems(world, true);
+								 playLabelComponent.setText("Pause");
+							 } else {
+								 toggleSimulationSystems(world, false);
+								 playLabelComponent.setText("Play");
+							 }
+							 playLabelComponent.setDirty(true);
+							 return true;
+						 }));
+			playButton.add(playComponent);
+			playButton.add(new TableCellComponent()
+								   .setHorizontalAlignment(Enums.HorizontalAlignment.RIGHT)
+								   .setVerticalAlignment(Enums.VerticalAlignment.TOP)
+								   .setExpandX(1)
+								   .setSpace(new Value.Fixed(spacing)));
+			playButton.add(new ButtonComponent());
+			playButton.add(new TransformComponent().setPosition(110, 0, 0));
+			playButton.add(new DimensionComponent().setDimension(100, 40)
+												   .setOrigin(0, 0));
+			EntityUtilities.relate(GUITable, playButton);
+			world.addEntity(playButton);
+
+			EntityUtilities.relate(playButton, playButtonLabel);
+			world.addEntity(playButtonLabel);
+
+			// reset
+			LabelComponent resetLabelComponent = new LabelComponent().setText("Reset");
+			Entity resetButtonLabel = EntityUtilities.makeLabel(resetLabelComponent)
+													.add(new TableCellComponent());
+
+			Entity resetButton = new Entity();
+			CanvasElementComponent resetComponent = new CanvasElementComponent();
+			resetted.setBool(true);
+			resetComponent.getListeners()
+						 .add(new ClickEventListenerExecuter(() -> {
+							 playLabelComponent.setText("Play");
+							 playLabelComponent.setDirty(true);
+							 toggleSimulationSystems(world, false);
+							 ImmutableArray<Entity> mapElements = world.getEntitiesFor(Family.one(AreaComponent.class, Light2dComponent.class)
+																							 .get());
+							 Entity[] array = new Entity[mapElements.size()];
+							 int index = 0;
+							 for (Entity element : mapElements) {
+								 element.remove(SelectionComponent.class);
+								 array[index] = element;
+								 index++;
+							 }
+							 Entity[] newEntities = world.loadPrefab("active_map");
+							 if (newEntities != null && newEntities.length > 0) {
+								 for (Entity entity : array) {
+									 entity.add(new RemovalComponent());
+								 }
+							 }
+							 resetted.setBool(true);
+							 return true;
+						 }));
+			resetButton.add(resetComponent);
+			resetButton.add(new TableCellComponent()
+									.setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+									.setVerticalAlignment(Enums.VerticalAlignment.TOP)
+									.setExpandX(1)
+									.setSpace(new Value.Fixed(spacing)));
+			resetButton.add(new ButtonComponent());
+			resetButton.add(new TransformComponent().setPosition(110, 0, 0));
+			resetButton.add(new DimensionComponent().setDimension(100, 40)
+												   .setOrigin(0, 0));
+			EntityUtilities.relate(GUITable, resetButton);
+			world.addEntity(resetButton);
+
+			EntityUtilities.relate(resetButton, resetButtonLabel);
+			world.addEntity(resetButtonLabel);
+
 		}
 
 		/**========================================================================================**/
@@ -426,7 +552,7 @@ public class MapEditorSceneBuilder
 														 .setPrefWidth(new Value.Fixed(50))
 														 .setPrefHeight(new Value.Fixed(50))
 														 .setSpace(new Value.Fixed(spacing))
-				.setColspan(8).setExpandY(1)
+				.setColspan(10).setExpandY(1)
 														 .setExpandX(1)
 				.setRowEnd(true);
 		lightSwitch.add(ltcc);
@@ -445,7 +571,7 @@ public class MapEditorSceneBuilder
 		Entity hotbar = new Entity();
 		hotbar.add(new TableCellComponent().setExpandX(1)
 										   .setFillX(1)
-										   .setColspan(8));
+										   .setColspan(10));
 		hotbar.add(new TableComponent());
 		hotbar.add(new CanvasElementComponent());
 		hotbar.add(new TransformComponent());
@@ -496,6 +622,22 @@ public class MapEditorSceneBuilder
 			};
 			world.register(hotbarListener, MapEditorHotbarEvent.class);
 		}
+
+	}
+
+	private void toggleSimulationSystems(World world, boolean enabled) {
+		world.setSystemStatus(DelayedRemovalSystem.class, enabled);
+		world.setSystemStatus(GrowthSystem.class, enabled);
+		world.setSystemStatus(MovementSystem.class, enabled);
+		world.setSystemStatus(RandomNoiseSystem.class, enabled);
+		world.setSystemStatus(RotationSystem.class, enabled);
+		world.setSystemStatus(BehaviourSystem.class, enabled);
+		world.setSystemStatus(RandomBehaviourSystem.class, enabled);
+		world.setSystemStatus(WorldMappingSystem.class, enabled);
+		world.setSystemStatus(AgentSightSystem.class, enabled);
+	}
+
+	private void toggleMapEditorSystems(World world, boolean enabled) {
 
 	}
 }

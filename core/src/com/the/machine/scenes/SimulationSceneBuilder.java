@@ -8,7 +8,7 @@ import com.the.machine.framework.events.input.KeyDownEvent;
 import com.the.machine.framework.events.input.KeyUpEvent;
 import com.the.machine.framework.events.input.ScrolledEvent;
 import com.the.machine.framework.events.physics.Light2dToggleEvent;
-import com.the.machine.framework.systems.DelayedRemovalSystem;
+import com.the.machine.framework.systems.RemovalSystem;
 import com.the.machine.framework.systems.physics.Light2dSystem;
 import com.the.machine.framework.systems.physics.Physics2dSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
@@ -38,7 +38,7 @@ public class SimulationSceneBuilder
 	@Override
 	public void createScene(World world) {
 		// The systems which act in this scene
-		world.addSystem(new DelayedRemovalSystem());
+		world.addSystem(new RemovalSystem());
 		world.addSystem(new GrowthSystem());
 		world.addSystem(new DirectionalMovementSystem());
 		world.addSystem(new InputControlledMovementSystem(), KeyDownEvent.class, KeyUpEvent.class);

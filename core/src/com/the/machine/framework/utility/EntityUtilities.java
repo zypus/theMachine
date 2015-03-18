@@ -48,11 +48,19 @@ public class EntityUtilities {
 	}
 
 	public static Entity makeLabel(String text, int width, int height) {
+		return makeLabel(new LabelComponent().setText(text), 100, 20);
+	}
+
+	public static Entity makeLabel(LabelComponent labelComponent) {
+		return makeLabel(labelComponent, 100, 20);
+	}
+
+	public static Entity makeLabel(LabelComponent labelComponent, int width, int height) {
 		Entity label = new Entity();
 		label.add(new TransformComponent());
 		label.add(new DimensionComponent().setDimension(width, height));
 		label.add(new CanvasElementComponent());
-		label.add(new LabelComponent().setText(text));
+		label.add(labelComponent);
 		return label;
 	}
 

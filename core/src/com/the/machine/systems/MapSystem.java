@@ -15,16 +15,17 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.DragComponent;
 import com.the.machine.components.DraggableComponent;
 import com.the.machine.components.HandleComponent;
 import com.the.machine.components.ListenerComponent;
+import com.the.machine.components.RandomBehaviourComponent;
 import com.the.machine.components.ResizableComponent;
 import com.the.machine.components.SelectableComponent;
 import com.the.machine.components.SelectionComponent;
 import com.the.machine.components.SelectorComponent;
-import com.the.machine.components.VelocityComponent;
 import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorLoadPrefabEvent;
@@ -402,8 +403,10 @@ public class MapSystem
 				newAgent.add(new SelectableComponent());
 				newAgent.add(new DraggableComponent());
 				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE).setFilter(lightFilter));
-				newAgent.add(new VelocityComponent().setVelocity(10f));
+				newAgent.add(new RandomBehaviourComponent());
+				newAgent.add(new AgentSightComponent());
 				newAgent.add(new ListenerComponent());
+				newAgent.add(new NameComponent().setName("Agent"));
 				world.addEntity(newAgent);
 			}
 		} else if (event instanceof KeyDownEvent) {

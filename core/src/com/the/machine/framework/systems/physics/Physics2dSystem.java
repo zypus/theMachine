@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -101,7 +102,7 @@ public class Physics2dSystem
 				Body body = physics2dComponent.getBody();
 				if (body != null) {
 					body.setTransform(transformComponent.get2DPosition()
-														.scl(WORLD_TO_BOX), transformComponent.getZRotation());
+														.scl(WORLD_TO_BOX), MathUtils.degreesToRadians*transformComponent.getZRotation());
 				}
 			}
 		}
@@ -157,7 +158,7 @@ public class Physics2dSystem
 		TransformComponent transformComponent = transforms.get(entity);
 		transformComponent.set2DPosition(body.getPosition()
 											 .cpy().scl(BOX_TO_WORLD));
-		transformComponent.setZRotation(body.getAngle());
+		transformComponent.setZRotation(body.getAngle()*MathUtils.radiansToDegrees);
 		transformComponent.notifyObservers();
 	}
 

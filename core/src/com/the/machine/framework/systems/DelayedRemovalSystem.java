@@ -12,12 +12,13 @@ import com.the.machine.framework.components.DelayedRemovalComponent;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 17/03/15
  */
-public class DelayedRemovalSystem extends IteratingSystem {
+public class DelayedRemovalSystem
+		extends IteratingSystem {
 
 	transient private ComponentMapper<DelayedRemovalComponent> delayedRemovals = ComponentMapper.getFor(DelayedRemovalComponent.class);
 
 	public DelayedRemovalSystem() {
-		super(Family.all(DelayedRemovalComponent.class)
+		super(Family.one(DelayedRemovalComponent.class)
 					.get());
 	}
 
