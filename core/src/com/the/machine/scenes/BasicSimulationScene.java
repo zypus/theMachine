@@ -12,6 +12,9 @@ import com.the.machine.framework.components.*;
 import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
+import com.the.machine.framework.events.input.TouchDownEvent;
+import com.the.machine.framework.events.input.TouchDraggedEvent;
+import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.systems.DelayedRemovalSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
@@ -37,6 +40,7 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
         world.addSystem(new DelayedRemovalSystem());
         world.addSystem(new RandomNoiseSystem());
+        world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
 
         Entity noiseMap = new Entity();
         noiseMap.add(new NoiseMapComponent());
@@ -71,6 +75,7 @@ public class BasicSimulationScene implements SceneBuilder {
         TransformComponent transformComponent = new TransformComponent().setPosition(new Vector3(0, 0, 5));
         camera.add(transformComponent);
         camera.add(new NameComponent().setName("Camera" + random.nextInt()));
+        camera.add(new SelectorComponent());
         w.addEntity(camera);
     }
 
@@ -78,11 +83,13 @@ public class BasicSimulationScene implements SceneBuilder {
         Entity guard = new Entity();
 
         guard.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch(assetName, TextureRegion.class)).setSortingOrder(2));
-        guard.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
+        guard.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(1).setZ(2));
         guard.add(new NameComponent().setName("Guard" + random.nextInt()));
         guard.add(new AgentSightComponent());
         guard.add(new RandomBehaviourComponent());
         guard.add(new ColliderComponent().add(new ColliderComponent.Collider()));
+        guard.add(new DraggableComponent());
+        guard.add(new DimensionComponent().setDimension(0.2f, 0.2f));
 
         w.addEntity(guard);
     }
