@@ -15,6 +15,9 @@ import java.util.Set;
  * Created by Frans on 15-3-2015.
  */
 public class WorldMapComponent {
+    /*
+     * TODO: Will probably be replaced by an entity with Areatype Ground
+     */
     private static final int cols = 50;   // Horizontal resolution
     private static final int rows = 50;   // Vertical resolution
 
