@@ -34,7 +34,7 @@ public class AgentSightComponent extends ObservableComponent {
 
     public AgentSightComponent() {
         maximumSightDistance = 1f;
-        degreesOfSight = 10;
+        degreesOfSight = 90;
     }
 
     // For debugging

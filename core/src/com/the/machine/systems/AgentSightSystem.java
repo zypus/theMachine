@@ -6,7 +6,9 @@ import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
+import com.the.machine.framework.components.DelayedRemovalComponent;
 import com.the.machine.framework.components.NameComponent;
+import com.the.machine.framework.components.ShapeRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 import java.util.Map;
@@ -30,9 +32,17 @@ public class AgentSightSystem extends IteratingSystem {
         AgentSightComponent agentSightComponent = entity.getComponent(AgentSightComponent.class);
         TransformComponent agentTransformComponent = entity.getComponent(TransformComponent.class);
 
+        // Update the debug info every second
+        boolean isTimeToShowDebugInfo = false;
+        if (agentSightComponent.timeSinceLastDebugOutput >= 0.1) {
+            agentSightComponent.timeSinceLastDebugOutput = 0;
+            isTimeToShowDebugInfo = true;
+        }
+        agentSightComponent.timeSinceLastDebugOutput += deltaTime;
+
         agentSightComponent.areaMapping.clear();
         Vector2 agentPosition = agentTransformComponent.get2DPosition();
-        float agentAngle = -agentTransformComponent.getZRotation();
+        float agentAngle = -agentTransformComponent.getZRotation(); // ...
 
         Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
         float maximumSightDistance = agentSightComponent.maximumSightDistance;
@@ -47,27 +57,16 @@ public class AgentSightSystem extends IteratingSystem {
 
                     // For debugging, add a small white dot if an agent has seen the area
                     // For debugging. Add a white pixel to areas that are on the map
-                    if (!agentSightComponent.areasBeingSeen.contains(areaPosition)) {
-                        Entity white = new Entity();
-                        white.add(AgentSightComponent.whiteSprite);
-                        white.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.04f).setZ(1));
-                        getWorld().addEntity(white);
-                        agentSightComponent.areasBeingSeen.add(areaPosition);  // Makes the simulation much faster
+                    if (isTimeToShowDebugInfo) {
+                        Entity circle = new Entity();
+                        circle.add(new ShapeRenderComponent().add((r) -> r.circle(0, 0, 2f)));
+                        circle.add(new TransformComponent().set2DPosition(areaPosition).setScale(.01f).setZ(1));
+                        circle.add(new DelayedRemovalComponent().setDelay(0.4f));
+                        getWorld().addEntity(circle);
                     }
                 }
             }
         }
-
-
-        // Only display debug info every 2 seconds
-        if (agentSightComponent.timeSinceLastDebugOutput >= 2) {
-            agentSightComponent.timeSinceLastDebugOutput = 0;
-            System.out.println(entity.getComponent(NameComponent.class).getName() + "'s sight component contains " + agentSightComponent.areaMapping.size() + " coordinates");
-        }
-        else {
-            agentSightComponent.timeSinceLastDebugOutput += deltaTime;
-        }
-
     }
 
     private static boolean isAngleBetween(float lowestAngle, float angleToMeasure, float highestAngle) {
