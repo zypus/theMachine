@@ -18,6 +18,7 @@ import com.the.machine.components.AreaComponent;
 import com.the.machine.components.DragComponent;
 import com.the.machine.components.DraggableComponent;
 import com.the.machine.components.HandleComponent;
+import com.the.machine.components.ListenerComponent;
 import com.the.machine.components.ResizableComponent;
 import com.the.machine.components.SelectableComponent;
 import com.the.machine.components.SelectionComponent;
@@ -390,6 +391,7 @@ public class MapSystem
 				newAgent.add(new DraggableComponent());
 				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE));
 				newAgent.add(new VelocityComponent().setVelocity(10f));
+				newAgent.add(new ListenerComponent());
 				world.addEntity(newAgent);
 			}
 		} else if (event instanceof KeyDownEvent) {

@@ -16,10 +16,12 @@ import com.the.machine.components.AreaComponent;
 import com.the.machine.components.ControlComponent;
 import com.the.machine.components.DirectionalVelocityComponent;
 import com.the.machine.components.DraggableComponent;
+import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.ResizableComponent;
 import com.the.machine.components.SelectableComponent;
 import com.the.machine.components.SelectorComponent;
 import com.the.machine.components.ZoomableComponent;
+import com.the.machine.events.AudioEvent;
 import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorLoadPrefabEvent;
@@ -55,6 +57,7 @@ import com.the.machine.framework.events.input.TouchDownEvent;
 import com.the.machine.framework.events.input.TouchDraggedEvent;
 import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.events.physics.Light2dToggleEvent;
+import com.the.machine.framework.systems.DelayedRemovalSystem;
 import com.the.machine.framework.systems.canvas.CanvasElementSystem;
 import com.the.machine.framework.systems.canvas.CanvasSystem;
 import com.the.machine.framework.systems.canvas.TableCellSystem;
@@ -68,14 +71,19 @@ import com.the.machine.framework.utility.ClickEventListenerExecuter;
 import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Enums;
 import com.the.machine.framework.utility.Executable;
+import com.the.machine.systems.AudioIndicatorSystem;
+import com.the.machine.systems.AudioListeningSystem;
 import com.the.machine.systems.CameraZoomSystem;
 import com.the.machine.systems.DirectionalMovementSystem;
 import com.the.machine.systems.DraggingSystem;
+import com.the.machine.systems.GrowthSystem;
 import com.the.machine.systems.InputControlledMovementSystem;
 import com.the.machine.systems.MapSystem;
 import com.the.machine.systems.MovementSystem;
+import com.the.machine.systems.RandomNoiseSystem;
 import com.the.machine.systems.ResizeHandleSystem;
 import com.the.machine.systems.SelectionSystem;
+import com.the.machine.systems.SoundDirectionDebugSystem;
 import com.the.machine.systems.ZoomIndependenceSystem;
 
 import java.util.HashMap;
@@ -94,6 +102,8 @@ public class MapEditorSceneBuilder
 
 	@Override
 	public void createScene(World world) {
+		world.addSystem(new DelayedRemovalSystem());
+		world.addSystem(new GrowthSystem());
 		world.addSystem(new DirectionalMovementSystem());
 		world.addSystem(new InputControlledMovementSystem(), KeyDownEvent.class, KeyUpEvent.class);
 		world.addSystem(new CameraRenderSystem(), AssetLoadingFinishedEvent.class);
@@ -107,6 +117,10 @@ public class MapEditorSceneBuilder
 		world.addSystem(new CanvasSystem(), ResizeEvent.class, CanvasKeyboardFocusEvent.class);
 		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new MovementSystem());
+		world.addSystem(new RandomNoiseSystem());
+		world.addSystem(new AudioIndicatorSystem(), AudioEvent.class);
+		world.addSystem(new AudioListeningSystem(), AudioEvent.class);
+		world.addSystem(new SoundDirectionDebugSystem());
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);
 		world.addSystem(new Light2dSystem(), Light2dToggleEvent.class);
@@ -183,6 +197,7 @@ public class MapEditorSceneBuilder
 						.add(new ColliderComponent.Collider().setShape(new Vector2(150, -150), new Vector2(150, 150)))
 						.add(new ColliderComponent.Collider().setShape(new Vector2(150, 150), new Vector2(-150, 150)))
 						.add(new ColliderComponent.Collider().setShape(new Vector2(-150, 150), new Vector2(-150, -150))));
+		map.add(new MapGroundComponent());
 		world.addEntity(map);
 
 		Entity GUITable = new Entity();
