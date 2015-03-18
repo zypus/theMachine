@@ -1,9 +1,14 @@
 package com.the.machine.systems;
 
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.the.machine.components.AgentSightComponent;
+import com.the.machine.components.GrowthComponent;
+import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.DelayedRemovalComponent;
@@ -17,6 +22,8 @@ import java.util.Map;
  * Created by Frans on 15-3-2015.
  */
 public class AgentSightSystem extends IteratingSystem {
+    private ImmutableArray<Entity> groundComponentEntities;
+
     public AgentSightSystem(int priority) {
         super(Family.all(
                 AgentSightComponent.class,  // To store the sight information
@@ -25,47 +32,65 @@ public class AgentSightSystem extends IteratingSystem {
     }
 
     @Override
+    public void addedToEngine(Engine engine) {
+        super.addedToEngine(engine);
+        groundComponentEntities = engine.getEntitiesFor(Family.one(MapGroundComponent.class).get());
+    }
+
+    @Override
+    public void removedFromEngine(Engine engine) {
+        super.removedFromEngine(engine);
+        groundComponentEntities = null;
+    }
+
+    @Override
     /*
      * Update the SightComponent for this Entity.
      */
     protected void processEntity(Entity entity, float deltaTime) {
-        AgentSightComponent agentSightComponent = entity.getComponent(AgentSightComponent.class);
-        TransformComponent agentTransformComponent = entity.getComponent(TransformComponent.class);
+        if (groundComponentEntities.size() > 0) {
+            AgentSightComponent agentSightComponent = entity.getComponent(AgentSightComponent.class);
+            TransformComponent agentTransformComponent = entity.getComponent(TransformComponent.class);
+            WorldMapComponent worldMapComponent = groundComponentEntities.get(0).getComponent(WorldMapComponent.class);
 
-        // Update the debug info every second
-        boolean isTimeToShowDebugInfo = false;
-        if (agentSightComponent.timeSinceLastDebugOutput >= 0.1) {
-            agentSightComponent.timeSinceLastDebugOutput = 0;
-            isTimeToShowDebugInfo = true;
-        }
-        agentSightComponent.timeSinceLastDebugOutput += deltaTime;
+            // Update the debug view every 0.1 seconds
+            boolean isTimeToShowDebugInfo = false;
+            if (agentSightComponent.timeSinceLastDebugOutput >= 0.1) {
+                agentSightComponent.timeSinceLastDebugOutput = 0;
+                isTimeToShowDebugInfo = true;
+            }
+            agentSightComponent.timeSinceLastDebugOutput += deltaTime;
 
-        agentSightComponent.areaMapping.clear();
-        Vector2 agentPosition = agentTransformComponent.get2DPosition();
-        float agentAngle = -agentTransformComponent.getZRotation(); // ...
+            agentSightComponent.areaMapping.clear();    // Delete what the agent saw during the previous iteration
+            Vector2 agentPosition = agentTransformComponent.get2DPosition();
+            float agentAngle = -agentTransformComponent.getZRotation(); // ...
 
-        Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
-        float maximumSightDistance = agentSightComponent.maximumSightDistance;
+            Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
+            float maximumSightDistance = agentSightComponent.maximumSightDistance;
 
-        for (Vector2 areaPosition : worldMap.keySet()) {
-            if (agentPosition.dst(areaPosition) <= maximumSightDistance ) {
-                float minAngle = normalizeAngle(agentAngle - (float) (0.5 * agentSightComponent.degreesOfSight));
-                float maxAngle = normalizeAngle(agentAngle + (float) (0.5 * agentSightComponent.degreesOfSight));
-                float angleOfArea = (new Vector2(areaPosition).sub(agentPosition)).angle();
-                if (isAngleBetween(minAngle, angleOfArea, maxAngle)) {
-                    agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
+            for (Vector2 areaPosition : worldMap.keySet()) {
+                if (agentPosition.dst(areaPosition) <= maximumSightDistance) {
+                    float minAngle = normalizeAngle(agentAngle - (float) (0.5 * agentSightComponent.degreesOfSight));
+                    float maxAngle = normalizeAngle(agentAngle + (float) (0.5 * agentSightComponent.degreesOfSight));
+                    float angleOfArea = (new Vector2(areaPosition).sub(agentPosition)).angle();
+                    if (isAngleBetween(minAngle, angleOfArea, maxAngle)) {
+                        agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
 
-                    // For debugging, add a small white dot if an agent has seen the area
-                    // For debugging. Add a white pixel to areas that are on the map
-                    if (isTimeToShowDebugInfo) {
-                        Entity circle = new Entity();
-                        circle.add(new ShapeRenderComponent().add((r) -> r.circle(0, 0, 2f)));
-                        circle.add(new TransformComponent().set2DPosition(areaPosition).setScale(.01f).setZ(1));
-                        circle.add(new DelayedRemovalComponent().setDelay(0.4f));
-                        getWorld().addEntity(circle);
+                        // For debugging. Add a white circle to areas that are on the map
+                        if (isTimeToShowDebugInfo) {
+                            Entity circle = new Entity();
+                            circle.add(new ShapeRenderComponent().add((r) -> r.circle(0, 0, 2f)));
+                            circle.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.02f).setZ(1));
+                            circle.add(new DelayedRemovalComponent().setDelay(0.2f));
+                            getWorld().addEntity(circle);
+                        }
                     }
                 }
             }
+        }
+        else {
+            // If there is no groundComponent
+            System.err.println("AgentSightSystem: No entity with the MapGroundComponent found.");
         }
     }
 

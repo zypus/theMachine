@@ -13,15 +13,9 @@ import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.systems.DelayedRemovalSystem;
-import com.the.machine.framework.systems.physics.Physics2dSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
-import com.the.machine.systems.AgentSightSystem;
-import com.the.machine.systems.BehaviourSystem;
-import com.the.machine.systems.MovementSystem;
-import com.the.machine.systems.RandomBehaviourSystem;
-import com.the.machine.systems.RotationSystem;
-import com.the.machine.systems.WorldMappingSystem;
+import com.the.machine.systems.*;
 
 import java.util.Random;
 
@@ -42,6 +36,11 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new AgentSightSystem(1));
         world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
         world.addSystem(new DelayedRemovalSystem());
+        world.addSystem(new RandomNoiseSystem());
+
+        Entity noiseMap = new Entity();
+        noiseMap.add(new NoiseMapComponent());
+        world.addEntity(noiseMap);
 
         createCamera(world);
         createGround(world);

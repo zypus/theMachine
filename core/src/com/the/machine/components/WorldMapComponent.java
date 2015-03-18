@@ -61,4 +61,10 @@ public class WorldMapComponent extends AbstractComponent{
 
         return this;
     }
+
+    public static class NotEnoughWorldMapComponentsException extends Exception{
+        public NotEnoughWorldMapComponentsException() {
+            super();
+        }
+    }
 }

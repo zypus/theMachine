@@ -4,17 +4,11 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
-import com.the.machine.framework.assets.Asset;
-import com.the.machine.framework.components.DelayedRemovalComponent;
-import com.the.machine.framework.components.ShapeRenderComponent;
-import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 import java.awt.*;
@@ -66,7 +60,6 @@ public class WorldMappingSystem extends IteratingSystem {
              * entities, not AreaComponents.
              */
 
-            // TODO use the ColliderComponent for this
             WorldMapComponent wmc = groundComponentEntities.get(0).getComponent(WorldMapComponent.class);
             if (!worldMap.containsValue(areaTransformComponent)) {
                 Vector2 bottomLeft = new Vector2(
@@ -93,8 +86,8 @@ public class WorldMappingSystem extends IteratingSystem {
                 // Also put the coordinates on the worldmap (so we can look up entities based on their coordinate)
                 for (Vector2 coordinate : coordinatesOfEntity) {
                     /*
-                     * Due to rounding, one coordinate can be close to multiple entities. If so, the resolution should be
-                     * increased in WorldMapComponent.
+                     * Due to rounding, one coordinate can be closer to other entities. If this causes problems, the
+                     * resolution should be increased in WorldMapComponent.
                      * To avoid this, we check if the WorldMap already contains the coordinate.
                      */
                     if (!worldMap.containsKey(coordinate)) {
@@ -102,6 +95,10 @@ public class WorldMappingSystem extends IteratingSystem {
                     }
                 }
             }
+        }
+        else {
+            // If there is no MapGroundComponent found
+            System.err.println("WorldMappingSystem: No entity with the MapGroundComponent found.");
         }
     }
 }
