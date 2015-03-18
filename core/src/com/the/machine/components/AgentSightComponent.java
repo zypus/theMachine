@@ -22,7 +22,7 @@ public class AgentSightComponent extends ObservableComponent {
         return maximumSightDistance;
     }
     public List<Vector2> areasBeingSeen = new ArrayList<>();   // Only for debugging
-    public static SpriteRenderComponent whiteSprite = new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(2);// new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1); // Also for debugging
+    public static SpriteRenderComponent whiteSprite = new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class));// new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1); // Also for debugging
 
     public AgentSightComponent setMaximumSightDistance(float maximumSightDistance) {
         this.maximumSightDistance = maximumSightDistance;
@@ -34,7 +34,7 @@ public class AgentSightComponent extends ObservableComponent {
 
     public AgentSightComponent() {
         maximumSightDistance = 1f;
-        degreesOfSight = 45;
+        degreesOfSight = 10;
     }
 
     // For debugging

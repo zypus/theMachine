@@ -50,7 +50,7 @@ public class AgentSightSystem extends IteratingSystem {
                     if (!agentSightComponent.areasBeingSeen.contains(areaPosition)) {
                         Entity white = new Entity();
                         white.add(AgentSightComponent.whiteSprite);
-                        white.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.02f).setZ(1));
+                        white.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.04f).setZ(1));
                         getWorld().addEntity(white);
                         agentSightComponent.areasBeingSeen.add(areaPosition);  // Makes the simulation much faster
                     }

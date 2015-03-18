@@ -14,6 +14,7 @@ import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
@@ -67,6 +68,7 @@ public class BasicSimulationScene implements SceneBuilder {
         guard1.add(new NameComponent().setName("Guard1"));
         guard1.add(new AgentSightComponent());
         guard1.add(new RandomBehaviourComponent());
+        guard1.add(new ColliderComponent().add(new ColliderComponent.Collider()));
 
         guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)).setSortingOrder(2));
         guard2.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
@@ -100,12 +102,12 @@ public class BasicSimulationScene implements SceneBuilder {
         door_open_1.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));
 
         target.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("target", TextureRegion.class)));
-        target.add(new TransformComponent().set2DPosition(new Vector2(1, -.5f)).setScale(2f, 2, 1));
+        target.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(4, 4, 1));
         target.add(new NameComponent().setName("Target1"));
         target.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));
 
-        world.addEntity(tower1);
-        world.addEntity(door_open_1);
+        //world.addEntity(tower1);
+        //world.addEntity(door_open_1);
         world.addEntity(target);
     }
 }
