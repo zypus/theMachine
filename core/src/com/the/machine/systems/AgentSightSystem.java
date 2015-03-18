@@ -2,15 +2,11 @@ package com.the.machine.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.google.common.collect.BiMap;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
-import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.NameComponent;
-import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 import java.util.Map;
@@ -54,7 +50,7 @@ public class AgentSightSystem extends IteratingSystem {
                     if (!agentSightComponent.areasBeingSeen.contains(areaPosition)) {
                         Entity white = new Entity();
                         white.add(AgentSightComponent.whiteSprite);
-                        white.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.02f));
+                        white.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.02f).setZ(1));
                         getWorld().addEntity(white);
                         agentSightComponent.areasBeingSeen.add(areaPosition);  // Makes the simulation much faster
                     }

@@ -3,8 +3,6 @@ package com.the.machine.components;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.ObservableComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
@@ -24,7 +22,7 @@ public class AgentSightComponent extends ObservableComponent {
         return maximumSightDistance;
     }
     public List<Vector2> areasBeingSeen = new ArrayList<>();   // Only for debugging
-    public static SpriteRenderComponent whiteSprite = new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1);// new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1); // Also for debugging
+    public static SpriteRenderComponent whiteSprite = new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(2);// new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1); // Also for debugging
 
     public AgentSightComponent setMaximumSightDistance(float maximumSightDistance) {
         this.maximumSightDistance = maximumSightDistance;

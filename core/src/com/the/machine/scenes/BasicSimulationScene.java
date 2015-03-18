@@ -5,16 +5,25 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
-import com.the.machine.components.*;
+import com.the.machine.components.AgentSightComponent;
+import com.the.machine.components.AreaComponent;
+import com.the.machine.components.RandomBehaviourComponent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
-import com.the.machine.framework.components.*;
+import com.the.machine.framework.components.CameraComponent;
+import com.the.machine.framework.components.NameComponent;
+import com.the.machine.framework.components.SpriteRenderComponent;
+import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
-import com.the.machine.framework.utility.EntityUtilities;
-import com.the.machine.systems.*;
+import com.the.machine.systems.AgentSightSystem;
+import com.the.machine.systems.BehaviourSystem;
+import com.the.machine.systems.MovementSystem;
+import com.the.machine.systems.RandomBehaviourSystem;
+import com.the.machine.systems.RotationSystem;
+import com.the.machine.systems.WorldMappingSystem;
 
 /**
  * Created by Frans on 12-3-2015.
@@ -39,7 +48,7 @@ public class BasicSimulationScene implements SceneBuilder {
                 .c(0)
                 .get();
         cameraComponent.setCullingMask(mask);
-        cameraComponent.setProjection(CameraComponent.Projection.PERSPECTIVE);
+        cameraComponent.setProjection(CameraComponent.Projection.ORTHOGRAPHIC);
         cameraComponent.setZoom(0.01f);
         camera.add(cameraComponent);
 
@@ -53,20 +62,20 @@ public class BasicSimulationScene implements SceneBuilder {
         Entity guard2 = new Entity();
         Entity guard3 = new Entity();
 
-        guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)).setSortingOrder(-2));
-        guard1.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
+        guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)).setSortingOrder(2));
+        guard1.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
         guard1.add(new NameComponent().setName("Guard1"));
         guard1.add(new AgentSightComponent());
         guard1.add(new RandomBehaviourComponent());
 
-        guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)).setSortingOrder(-2));
-        guard2.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
+        guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)).setSortingOrder(2));
+        guard2.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
         guard2.add(new NameComponent().setName("Guard2"));
         guard2.add(new AgentSightComponent());
         guard2.add(new RandomBehaviourComponent());
 
-        guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)).setSortingOrder(-2));
-        guard3.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f));
+        guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)).setSortingOrder(2));
+        guard3.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
         guard3.add(new NameComponent().setName("Guard3"));
         guard3.add(new AgentSightComponent());
         guard3.add(new RandomBehaviourComponent());

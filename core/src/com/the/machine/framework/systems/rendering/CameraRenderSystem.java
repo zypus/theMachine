@@ -270,6 +270,7 @@ public class CameraRenderSystem
 			// draw all entities
 			List<Entity> onTop = new ArrayList<>();
 			String lastLayer = null;
+			boolean flushed = false;
 			for (int i = 0; i < entities.size; i++) {
 				Entity entity = entities.get(i);
 				if (EntityUtilities.isEntityEnabled(entity)) {
@@ -282,6 +283,9 @@ public class CameraRenderSystem
 						String layer = getSortable(entity).getSortingLayer();
 						if (lastLayer != null && !layer.equals(lastLayer)) {
 							decalBatch.flush();
+							flushed = true;
+						} else {
+							flushed = false;
 						}
 						lastLayer = layer;
 						if (spriteRenderers.has(entity) && spriteRenderers.get(entity)
@@ -362,7 +366,9 @@ public class CameraRenderSystem
 					}
 				}
 			}
-//			decalBatch.flush();
+			if (!flushed) {
+				decalBatch.flush();
+			}
 			for (int i = onTop.size()-1; i >= 0; i--) {
 				Entity entity = onTop.get(i);
 				if (physic2dDebugs.has(entity)) {
