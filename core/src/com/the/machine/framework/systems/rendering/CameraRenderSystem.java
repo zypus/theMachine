@@ -27,6 +27,7 @@ import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.components.CanvasComponent;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.LayerComponent;
+import com.the.machine.framework.components.ShapeRenderComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.physics.Light2dRenderComponent;
@@ -65,6 +66,7 @@ public class CameraRenderSystem
 	private transient         ComponentMapper<LayerComponent>        layers           = ComponentMapper.getFor(LayerComponent.class);
 	private transient         ComponentMapper<Physics2dDebugComponent>        physic2dDebugs           = ComponentMapper.getFor(Physics2dDebugComponent.class);
 	private transient         ComponentMapper<Light2dRenderComponent> lights = ComponentMapper.getFor(Light2dRenderComponent.class);
+	private transient         ComponentMapper<ShapeRenderComponent> shapes = ComponentMapper.getFor(ShapeRenderComponent.class);
 
 	private transient Family                 cameraFamily;
 	private transient ImmutableArray<Entity> cameras;
@@ -87,7 +89,7 @@ public class CameraRenderSystem
 	}
 
 	public CameraRenderSystem() {
-		super(Family.one(SpriteRenderComponent.class, CanvasComponent.class, Physics2dDebugComponent.class, Light2dRenderComponent.class)
+		super(Family.one(SpriteRenderComponent.class, CanvasComponent.class, Physics2dDebugComponent.class, Light2dRenderComponent.class, ShapeRenderComponent.class)
 					.get());
 		setComparator(new LayerComparator(this).thenComparing(new OrderComparator(this)));
 
@@ -341,6 +343,32 @@ public class CameraRenderSystem
 							projection.scl(physics2dDebugComponent.getBoxToWorld(), physics2dDebugComponent.getBoxToWorld(), 1f);
 							box2DDebugRenderer.render(physics2dDebugComponent.getBox2dWorld(), projection);
 //							onTop.add(entity);
+						}
+
+						if (shapes.has(entity) && shapes.get(entity)
+														.isEnabled()) {
+							ShapeRenderComponent shapeRenderComponent = shapes.get(entity);
+							TransformComponent transform = EntityUtilities.computeAbsoluteTransform(entity);
+							DimensionComponent dm = dimensions.get(entity);
+							float w = 1;
+							float h = 1;
+							if (dm != null) {
+								w = dm.getWidth();
+								h = dm.getHeight();
+							}
+							shapeRenderer.setProjectionMatrix(camera.combined);
+							Matrix4 transformMatrix = shapeRenderer.getTransformMatrix();
+							Matrix4 newTransformMatrix = new Matrix4();
+							newTransformMatrix.rotate(transform.getRotation());
+							newTransformMatrix.translate(transform.getPosition());
+							newTransformMatrix.scl(transform.getScale());
+							shapeRenderer.setTransformMatrix(newTransformMatrix);
+							shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+							for (ShapeRenderComponent.Shape shape : shapeRenderComponent.getShapes()) {
+								shape.render(shapeRenderer);
+							}
+							shapeRenderer.end();
+							shapeRenderer.setTransformMatrix(transformMatrix);
 						}
 
 						if (lights.has(entity) && lights.get(entity)
