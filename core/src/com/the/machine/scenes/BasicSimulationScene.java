@@ -53,12 +53,12 @@ public class BasicSimulationScene implements SceneBuilder {
         //createGuard(world, "guard1");
         //createGuard(world, "guard2");
 
-        for (int i = 0; i < 25; i++)
-    createGuard(world, "guard3");
+        for (int i = 0; i < 2; i++)
+            createGuard(world, "guard3");
 
-    createArea(world, AreaComponent.AreaType.TOWER,     new TransformComponent().set2DPosition(new Vector2(-1, -1))    .setScale(0.5f));
-    createArea(world, AreaComponent.AreaType.DOOR_OPEN, new TransformComponent().set2DPosition(new Vector2(1.5f, 1.5f)).setScale(1, 0.3f, 1));
-    createArea(world, AreaComponent.AreaType.TARGET, new TransformComponent().set2DPosition(new Vector2(-1.5f, 2)).setScale(2, 3, 1));
+        createArea(world, AreaComponent.AreaType.TOWER,     new TransformComponent().set2DPosition(new Vector2(-1, -1))    .setScale(0.5f));
+        createArea(world, AreaComponent.AreaType.DOOR_OPEN, new TransformComponent().set2DPosition(new Vector2(1.5f, 1.5f)).setScale(1, 0.3f, 1));
+        createArea(world, AreaComponent.AreaType.TARGET, new TransformComponent().set2DPosition(new Vector2(-1.5f, 2)).setScale(2, 3, 1));
 }
 
     private void createCamera(World w) {

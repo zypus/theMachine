@@ -17,23 +17,43 @@ import java.util.Map;
  */
 public class AgentSightComponent extends ObservableComponent {
     public Map<Vector2, Entity> areaMapping = new HashMap<>();
+    private float degreesOfSight;
+    private float maximumSightDistance;
+    private float minimumSightDistance;
+
 
     public float getMaximumSightDistance() {
         return maximumSightDistance;
     }
+
+    public float getMinimumSightDistance() {
+        return minimumSightDistance;
+    }
+
+    public float getDegreesOfSight() {
+        return degreesOfSight;
+    }
+
     public List<Vector2> areasBeingSeen = new ArrayList<>();   // Only for debugging
-    public static SpriteRenderComponent whiteSprite = new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class));// new SpriteRenderComponent().setTextureRegion(Asset.fetch("white", TextureRegion.class)).setSortingOrder(-1); // Also for debugging
 
     public AgentSightComponent setMaximumSightDistance(float maximumSightDistance) {
         this.maximumSightDistance = maximumSightDistance;
         return this;
     }
 
-    public float degreesOfSight;
-    public float maximumSightDistance;
+    public AgentSightComponent setMinimumSightDistance(float minimumSightDistance) {
+        this.minimumSightDistance = minimumSightDistance;
+        return this;
+    }
+
+    public AgentSightComponent setDegreesOfSight(float degreesOfSight) {
+        this.degreesOfSight = degreesOfSight;
+        return this;
+    }
 
     public AgentSightComponent() {
-        maximumSightDistance = 1f;
+        minimumSightDistance = 1f;
+        maximumSightDistance = 2f;
         degreesOfSight = 90;
     }
 

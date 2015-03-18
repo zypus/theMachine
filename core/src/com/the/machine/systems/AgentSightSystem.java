@@ -66,12 +66,13 @@ public class AgentSightSystem extends IteratingSystem {
             float agentAngle = -agentTransformComponent.getZRotation(); // ...
 
             Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
-            float maximumSightDistance = agentSightComponent.maximumSightDistance;
+            float maximumSightDistance = agentSightComponent.getMaximumSightDistance();
+            float minimumSightDistance = agentSightComponent.getMinimumSightDistance();
 
             for (Vector2 areaPosition : worldMap.keySet()) {
-                if (agentPosition.dst(areaPosition) <= maximumSightDistance) {
-                    float minAngle = normalizeAngle(agentAngle - (float) (0.5 * agentSightComponent.degreesOfSight));
-                    float maxAngle = normalizeAngle(agentAngle + (float) (0.5 * agentSightComponent.degreesOfSight));
+                if (agentPosition.dst(areaPosition) <= maximumSightDistance && minimumSightDistance <= agentPosition.dst(areaPosition)) {
+                    float minAngle = normalizeAngle(agentAngle - (float) (0.5 * agentSightComponent.getDegreesOfSight()));
+                    float maxAngle = normalizeAngle(agentAngle + (float) (0.5 * agentSightComponent.getDegreesOfSight()));
                     float angleOfArea = (new Vector2(areaPosition).sub(agentPosition)).angle();
                     if (isAngleBetween(minAngle, angleOfArea, maxAngle)) {
                         agentSightComponent.areaMapping.put(areaPosition, worldMap.get(areaPosition));
