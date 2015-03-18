@@ -156,6 +156,7 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 			light.setSoftnessLength(lc.getSoftnessLength());
 			light.setStaticLight(lc.isStaticLight());
 			light.setXray(lc.isXray());
+			Light.setContactFilter(lc.getFilter());
 		}
 	}
 
@@ -188,6 +189,7 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		light.setSoftnessLength(lc.getSoftnessLength());
 		light.setStaticLight(lc.isStaticLight());
 		light.setXray(lc.isXray());
+		Light.setContactFilter(lc.getFilter());
 		lc.setLight(light);
 	}
 }

@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.DragComponent;
@@ -342,9 +343,9 @@ public class MapSystem
 					if (camera != null) {
 						Vector3 unproject = EntityUtilities.getWorldCoordinates(((TouchUpEvent) event).getScreenX(), ((TouchUpEvent) event).getScreenY(), camera, world);
 						newMapElement.add(new TransformComponent().setPosition(unproject)
-																  .setZ(mapElements.size()));
+																  .setZ(0));
 					} else {
-						newMapElement.add(new TransformComponent().setZ(mapElements.size()));
+						newMapElement.add(new TransformComponent().setZ(0));
 					}
 					newMapElement.add(new DimensionComponent().setDimension(10, 10));
 					newMapElement.add(new AreaComponent().setType(currentType));
@@ -355,7 +356,7 @@ public class MapSystem
 																 .setSortingLayer("Default")
 																 .setSortingOrder(mapElements.size() + 1));
 					newMapElement.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
-					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-5, -5, 10, 10))));
+					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-5, -5, 10, 10)).setFilter(currentType.getFilter()).setDensity(100000)));
 					newMapElement.add(new SelectableComponent());
 					newMapElement.add(new ResizableComponent());
 					newMapElement.add(new DraggableComponent());
@@ -386,10 +387,21 @@ public class MapSystem
 				newAgent.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("badlogic", TextureRegion.class))
 														.setSortingLayer("Default"));
 				newAgent.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
-				newAgent.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Vector2(), 1)));
+
+				Filter filter = new Filter();
+				filter.categoryBits = AreaComponent.AGENT_CATEGORY;
+				filter.maskBits = AreaComponent.AGENT_MASK;
+				filter.groupIndex = 0;
+
+				Filter lightFilter = new Filter();
+				lightFilter.categoryBits = AreaComponent.AGENT_CATEGORY;
+				lightFilter.maskBits = AreaComponent.LIGHT_MASK;
+				lightFilter.groupIndex = 0;
+
+				newAgent.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Vector2(), 1).setFilter(filter)));
 				newAgent.add(new SelectableComponent());
 				newAgent.add(new DraggableComponent());
-				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE));
+				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE).setFilter(lightFilter));
 				newAgent.add(new VelocityComponent().setVelocity(10f));
 				newAgent.add(new ListenerComponent());
 				world.addEntity(newAgent);
@@ -474,6 +486,11 @@ public class MapSystem
 																   .getTextureAsset());
 							spriteRenderComponent.setDirty(true);
 							areaComponent.setDirty(false);
+							ColliderComponent colliderComponent = colliders.get(element);
+							colliderComponent.getColliders()
+											 .get(0)
+											 .setFilter(areaComponent.getType()
+																	 .getFilter());
 						}
 					}
 				}

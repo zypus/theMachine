@@ -214,6 +214,7 @@ public class CameraRenderSystem
 
 	@Override
 	public void update(float deltaTime) {
+		sort();
 		Array<Entity> entities = sortedEntities;
 		for (int c = 0; c < cameras.size(); c++) {
 			Entity cameraEntity = sortedCameras.get(c);

@@ -15,7 +15,6 @@ import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.ControlComponent;
 import com.the.machine.components.DirectionalVelocityComponent;
-import com.the.machine.components.DraggableComponent;
 import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.ResizableComponent;
 import com.the.machine.components.SelectableComponent;
@@ -188,7 +187,6 @@ public class MapEditorSceneBuilder
 											 .get()));
 		map.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset())
 										   .setSortingLayer("Default"));
-		map.add(new DraggableComponent());
 		map.add(new SelectableComponent());
 		map.add(new ResizableComponent());
 		map.add(new Physics2dComponent().setType(BodyDef.BodyType.StaticBody));
