@@ -33,8 +33,8 @@ public class AreaComponent extends AbstractComponent{
 		WINDOW_BROKEN(Asset.fetch("window_broken", TextureRegion.class)),
 		DOOR_OPEN(Asset.fetch("door_open", TextureRegion.class)),
 		DOOR_CLOSED(Asset.fetch("door_closed", TextureRegion.class)),
-		TARGET(Asset.fetch("", TextureRegion.class)),
-		TOWER(Asset.fetch("", TextureRegion.class)),
+		TARGET(Asset.fetch("target", TextureRegion.class)),
+		TOWER(Asset.fetch("tower", TextureRegion.class)),
 		TOWER_USED(Asset.fetch("", TextureRegion.class)),
 		COVER(Asset.fetch("", TextureRegion.class));
 

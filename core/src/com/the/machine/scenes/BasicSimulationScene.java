@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
 import com.the.machine.components.*;
+import com.the.machine.events.AudioEvent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.*;
@@ -39,12 +40,7 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new AgentSightSystem(1));
         world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
         world.addSystem(new DelayedRemovalSystem());
-        world.addSystem(new RandomNoiseSystem());
         world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
-
-        Entity noiseMap = new Entity();
-        noiseMap.add(new NoiseMapComponent());
-        world.addEntity(noiseMap);
 
         createCamera(world);
         createGround(world);
@@ -58,7 +54,7 @@ public class BasicSimulationScene implements SceneBuilder {
 
         createArea(world, AreaComponent.AreaType.TOWER,     new TransformComponent().set2DPosition(new Vector2(-1, -1))    .setScale(0.5f));
         createArea(world, AreaComponent.AreaType.DOOR_OPEN, new TransformComponent().set2DPosition(new Vector2(1.5f, 1.5f)).setScale(1, 0.3f, 1));
-        createArea(world, AreaComponent.AreaType.TARGET, new TransformComponent().set2DPosition(new Vector2(-1.5f, 2)).setScale(2, 3, 1));
+        createArea(world, AreaComponent.AreaType.TARGET, new TransformComponent().set2DPosition(new Vector2(-1.5f, 2))     .setScale(5, 3, 1));
 }
 
     private void createCamera(World w) {
@@ -98,7 +94,7 @@ public class BasicSimulationScene implements SceneBuilder {
         Entity ground = new Entity();
         ground.add(new MapGroundComponent());
         ground.add(new AreaComponent().setType(AreaComponent.AreaType.GROUND));
-        ground.add(new SpriteRenderComponent().setTextureRegion(AreaComponent.AreaType.GROUND.getTextureAsset()).setSortingLayer("Default"));
+        //ground.add(new SpriteRenderComponent().setTextureRegion(AreaComponent.AreaType.GROUND.getTextureAsset()).setSortingLayer("Default"));
         ground.add(new DimensionComponent().setDimension(8, 8));
         ground.add(new WorldMapComponent());
 
