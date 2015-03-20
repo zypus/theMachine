@@ -46,8 +46,8 @@ public class AreaComponent extends AbstractComponent{
 		WINDOW_BROKEN(Asset.fetch("window_broken", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
 		DOOR_OPEN(Asset.fetch("door_open", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
 		DOOR_CLOSED(Asset.fetch("door_closed", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
-		TARGET(Asset.fetch("", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
-		TOWER(Asset.fetch("", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
+		TARGET(Asset.fetch("target", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
+		TOWER(Asset.fetch("tower", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
 		TOWER_USED(Asset.fetch("", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
 		COVER(Asset.fetch("", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0);
 

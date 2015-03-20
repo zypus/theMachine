@@ -4,6 +4,8 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.the.machine.framework.components.AbstractComponent;
+import com.the.machine.framework.components.DimensionComponent;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -14,23 +16,55 @@ import java.util.Set;
 /**
  * Created by Frans on 15-3-2015.
  */
-public class WorldMapComponent {
-    private static final int cols = 100;   // Horizontal resolution
-    private static final int rows = 100;   // Vertical resolution
+public class WorldMapComponent extends AbstractComponent{
+    private int cols;   // Horizontal resolution
+    private int rows;   // Vertical resolution
 
-    // The area that will be mapped
-    public static final float x_start = -2;
-    public static final float x_end = 2;
-    public static final float y_start = -2;
-    public static final float y_end = 2;
+    // The area that will be mapped is determined in the DimensionComponent of the entity that has the MapGroundComponent
+    public float x_start;
+    public float x_end;
+    public float y_start;
+    public float y_end;
 
-    public static final float col_width = Math.abs(x_end - x_start) / (cols - 1);
-    public static final float row_height = Math.abs(y_end - y_start) / (rows - 1);
+    public float col_width(){ return Math.abs(x_end - x_start) / (cols - 1); }
+    public float row_height(){ return Math.abs(y_end - y_start) / (rows - 1); }
 
-    public static BiMap<Set<Vector2>, Entity> worldBiMap = HashBiMap.create();  // Maps a set of coordinates to an entity and vice versa
     public static Map<Vector2, Entity> worldMap = new HashMap<>(); // Maps coordinates to entities
 
-    WorldMapComponent() {
-        // Constructor should never be called
+    public WorldMapComponent() {
+        x_start = -1;
+        x_end = 1;
+        y_start = -1;
+        y_end = 1;
+
+        cols = 10;
+        rows = 10;
+    }
+
+    public WorldMapComponent setDimension(DimensionComponent dc) {
+        worldMap = new HashMap<>();
+
+        float width = dc.getWidth();
+        float height = dc.getHeight();
+
+        float x_start = -width/2;
+        float y_start = -height/2;
+        float x_end = width/2;
+        float y_end = height/2;
+
+        return this;
+    }
+
+    public WorldMapComponent setResolution(int cols, int rows) {
+        this.cols = cols;
+        this.rows = rows;
+
+        return this;
+    }
+
+    public static class NotEnoughWorldMapComponentsException extends Exception{
+        public NotEnoughWorldMapComponentsException() {
+            super();
+        }
     }
 }

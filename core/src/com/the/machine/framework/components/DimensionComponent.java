@@ -99,5 +99,4 @@ public class DimensionComponent
 		this.pivot = pivot;
 		return this;
 	}
-
 }

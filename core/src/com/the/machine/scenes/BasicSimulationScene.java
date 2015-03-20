@@ -5,30 +5,29 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Bits;
-import com.the.machine.components.AgentSightComponent;
-import com.the.machine.components.AreaComponent;
-import com.the.machine.components.RandomBehaviourComponent;
+import com.the.machine.components.*;
+import com.the.machine.events.AudioEvent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
-import com.the.machine.framework.components.CameraComponent;
-import com.the.machine.framework.components.NameComponent;
-import com.the.machine.framework.components.SpriteRenderComponent;
-import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.*;
+import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.engine.World;
 import com.the.machine.framework.events.basic.AssetLoadingFinishedEvent;
+import com.the.machine.framework.events.input.TouchDownEvent;
+import com.the.machine.framework.events.input.TouchDraggedEvent;
+import com.the.machine.framework.events.input.TouchUpEvent;
+import com.the.machine.framework.systems.DelayedRemovalSystem;
 import com.the.machine.framework.systems.rendering.CameraRenderSystem;
 import com.the.machine.framework.utility.BitBuilder;
-import com.the.machine.systems.AgentSightSystem;
-import com.the.machine.systems.BehaviourSystem;
-import com.the.machine.systems.MovementSystem;
-import com.the.machine.systems.RandomBehaviourSystem;
-import com.the.machine.systems.RotationSystem;
-import com.the.machine.systems.WorldMappingSystem;
+import com.the.machine.systems.*;
+
+import java.util.Random;
 
 /**
  * Created by Frans on 12-3-2015.
  */
 public class BasicSimulationScene implements SceneBuilder {
+    private static Random random = new Random();
 
     @Override
     public void createScene(World world) {
@@ -38,10 +37,27 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new RotationSystem());
         world.addSystem(new BehaviourSystem());
         world.addSystem(new RandomBehaviourSystem());
-        world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
         world.addSystem(new AgentSightSystem(1));
+        world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
+        world.addSystem(new DelayedRemovalSystem());
+        world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
 
-        // Camera
+        createCamera(world);
+        createGround(world);
+
+        // Create the guards
+        //createGuard(world, "guard1");
+        //createGuard(world, "guard2");
+
+        for (int i = 0; i < 2; i++)
+            createGuard(world, "guard3");
+
+        createArea(world, AreaComponent.AreaType.TOWER,     new TransformComponent().set2DPosition(new Vector2(-1, -1))    .setScale(0.5f));
+        createArea(world, AreaComponent.AreaType.DOOR_OPEN, new TransformComponent().set2DPosition(new Vector2(1.5f, 1.5f)).setScale(1, 0.3f, 1));
+        createArea(world, AreaComponent.AreaType.TARGET, new TransformComponent().set2DPosition(new Vector2(-1.5f, 2))     .setScale(5, 3, 1));
+}
+
+    private void createCamera(World w) {
         Entity camera = new Entity();
         CameraComponent cameraComponent = new CameraComponent();
         Bits mask = BitBuilder.all(32)
@@ -53,59 +69,46 @@ public class BasicSimulationScene implements SceneBuilder {
         camera.add(cameraComponent);
 
         TransformComponent transformComponent = new TransformComponent().setPosition(new Vector3(0, 0, 5));
-        camera.add(transformComponent);             // The transform component allows moving and rotating the camera
-        camera.add(new NameComponent().setName("Main Camera"));
-        world.addEntity(camera);
+        camera.add(transformComponent);
+        camera.add(new NameComponent().setName("Camera" + random.nextInt()));
+        camera.add(new SelectorComponent());
+        w.addEntity(camera);
+    }
 
-        // Create the guards
-        Entity guard1 = new Entity();
-        Entity guard2 = new Entity();
-        Entity guard3 = new Entity();
+    private void createGuard(World w, String assetName) {
+        Entity guard = new Entity();
 
-        guard1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard1", TextureRegion.class)).setSortingOrder(2));
-        guard1.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
-        guard1.add(new NameComponent().setName("Guard1"));
-        guard1.add(new AgentSightComponent());
-        guard1.add(new RandomBehaviourComponent());
+        guard.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch(assetName, TextureRegion.class)).setSortingOrder(2));
+        guard.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(1).setZ(2));
+        guard.add(new NameComponent().setName("Guard" + random.nextInt()));
+        guard.add(new AgentSightComponent());
+        guard.add(new RandomBehaviourComponent());
+        guard.add(new ColliderComponent().add(new ColliderComponent.Collider()));
+        guard.add(new DraggableComponent());
+        guard.add(new DimensionComponent().setDimension(0.2f, 0.2f));
 
-        guard2.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard2", TextureRegion.class)).setSortingOrder(2));
-        guard2.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
-        guard2.add(new NameComponent().setName("Guard2"));
-        guard2.add(new AgentSightComponent());
-        guard2.add(new RandomBehaviourComponent());
+        w.addEntity(guard);
+    }
 
-        guard3.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("guard3", TextureRegion.class)).setSortingOrder(2));
-        guard3.add(new TransformComponent().set2DPosition(new Vector2(0, 0)).setScale(0.2f).setZ(2));
-        guard3.add(new NameComponent().setName("Guard3"));
-        guard3.add(new AgentSightComponent());
-        guard3.add(new RandomBehaviourComponent());
+    private void createGround(World w) {
+        Entity ground = new Entity();
+        ground.add(new MapGroundComponent());
+        ground.add(new AreaComponent().setType(AreaComponent.AreaType.GROUND));
+        //ground.add(new SpriteRenderComponent().setTextureRegion(AreaComponent.AreaType.GROUND.getTextureAsset()).setSortingLayer("Default"));
+        ground.add(new DimensionComponent().setDimension(8, 8));
+        ground.add(new WorldMapComponent());
 
-        world.addEntity(guard1);
-        world.addEntity(guard2);
-        world.addEntity(guard3);
+        w.addEntity(ground);
+    }
 
-        // And create some entities which can be seen by the guards
-        Entity tower1 = new Entity();
-        Entity door_open_1 = new Entity();
-        Entity target = new Entity();
+    private void createArea(World w, AreaComponent.AreaType type, TransformComponent transformComponent) {
+        Entity area = new Entity();
 
-        tower1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("tower", TextureRegion.class)));
-        tower1.add(new TransformComponent().set2DPosition(new Vector2(-1, -1)).setScale(0.5f));
-        tower1.add(new NameComponent().setName("Tower1"));
-        tower1.add(new AreaComponent().setType(AreaComponent.AreaType.TOWER));
+        area.add(transformComponent);
+        area.add(new NameComponent().setName(type.name() + random.nextInt()));
+        area.add(new AreaComponent().setType(type));
+        area.add(new SpriteRenderComponent().setTextureRegion(type.getTextureAsset()));
 
-        door_open_1.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("door_open", TextureRegion.class)));
-        door_open_1.add(new TransformComponent().set2DPosition(new Vector2(1.5f, 1.5f)).setScale(1, 0.3f, 1));
-        door_open_1.add(new NameComponent().setName("DoorOpen1"));
-        door_open_1.add(new AreaComponent().setType(AreaComponent.AreaType.DOOR_OPEN));
-
-        target.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("target", TextureRegion.class)));
-        target.add(new TransformComponent().set2DPosition(new Vector2(1, -.5f)).setScale(2f, 2, 1));
-        target.add(new NameComponent().setName("Target1"));
-        target.add(new AreaComponent().setType(AreaComponent.AreaType.TARGET));
-
-        world.addEntity(tower1);
-        world.addEntity(door_open_1);
-        world.addEntity(target);
+        w.addEntity(area);
     }
 }
