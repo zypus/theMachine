@@ -11,6 +11,7 @@ import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.input.ScrolledEvent;
+import lombok.EqualsAndHashCode;
 
 /**
  * TODO Add description
@@ -18,6 +19,7 @@ import com.the.machine.framework.events.input.ScrolledEvent;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 14/03/15
  */
+@EqualsAndHashCode
 public class CameraZoomSystem extends AbstractSystem implements EventListener {
 
 	transient private ComponentMapper<CameraComponent> cameraComponents = ComponentMapper.getFor(CameraComponent.class);
@@ -30,7 +32,7 @@ public class CameraZoomSystem extends AbstractSystem implements EventListener {
 			if (cameras != null) {
 				for (Entity camera : cameras) {
 					CameraComponent cameraComponent = cameraComponents.get(camera);
-					float zoom = cameraComponent.getZoom() + 0.1f * ((ScrolledEvent) event).getAmount();
+					float zoom = cameraComponent.getZoom() + 0.05f * ((ScrolledEvent) event).getAmount();
 					if (zoom <= 0) {
 						zoom = 0.01f;
 					}

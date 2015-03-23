@@ -7,10 +7,12 @@ import com.the.machine.components.DragComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.framework.components.TransformComponent;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by Frans on 12-3-2015.
  */
+@EqualsAndHashCode
 public class RotationSystem extends IteratingSystem {
     private transient ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
     private transient ComponentMapper<AngularVelocityComponent> angularvelocities = ComponentMapper.getFor(AngularVelocityComponent.class);
@@ -32,6 +34,7 @@ public class RotationSystem extends IteratingSystem {
             float newRotation = oldRotation + (deltaTime * angularVelocityComponent.getAngularVelocity());
 
             transformComponent.setZRotation(((newRotation % 360) + 360) % 360);
+			transformComponent.notifyObservers();
         }
     }
 }

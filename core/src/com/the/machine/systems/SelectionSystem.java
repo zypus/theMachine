@@ -7,7 +7,6 @@ import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.the.machine.components.SelectableComponent;
@@ -25,6 +24,7 @@ import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.utility.EntityUtilities;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +38,7 @@ import static com.badlogic.gdx.Input.Keys.*;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 14/03/15
  */
+@EqualsAndHashCode
 public class SelectionSystem
 		extends AbstractSystem
 		implements EntityListener, EventListener {
@@ -147,8 +148,8 @@ public class SelectionSystem
 	private void deselect(Entity entity) {
 		entity.remove(SelectionComponent.class);
 		if (sprites.has(entity)) {
-			sprites.get(entity)
-				   .setTint(Color.WHITE);
+//			sprites.get(entity)
+//				   .setTint(Color.WHITE);
 			sprites.get(entity)
 				   .notifyObservers();
 		}
@@ -157,8 +158,8 @@ public class SelectionSystem
 	private void select(Entity entity) {
 		entity.add(new SelectionComponent());
 		if (sprites.has(entity)) {
-			sprites.get(entity)
-				   .setTint(new Color(0.3f, 0.9f, 0.9f, 1.0f));
+//			sprites.get(entity)
+//				   .setTint(new Color(0.3f, 0.9f, 0.9f, 1.0f));
 			sprites.get(entity)
 				   .notifyObservers();
 		}

@@ -24,12 +24,20 @@ import com.the.machine.components.SelectionComponent;
 import com.the.machine.components.SelectorComponent;
 import com.the.machine.components.ZoomableComponent;
 import com.the.machine.events.AudioEvent;
+import com.the.machine.events.DoorCancelEvent;
+import com.the.machine.events.DoorOpenEvent;
 import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorLoadPrefabEvent;
 import com.the.machine.events.MapEditorSaveEvent;
 import com.the.machine.events.MapEditorSavePrefabEvent;
 import com.the.machine.events.MapEditorSaveSuccessEvent;
+import com.the.machine.events.MarkerEvent;
+import com.the.machine.events.ResetEvent;
+import com.the.machine.events.SprintEvent;
+import com.the.machine.events.TowerEnterEvent;
+import com.the.machine.events.TowerLeaveEvent;
+import com.the.machine.events.WindowDestroyEvent;
 import com.the.machine.framework.SceneBuilder;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.CameraComponent;
@@ -61,6 +69,8 @@ import com.the.machine.framework.events.input.ScrolledEvent;
 import com.the.machine.framework.events.input.TouchDownEvent;
 import com.the.machine.framework.events.input.TouchDraggedEvent;
 import com.the.machine.framework.events.input.TouchUpEvent;
+import com.the.machine.framework.events.physics.ContactBeginEvent;
+import com.the.machine.framework.events.physics.ContactEndEvent;
 import com.the.machine.framework.events.physics.Light2dToggleEvent;
 import com.the.machine.framework.systems.DelayedRemovalSystem;
 import com.the.machine.framework.systems.RemovalSystem;
@@ -78,24 +88,36 @@ import com.the.machine.framework.utility.ClickEventListenerExecuter;
 import com.the.machine.framework.utility.EntityUtilities;
 import com.the.machine.framework.utility.Enums;
 import com.the.machine.framework.utility.Executable;
-import com.the.machine.systems.AgentSightSystem;
 import com.the.machine.systems.AudioIndicatorSystem;
 import com.the.machine.systems.AudioListeningSystem;
 import com.the.machine.systems.BehaviourSystem;
 import com.the.machine.systems.CameraZoomSystem;
 import com.the.machine.systems.DirectionalMovementSystem;
+import com.the.machine.systems.DiscretizedMapDebugSystem;
+import com.the.machine.systems.DiscretizedMapSystem;
+import com.the.machine.systems.DizzinessSystem;
+import com.the.machine.systems.DoorSystem;
 import com.the.machine.systems.DraggingSystem;
+import com.the.machine.systems.EnvironmentSystem;
 import com.the.machine.systems.GrowthSystem;
 import com.the.machine.systems.InputControlledMovementSystem;
+import com.the.machine.systems.IntruderSpawnSystem;
 import com.the.machine.systems.MapSystem;
+import com.the.machine.systems.MarkerSystem;
 import com.the.machine.systems.MovementSystem;
-import com.the.machine.systems.RandomBehaviourSystem;
 import com.the.machine.systems.RandomNoiseSystem;
 import com.the.machine.systems.ResizeHandleSystem;
 import com.the.machine.systems.RotationSystem;
 import com.the.machine.systems.SelectionSystem;
 import com.the.machine.systems.SoundDirectionDebugSystem;
-import com.the.machine.systems.WorldMappingSystem;
+import com.the.machine.systems.SprintSystem;
+import com.the.machine.systems.StepSoundSystem;
+import com.the.machine.systems.TowerSystem;
+import com.the.machine.systems.VictorySystem;
+import com.the.machine.systems.VisionRangeDebugSystem;
+import com.the.machine.systems.VisionSystem;
+import com.the.machine.systems.VisonDebugSystem;
+import com.the.machine.systems.WindowSystem;
 import com.the.machine.systems.ZoomIndependenceSystem;
 
 import java.util.HashMap;
@@ -127,18 +149,30 @@ public class MapEditorSceneBuilder
 		world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
 		world.addSystem(new SelectionSystem(), TouchUpEvent.class);
 		world.addSystem(new ResizeHandleSystem());
-		world.addSystem(new RotationSystem());
-		world.addSystem(new BehaviourSystem());
-		world.addSystem(new RandomBehaviourSystem());
-		world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
-		world.addSystem(new AgentSightSystem(1));
 		world.addSystem(new CanvasSystem(), ResizeEvent.class, CanvasKeyboardFocusEvent.class);
 		world.addSystem(new CanvasElementSystem());
+		world.addSystem(new SprintSystem(), SprintEvent.class);
+		world.addSystem(new IntruderSpawnSystem());
 		world.addSystem(new MovementSystem());
+		world.addSystem(new DizzinessSystem());
+		world.addSystem(new EnvironmentSystem(), ContactBeginEvent.class, ContactEndEvent.class);
 		world.addSystem(new RandomNoiseSystem());
+		world.addSystem(new StepSoundSystem());
 		world.addSystem(new AudioIndicatorSystem(), AudioEvent.class);
 		world.addSystem(new AudioListeningSystem(), AudioEvent.class);
 		world.addSystem(new SoundDirectionDebugSystem());
+		world.addSystem(new DiscretizedMapSystem());
+//		world.addSystem(new DiscretizedMapDebugSystem());
+		world.addSystem(new VisionRangeDebugSystem());
+		world.addSystem(new VisionSystem());
+		world.addSystem(new VisonDebugSystem());
+		world.addSystem(new RotationSystem());
+		world.addSystem(new MarkerSystem(), MarkerEvent.class, ResetEvent.class);
+		world.addSystem(new TowerSystem(), TowerEnterEvent.class, TowerLeaveEvent.class);
+		world.addSystem(new DoorSystem(), DoorOpenEvent.class, DoorCancelEvent.class);
+		world.addSystem(new WindowSystem(), WindowDestroyEvent.class);
+		world.addSystem(new BehaviourSystem());
+		world.addSystem(new VictorySystem());
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);
 		world.addSystem(new Light2dSystem(), Light2dToggleEvent.class);
@@ -152,6 +186,7 @@ public class MapEditorSceneBuilder
 							  .get();
 		mapCameraComponent.setCullingMask(mask);
 		mapCameraComponent.setProjection(CameraComponent.Projection.ORTHOGRAPHIC);
+		mapCameraComponent.setZoom(0.3f);
 		mapCameraComponent.getClippingPlanes()
 						 .setNear(-300f);
 		mapCamera.add(mapCameraComponent);
@@ -200,7 +235,7 @@ public class MapEditorSceneBuilder
 
 		Entity map = new Entity();
 		map.add(new TransformComponent().setZ(-1));
-		map.add(new DimensionComponent().setDimension(300, 300));
+		map.add(new DimensionComponent().setDimension(200, 200));
 		AreaComponent.AreaType type = AreaComponent.AreaType.GROUND;
 		map.add(new AreaComponent().setType(type));
 		map.add(new LayerComponent(BitBuilder.none(32)
@@ -212,10 +247,10 @@ public class MapEditorSceneBuilder
 		map.add(new ResizableComponent());
 		map.add(new Physics2dComponent().setType(BodyDef.BodyType.StaticBody));
 		map.add(new ColliderComponent()
-						.add(new ColliderComponent.Collider().setShape(new Vector2(-150, -150), new Vector2(150, -150)))
-						.add(new ColliderComponent.Collider().setShape(new Vector2(150, -150), new Vector2(150, 150)))
-						.add(new ColliderComponent.Collider().setShape(new Vector2(150, 150), new Vector2(-150, 150)))
-						.add(new ColliderComponent.Collider().setShape(new Vector2(-150, 150), new Vector2(-150, -150))));
+						.add(new ColliderComponent.Collider().setShape(new Vector2(-100, -100), new Vector2(100, -100)))
+						.add(new ColliderComponent.Collider().setShape(new Vector2(100, -100), new Vector2(100, 100)))
+						.add(new ColliderComponent.Collider().setShape(new Vector2(100, 100), new Vector2(-100, 100)))
+						.add(new ColliderComponent.Collider().setShape(new Vector2(-100, 100), new Vector2(-100, -100))));
 		map.add(new MapGroundComponent());
 		world.addEntity(map);
 
@@ -416,6 +451,7 @@ public class MapEditorSceneBuilder
 								 }
 							 }
 							 resetted.setBool(true);
+							 world.dispatchEvent(new ResetEvent());
 							 return true;
 						 }));
 			resetButton.add(resetComponent);
@@ -579,7 +615,7 @@ public class MapEditorSceneBuilder
 		EntityUtilities.relate(GUITable, hotbar);
 		world.addEntity(hotbar);
 
-		String[] buttonNames = new String[]{"Wall", "Window(T)", "Door(T)", "Cover", "Tower(T)", "Target", "Agent(T)", "Prefab"};
+		String[] buttonNames = new String[]{"Wall", "Window(T)", "Door(T)", "Cover", "Tower", "Target", "Agent(T)", "Prefab"};
 		ButtonGroup<Button> buttonGroup = new ButtonGroup<>();
 		buttonGroup.setMinCheckCount(1);
 		buttonGroup.setMaxCheckCount(1);
@@ -625,19 +661,32 @@ public class MapEditorSceneBuilder
 
 	}
 
-	private void toggleSimulationSystems(World world, boolean enabled) {
+	public static void toggleSimulationSystems(World world, boolean enabled) {
 		world.setSystemStatus(DelayedRemovalSystem.class, enabled);
 		world.setSystemStatus(GrowthSystem.class, enabled);
 		world.setSystemStatus(MovementSystem.class, enabled);
 		world.setSystemStatus(RandomNoiseSystem.class, enabled);
 		world.setSystemStatus(RotationSystem.class, enabled);
 		world.setSystemStatus(BehaviourSystem.class, enabled);
-		world.setSystemStatus(RandomBehaviourSystem.class, enabled);
-		world.setSystemStatus(WorldMappingSystem.class, enabled);
-		world.setSystemStatus(AgentSightSystem.class, enabled);
+//		world.setSystemStatus(RandomBehaviourSystem.class, enabled);
+		world.setSystemStatus(DiscretizedMapSystem.class, enabled);
+		world.setSystemStatus(DiscretizedMapDebugSystem.class, enabled);
+		world.setSystemStatus(VisionSystem.class, enabled);
+		world.setSystemStatus(StepSoundSystem.class, enabled);
+		world.setSystemStatus(DizzinessSystem.class, enabled);
+		world.setSystemStatus(SprintSystem.class, enabled);
+		world.setSystemStatus(IntruderSpawnSystem.class, enabled);
+		world.setSystemStatus(VisonDebugSystem.class, enabled);
+		world.setSystemStatus(WindowSystem.class, enabled);
+		world.setSystemStatus(DoorSystem.class, enabled);
+		world.setSystemStatus(TowerSystem.class, enabled);
+		world.setSystemStatus(MarkerSystem.class, enabled);
+		world.setSystemStatus(VictorySystem.class, enabled);
+//		world.setSystemStatus(WorldMappingSystem.class, enabled);
+//		world.setSystemStatus(AgentSightSystem.class, enabled);
 	}
 
-	private void toggleMapEditorSystems(World world, boolean enabled) {
+	private static void toggleMapEditorSystems(World world, boolean enabled) {
 
 	}
 }

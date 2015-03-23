@@ -5,14 +5,11 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.the.machine.components.AgentSightComponent;
-import com.the.machine.components.GrowthComponent;
 import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.DelayedRemovalComponent;
-import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.ShapeRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 
@@ -80,8 +77,8 @@ public class AgentSightSystem extends IteratingSystem {
                         // For debugging. Add a white circle to areas that are on the map
                         if (isTimeToShowDebugInfo) {
                             Entity circle = new Entity();
-                            circle.add(new ShapeRenderComponent().add((r) -> r.circle(0, 0, 2f)));
-                            circle.add(new TransformComponent().set2DPosition(areaPosition).setScale(0.02f).setZ(1));
+                            circle.add(new ShapeRenderComponent().add((r) -> r.circle(0, 0, 2f)).setSortingLayer("Physics 2d Debug"));
+                            circle.add(new TransformComponent().set2DPosition(areaPosition).setScale(1f).setZ(1));
                             circle.add(new DelayedRemovalComponent().setDelay(0.2f));
                             getWorld().addEntity(circle);
                         }

@@ -43,9 +43,15 @@ public class ColliderComponent extends AbstractComponent {
 		return this;
 	}
 
+	public ColliderComponent clear() {
+		removed.addAll(colliders);
+		colliders.clear();
+		return this;
+	}
+
 	@Getter
 	public static class Collider {
-		transient @Setter Fixture fixture;
+		transient @Setter Fixture fixture = null;
 		float   density = 1;
 		Filter  filter = new Filter();
 		float   friction = 0;

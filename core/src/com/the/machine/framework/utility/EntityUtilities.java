@@ -213,8 +213,8 @@ public class EntityUtilities {
 							.sub(at.getPosition());
 		localCoords.scl(1f/at.getXScale(), 1f / at.getYScale(), 1f / at.getZScale());
 		Quaternion inverseRotation = at.getRotation()
-						   .cpy()
-						   .mul(-1);
+						   .cpy().nor();
+		inverseRotation.conjugate();
 		inverseRotation.transform(localCoords);
 		return localCoords;
 	}
@@ -258,7 +258,11 @@ public class EntityUtilities {
 				bound = bound.merge(rect);
 			}
 		}
-		return bound;
+		if (bound == null) {
+			return new Rectangle();
+		} else {
+			return bound;
+		}
 	}
 
 	public static Rectangle toScreenRect(Rectangle rect, Entity camera, World world) {
