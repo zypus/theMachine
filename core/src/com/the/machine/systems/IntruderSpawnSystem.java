@@ -139,6 +139,7 @@ public class IntruderSpawnSystem
 		newAgent.add(new DraggableComponent());
 		newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE)
 										   .setAngle(45)
+										   .setColor(Color.RED)
 										   .setFilter(lightFilter)
 										   .setDistance(7.5f));
 		newAgent.add(new VisionComponent());

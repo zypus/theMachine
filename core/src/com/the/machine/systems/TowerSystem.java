@@ -83,6 +83,7 @@ public class TowerSystem
 							float dist = areaTf.getPosition()
 											   .dst2(tf.getPosition());
 							if (dist < dst2) {
+								dst2 = dist;
 								tower = element;
 							}
 						}
