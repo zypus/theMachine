@@ -10,6 +10,7 @@ import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.ListenerComponent;
 import com.the.machine.components.MapGroundComponent;
+import com.the.machine.components.SprintComponent;
 import com.the.machine.components.VisionComponent;
 import com.the.machine.events.TowerEnterEvent;
 import com.the.machine.events.TowerLeaveEvent;
@@ -47,6 +48,7 @@ public class TowerSystem
 	transient private ComponentMapper<AgentComponent>     agents     = ComponentMapper.getFor(AgentComponent.class);
 	transient private ComponentMapper<ListenerComponent> listeners = ComponentMapper.getFor(ListenerComponent.class);
 	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
+	transient private ComponentMapper<SprintComponent> sprints = ComponentMapper.getFor(SprintComponent.class);
 
 	transient private ImmutableArray<Entity> mapElements;
 	transient private List<TowerCommand> commands = new ArrayList<>();
@@ -72,7 +74,8 @@ public class TowerSystem
 													 .get();
 			if (entity != null) {
 				AgentComponent agentComponent = agents.get(entity);
-				if (agentComponent.getEnvironmentType() == AreaComponent.AreaType.TOWER && !agentComponent.isInTower()) {
+				SprintComponent sprintComponent = sprints.get(entity);
+				if (sprintComponent == null && agentComponent.getEnvironmentType() == AreaComponent.AreaType.TOWER && !agentComponent.isInTower()) {
 					Entity tower = null;
 					float dst2 = 10000000f;
 					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(entity);
@@ -90,10 +93,10 @@ public class TowerSystem
 					}
 					if (tower != null) {
 						TransformComponent towerTf = EntityUtilities.computeAbsoluteTransform(tower);
-//						Vector3 delta = towerTf.getPosition()
-//											   .cpy()
-//											   .sub(tf.getPosition())
-//											   .scl(0.25f);
+						//						Vector3 delta = towerTf.getPosition()
+						//											   .cpy()
+						//											   .sub(tf.getPosition())
+						//											   .scl(0.25f);
 						commands.add(new TowerCommand(true, TOWER_DELAY, ((TowerEnterEvent) event).getEnterer(), new WeakReference<>(tower), towerTf.getPosition()));
 						VisionComponent visionComponent = visions.get(entity);
 						visionComponent.setBlind(true);
@@ -108,42 +111,46 @@ public class TowerSystem
 		} else if (event instanceof TowerLeaveEvent) {
 			Entity entity = ((TowerLeaveEvent) event).getLeaver()
 													 .get();
-			AgentComponent agentComponent = agents.get(entity);
-			if (agentComponent
-					  .getEnvironmentType() == AreaComponent.AreaType.TOWER && agentComponent.isInTower()) {
-				Entity tower = null;
-				float dst2 = 10000000f;
-				TransformComponent tf = EntityUtilities.computeAbsoluteTransform(entity);
-				for (Entity element : mapElements) {
-					AreaComponent areaComponent = areas.get(element);
-					if (areaComponent.getType() == AreaComponent.AreaType.TOWER) {
-						TransformComponent areaTf = EntityUtilities.computeAbsoluteTransform(element);
-						float dist = areaTf.getPosition()
-										   .dst2(tf.getPosition());
-						if (dist < dst2) {
-							dst2 = dist;
-							tower = element;
+			if (entity != null) {
+				AgentComponent agentComponent = agents.get(entity);
+				SprintComponent sprintComponent = sprints.get(entity);
+				if (sprintComponent != null && agentComponent
+													   .getEnvironmentType() == AreaComponent.AreaType.TOWER && agentComponent.isInTower()) {
+					Entity tower = null;
+					float dst2 = 10000000f;
+					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(entity);
+					for (Entity element : mapElements) {
+						AreaComponent areaComponent = areas.get(element);
+						if (areaComponent.getType() == AreaComponent.AreaType.TOWER) {
+							TransformComponent areaTf = EntityUtilities.computeAbsoluteTransform(element);
+							float dist = areaTf.getPosition()
+											   .dst2(tf.getPosition());
+							if (dist < dst2) {
+								dst2 = dist;
+								tower = element;
+							}
 						}
 					}
-				}
-				if (tower != null) {
-					TransformComponent towerTf = EntityUtilities.computeAbsoluteTransform(tower);
-					DimensionComponent dm = dimensions.get(tower);
+					if (tower != null) {
+						TransformComponent towerTf = EntityUtilities.computeAbsoluteTransform(tower);
+						DimensionComponent dm = dimensions.get(tower);
 
-					Vector3 delta = tf.getPosition()
-										   .cpy()
-										   .sub(towerTf.getPosition()).nor()
-										   .scl(1.1f*(float) Math.sqrt(Math.pow(dm.getWidth()/2, 2)+Math.pow(dm.getHeight()/2, 2)));
-					commands.add(new TowerCommand(false, TOWER_DELAY, ((TowerLeaveEvent) event).getLeaver(), new WeakReference<>(tower), towerTf.getPosition()
-																																		   .cpy()
-																																		   .add(delta)));
-					VisionComponent visionComponent = visions.get(entity);
-					visionComponent.setBlind(true);
-					agentComponent.setMaxMovementSpeed(0);
-					agentComponent.setMaxTurningSpeed(0);
-					agentComponent.setActing(true);
-					ListenerComponent listenerComponent = listeners.get(entity);
-					listenerComponent.setDeaf(true);
+						Vector3 delta = tf.getPosition()
+										  .cpy()
+										  .sub(towerTf.getPosition())
+										  .nor()
+										  .scl(1.1f * (float) Math.sqrt(Math.pow(dm.getWidth() / 2, 2) + Math.pow(dm.getHeight() / 2, 2)));
+						commands.add(new TowerCommand(false, TOWER_DELAY, ((TowerLeaveEvent) event).getLeaver(), new WeakReference<>(tower), towerTf.getPosition()
+																																					.cpy()
+																																					.add(delta)));
+						VisionComponent visionComponent = visions.get(entity);
+						visionComponent.setBlind(true);
+						agentComponent.setMaxMovementSpeed(0);
+						agentComponent.setMaxTurningSpeed(0);
+						agentComponent.setActing(true);
+						ListenerComponent listenerComponent = listeners.get(entity);
+						listenerComponent.setDeaf(true);
+					}
 				}
 			}
 		}
