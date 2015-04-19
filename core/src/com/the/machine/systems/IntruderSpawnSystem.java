@@ -40,6 +40,7 @@ import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.components.physics.Light2dComponent;
 import com.the.machine.framework.components.physics.Physics2dComponent;
 import com.the.machine.framework.utility.BitBuilder;
+import com.the.machine.framework.utility.EntityUtilities;
 
 import java.lang.ref.WeakReference;
 
@@ -114,13 +115,13 @@ public class IntruderSpawnSystem
 												 .angle();
 
 		Entity newAgent = new Entity();
-		newAgent.add(new TransformComponent().setPosition(spawnX, spawnY, 0).setZRotation(angle));
+		newAgent.add(new TransformComponent().setPosition(spawnX, spawnY, 2).setZRotation(angle));
 		newAgent.add(new DimensionComponent().setDimension(1, 1));
 		newAgent.add(new LayerComponent(BitBuilder.none(32)
 												  .s(1)
 												  .get()));
 		newAgent.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("agent", TextureRegion.class))
-												.setSortingLayer("Default").setTint(Color.RED));
+												.setSortingLayer("Default").setTint(Color.RED).setSortingOrder(2));
 		newAgent.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
 
 		Filter filter = new Filter();
@@ -154,7 +155,18 @@ public class IntruderSpawnSystem
 		newAgent.add(new StepComponent());
 		newAgent.add(new DizzinessComponent());
 		newAgent.add(new SprintComponent());
+
+		Entity vision = new Entity();
+		vision.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE)
+										 .setAngle(45)
+										 .setFilter(lightFilter)
+										 .setDistance(18)
+		.setColor(Color.BLACK));
+		vision.add(new TransformComponent());
+		EntityUtilities.relate(newAgent, vision);
 		world.addEntity(newAgent);
+		world.addEntity(vision);
+
 		world.dispatchEvent(new AudioEvent(new Vector3(spawnX, spawnY, 0), 5, new WeakReference<>(newAgent)));
 		Entity spawnPoint = new Entity();
 		spawnPoint.add(new TransformComponent().setPosition(spawnX, spawnY, 0));

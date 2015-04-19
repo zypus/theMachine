@@ -53,7 +53,8 @@ public class AudioListeningSystem extends AbstractSystem implements EventListene
 	public void handleEvent(Event event) {
 		if (event instanceof AudioEvent) {
 			AudioEvent audioEvent = (AudioEvent) event;
-			Vector3 location = audioEvent.getLocation();
+			Vector3 location = audioEvent.getLocation().cpy();
+			location.z = 0;
 			Entity source = audioEvent.getSource()
 									  .get();
 
@@ -63,7 +64,8 @@ public class AudioListeningSystem extends AbstractSystem implements EventListene
 					ListenerComponent listenerComponent = listenerComponents.get(listener);
 					if (!listenerComponent.isDeaf()) {
 						TransformComponent transform = transforms.get(listener);
-						Vector3 listenerPos = transform.getPosition();
+						Vector3 listenerPos = transform.getPosition().cpy();
+						listenerPos.z = 0;
 						if (listenerPos.dst2(location) < dist2) {
 							Vector3 dir = EntityUtilities.inLocalCoordinates(listener, location);
 							//							Vector3 dir = listenerPos.cpy()

@@ -93,9 +93,9 @@ public class MapSystem
 	transient private ComponentMapper<HandleComponent>       handleComponents = ComponentMapper.getFor(HandleComponent.class);
 	transient private ComponentMapper<ColliderComponent>     colliders        = ComponentMapper.getFor(ColliderComponent.class);
 	transient private ComponentMapper<Physics2dComponent>    bodies           = ComponentMapper.getFor(Physics2dComponent.class);
-	transient private ComponentMapper<SprintComponent>    sprints           = ComponentMapper.getFor(SprintComponent.class);
-	transient private ComponentMapper<AgentComponent>    agents           = ComponentMapper.getFor(AgentComponent.class);
-	transient private ComponentMapper<Light2dComponent>    lights           = ComponentMapper.getFor(Light2dComponent.class);
+	transient private ComponentMapper<SprintComponent>       sprints          = ComponentMapper.getFor(SprintComponent.class);
+	transient private ComponentMapper<AgentComponent>        agents           = ComponentMapper.getFor(AgentComponent.class);
+	transient private ComponentMapper<Light2dComponent>      lights           = ComponentMapper.getFor(Light2dComponent.class);
 
 	transient private final double DOUBLE_TAP_TIME = 0.3f;
 	transient private       double lastTap         = -2 * DOUBLE_TAP_TIME;
@@ -108,7 +108,7 @@ public class MapSystem
 	transient private AreaComponent.AreaType currentType = WALL;
 	transient private String                 prefabName  = null;
 	transient private boolean                loadPrefab  = false;
-	transient private boolean				makeAgent = false;
+	transient private boolean                makeAgent   = false;
 
 	transient private List<Entity> toBeRemoved = new ArrayList<>();
 
@@ -177,7 +177,8 @@ public class MapSystem
 				colliderList.get(3)
 							.setShape(new Vector2(-wh, hh), new Vector2(-wh, -hh));
 				if (type == TOWER) {
-					colliderList.get(4).setShape(dm.getWidth(), dm.getHeight());
+					colliderList.get(4)
+								.setShape(dm.getWidth(), dm.getHeight());
 				}
 			} else {
 				ColliderComponent colliderComponent = colliders.get(entity);
@@ -300,11 +301,11 @@ public class MapSystem
 							areaComponent.setType(COVER);
 							break;
 						case 4:
-//							if (areaComponent.getType() == TOWER) {
-//								areaComponent.setType(TOWER_USED);
-//							} else {
-								areaComponent.setType(TOWER);
-//							}
+							//							if (areaComponent.getType() == TOWER) {
+							//								areaComponent.setType(TOWER_USED);
+							//							} else {
+							areaComponent.setType(TOWER);
+							//							}
 							break;
 						case 5:
 							areaComponent.setType(TARGET);
@@ -324,15 +325,19 @@ public class MapSystem
 					SpriteRenderComponent spriteRenderComponent = sprites.get(entity);
 					if (sprints.has(entity)) {
 						entity.remove(SprintComponent.class);
-						agents.get(entity).setBaseViewingDistance(6f);
-						lights.get(entity).setColor(Color.WHITE);
+						agents.get(entity)
+							  .setBaseViewingDistance(6f);
+						lights.get(entity)
+							  .setColor(Color.WHITE);
 						spriteRenderComponent
-							   .setTint(Color.WHITE);
+								.setTint(Color.WHITE);
 
 					} else {
 						entity.add(new SprintComponent());
-						agents.get(entity).setBaseViewingDistance(7.5f);
-						lights.get(entity).setColor(Color.RED);
+						agents.get(entity)
+							  .setBaseViewingDistance(7.5f);
+						lights.get(entity)
+							  .setColor(Color.RED);
 						spriteRenderComponent.setTint(Color.RED);
 					}
 					// TODO agent / intruder
@@ -405,7 +410,7 @@ public class MapSystem
 																   .get()));
 					newMapElement.add(new SpriteRenderComponent().setTextureRegion(currentType.getTextureAsset())
 																 .setSortingLayer("Default")
-																 .setSortingOrder(mapElements.size() + 1));
+																 .setSortingOrder(1));
 					newMapElement.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
 					ColliderComponent colliderComponent = new ColliderComponent();
 					makeColliders(colliderComponent, currentType, 10, 10);
@@ -429,16 +434,16 @@ public class MapSystem
 				if (camera != null) {
 					Vector3 unproject = EntityUtilities.getWorldCoordinates(((TouchUpEvent) event).getScreenX(), ((TouchUpEvent) event).getScreenY(), camera, world);
 					newAgent.add(new TransformComponent().setPosition(unproject)
-														 .setZ(mapElements.size()));
+														 .setZ(3));
 				} else {
-					newAgent.add(new TransformComponent().setZ(mapElements.size()));
+					newAgent.add(new TransformComponent().setZ(3));
 				}
 				newAgent.add(new DimensionComponent().setDimension(1, 1));
 				newAgent.add(new LayerComponent(BitBuilder.none(32)
 														  .s(1)
 														  .get()));
 				newAgent.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("agent", TextureRegion.class))
-														.setSortingLayer("Default"));
+														.setSortingLayer("Default").setSortingOrder(2));
 				newAgent.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
 
 				Filter filter = new Filter();
@@ -475,7 +480,17 @@ public class MapSystem
 				newAgent.add(new AgentComponent());
 				newAgent.add(new StepComponent());
 				newAgent.add(new DizzinessComponent());
+
+				Entity vision = new Entity();
+				vision.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE)
+												 .setAngle(45)
+												 .setFilter(lightFilter)
+												 .setDistance(18)
+												 .setColor(Color.BLACK));
+				vision.add(new TransformComponent());
+				EntityUtilities.relate(newAgent, vision);
 				world.addEntity(newAgent);
+				world.addEntity(vision);
 			}
 		} else if (event instanceof KeyDownEvent) {
 			int keycode = ((KeyDownEvent) event).getKeycode();
@@ -579,23 +594,23 @@ public class MapSystem
 
 	private void makeColliders(ColliderComponent colliderComponent, AreaComponent.AreaType type, float width, float height) {
 		colliderComponent.clear();
-		float wh = width/2;
-		float hh = height/2;
+		float wh = width / 2;
+		float hh = height / 2;
 		Filter sensorFilter = new Filter();
 		sensorFilter.categoryBits = AreaComponent.SENSOR_CATEGORY;
 		if (type == TOWER) {
 			colliderComponent.add(new ColliderComponent.Collider().setShape(new Vector2(-wh, -hh), new Vector2(wh, -hh))
-															  .setFilter(type.getFilter())
-															  .setDensity(100000))
-				.add(new ColliderComponent.Collider().setShape(new Vector2(wh, -hh), new Vector2(wh, hh))
-													 .setFilter(type.getFilter())
-													 .setDensity(100000))
-				.add(new ColliderComponent.Collider().setShape(new Vector2(wh, hh), new Vector2(-wh, hh))
-													 .setFilter(type.getFilter())
-													 .setDensity(100000))
-				.add(new ColliderComponent.Collider().setShape(new Vector2(-wh, hh), new Vector2(-wh, -hh))
-													 .setFilter(type.getFilter())
-													 .setDensity(100000));
+																  .setFilter(type.getFilter())
+																  .setDensity(100000))
+							 .add(new ColliderComponent.Collider().setShape(new Vector2(wh, -hh), new Vector2(wh, hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000))
+							 .add(new ColliderComponent.Collider().setShape(new Vector2(wh, hh), new Vector2(-wh, hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000))
+							 .add(new ColliderComponent.Collider().setShape(new Vector2(-wh, hh), new Vector2(-wh, -hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000));
 		} else {
 			colliderComponent.add(new ColliderComponent.Collider().setShape(new Rectangle(-wh, -hh, width, height))
 																  .setFilter(type.getFilter())

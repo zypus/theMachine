@@ -40,12 +40,10 @@ public class DiscretizedMapDebugSystem
 		DiscreteMapComponent mapComponent = discreteMaps.get(entity);
 		List<DiscreteMapComponent.MapCell> map = mapComponent.getSparseMap();
 		DimensionComponent dm = dimensions.get(entity);
-		float lx = -dm.getWidth() / 2;
-		float ly = -dm.getHeight() / 2;
 		for (DiscreteMapComponent.MapCell cell : map) {
-			if (cell.getType() != AreaComponent.AreaType.GROUND) {
+			if (cell.getType() != AreaComponent.AreaType.GROUND && cell.getType() != AreaComponent.AreaType.OUTER_WALL) {
 				Entity point = new Entity();
-				point.add(new TransformComponent().setPosition(new Vector3(cell.getPosition().x + lx, cell.getPosition().y + ly, 0)));
+				point.add(new TransformComponent().setPosition(new Vector3(cell.getPosition().x, cell.getPosition().y, 0)));
 				point.add(new ShapeRenderComponent().add((r) -> r.circle(0, 0, 1))
 													.setSortingLayer("Physics 2d Debug"));
 				point.add(new LayerComponent(BitBuilder.none(32)

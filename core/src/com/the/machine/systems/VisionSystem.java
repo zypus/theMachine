@@ -12,7 +12,9 @@ import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.components.VisionComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.DimensionComponent;
+import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.physics.Light2dComponent;
 import com.the.machine.framework.utility.EntityUtilities;
 import lombok.EqualsAndHashCode;
 
@@ -34,11 +36,14 @@ public class VisionSystem
 	transient private ComponentMapper<DimensionComponent>   dimensions   = ComponentMapper.getFor(DimensionComponent.class);
 	transient private ComponentMapper<VisionComponent>      visions      = ComponentMapper.getFor(VisionComponent.class);
 	transient private ComponentMapper<AgentComponent> agents = ComponentMapper.getFor(AgentComponent.class);
+	transient private ComponentMapper<Light2dComponent> lights = ComponentMapper.getFor(Light2dComponent.class);
+	transient private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
 	private ImmutableArray<Entity> mapEntities;
 	private ImmutableArray<Entity> agentEntities;
 
 	public VisionSystem() {
-		super(Family.all(VisionComponent.class)
+		super(Family.all(Light2dComponent.class)
+					.exclude(AgentComponent.class)
 					.get());
 	}
 
@@ -60,65 +65,90 @@ public class VisionSystem
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
 		// TODO line of sight
-		VisionComponent visionComponent = visions.get(entity);
-		List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
-		List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
-		visibleAgents.clear();
-		cells.clear();
-		if (mapEntities.size() > 0 && !visions.get(entity)
-											  .isBlind()) {
-			Entity mapEntity = mapEntities.first();
-			DimensionComponent dimensionComponent = dimensions.get(mapEntity);
-			TransformComponent transformComponent = transforms.get(mapEntity);
-			DiscreteMapComponent discreteMapComponent = discreteMaps.get(mapEntity);
-			List<DiscreteMapComponent.MapCell> map = discreteMapComponent.getSparseMap();
+		Entity agent = parents.get(entity)
+								.getParent()
+								.get();
+		if (agent != null) {
+			VisionComponent visionComponent = visions.get(agent);
+			List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
+			List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
+			visibleAgents.clear();
+			cells.clear();
+			if (mapEntities.size() > 0 && !visions.get(agent)
+												  .isBlind()) {
+				Entity mapEntity = mapEntities.first();
+				DimensionComponent dimensionComponent = dimensions.get(mapEntity);
+				TransformComponent transformComponent = transforms.get(mapEntity);
+				DiscreteMapComponent discreteMapComponent = discreteMaps.get(mapEntity);
+				List<DiscreteMapComponent.MapCell> map = discreteMapComponent.getSparseMap();
 
-			AgentComponent agentComponent = agents.get(entity);
-			float min = visionComponent.getMinDistance() * agentComponent.getVisionModifier();
-			min *= min;
-			float max = visionComponent.getMaxDistance() * agentComponent.getVisionModifier();
-			max *= max;
-			float angle = visionComponent.getAngle();
-			for (DiscreteMapComponent.MapCell cell : map) {
-				TransformComponent tf = EntityUtilities.computeAbsoluteTransform(entity);
-				float rotation = normAngle(tf.getZRotation());
-				Vector2 delta = cell.getPosition()
-									.cpy()
-									.sub(tf.get2DPosition());
-				float dst2 = delta.len2();
-				float deltaAngle = normAngle(delta.angle());
-				if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-					cells.add(new DiscreteMapComponent.MapCell(cell));
-				} else if (cell.getType()
-							   .isStructure() && dst2 <= 100 && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-					cells.add(new DiscreteMapComponent.MapCell(cell));
-				} else if (cell.getType()
-							   .isTower() && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-					DiscreteMapComponent.MapCell tower = new DiscreteMapComponent.MapCell(cell);
-					tower.setType(AreaComponent.AreaType.TOWER);
-					cells.add(cell);
+				AgentComponent agentComponent = agents.get(agent);
+				float min = visionComponent.getMinDistance() * agentComponent.getVisionModifier();
+				min *= min;
+				float max = visionComponent.getMaxDistance() * agentComponent.getVisionModifier();
+				max *= max;
+				Light2dComponent light2dComponent = lights.get(entity);
+				for (DiscreteMapComponent.MapCell cell : map) {
+					Vector2 cellPos = cell.getPosition()
+										  .cpy()
+										  .scl(0.1f);
+					boolean contains = light2dComponent.getLight()
+													   .contains(cellPos.x, cellPos.y);
+					boolean outerWall = false;
+					if (cell.getType() == AreaComponent.AreaType.OUTER_WALL) {
+						float angle = visionComponent.getAngle();
+						TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
+						float rotation = normAngle(tf
+														   .getZRotation());
+						Vector2 delta = cell.getPosition().cpy().sub(tf.get2DPosition());
+						float deltaAngle = normAngle(delta.angle());
+						outerWall = Math.abs(rotation - deltaAngle) < (angle / 2);
+					}
+					if (contains || outerWall) {
+						TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
+						Vector2 delta = cell.getPosition()
+											.cpy()
+											.sub(tf.get2DPosition());
+						float dst2 = delta.len2();
+						if (dst2 <= max && dst2 >= min) {
+							if (cell.getType() != AreaComponent.AreaType.COVER || dst2 <= max/4) {
+									cells.add(new DiscreteMapComponent.MapCell(cell));
+							}
+						} else if (cell.getType()
+									   .isStructure() && dst2 <= 100) {
+							cells.add(new DiscreteMapComponent.MapCell(cell));
+						} else if (cell.getType()
+									   .isTower()) {
+							DiscreteMapComponent.MapCell tower = new DiscreteMapComponent.MapCell(cell);
+							tower.setType(AreaComponent.AreaType.TOWER);
+							cells.add(cell);
+						}
+					}
 				}
 			}
-		}
-		if (agentEntities.size() > 0 && !visions.get(entity)
-											  .isBlind()) {
-			AgentComponent agentComponent = agents.get(entity);
-			float min = visionComponent.getMinDistance() * agentComponent.getVisionModifier();
-			min *= min;
-			float max = visionComponent.getMaxDistance() * agentComponent.getVisionModifier();
-			max *= max;
-			float angle = visionComponent.getAngle();
-			for (Entity agent: agentEntities) {
-				TransformComponent tf = EntityUtilities.computeAbsoluteTransform(entity);
-				TransformComponent atf = EntityUtilities.computeAbsoluteTransform(agent);
-				float rotation = normAngle(tf.getZRotation());
-				Vector2 delta = atf.get2DPosition()
-									.cpy()
-									.sub(tf.get2DPosition());
-				float dst2 = delta.len2();
-				float deltaAngle = normAngle(delta.angle());
-				if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-					visibleAgents.add(new WeakReference<>(agent));
+			if (agentEntities.size() > 0 && !visions.get(agent)
+													.isBlind()) {
+				AgentComponent agentComponent = agents.get(agent);
+				float min = visionComponent.getMinDistance() * agentComponent.getVisionModifier();
+				min *= min;
+				float max = visionComponent.getMaxDistance() * agentComponent.getVisionModifier();
+				max *= max;
+				float angle = visionComponent.getAngle();
+				for (Entity aEntity : agentEntities) {
+					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
+					TransformComponent atf = EntityUtilities.computeAbsoluteTransform(aEntity);
+					AgentComponent aComponent = agents.get(aEntity);
+					float rotation = normAngle(tf.getZRotation());
+					Vector2 delta = atf.get2DPosition()
+									   .cpy()
+									   .sub(tf.get2DPosition());
+					float dst2 = delta.len2();
+					float deltaAngle = normAngle(delta.angle());
+					if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
+						if (aComponent.getEnvironmentType() != AreaComponent.AreaType.COVER || dst2 <= max/4) {
+							visibleAgents.add(new WeakReference<>(aEntity));
+						}
+					}
 				}
 			}
 		}

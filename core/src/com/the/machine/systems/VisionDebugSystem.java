@@ -23,13 +23,13 @@ import java.util.List;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 23/03/15
  */
-public class VisonDebugSystem
+public class VisionDebugSystem
 		extends IteratingSystem {
 
 	transient private ComponentMapper<VisionComponent> visions = ComponentMapper.getFor(VisionComponent.class);
 	transient private ComponentMapper<DimensionComponent>   dimensions   = ComponentMapper.getFor(DimensionComponent.class);
 
-	public VisonDebugSystem() {
+	public VisionDebugSystem() {
 		super(Family.all(VisionComponent.class)
 					.get());
 	}
@@ -47,7 +47,7 @@ public class VisonDebugSystem
 				point.add(new LayerComponent(BitBuilder.none(32)
 													   .s(1)
 													   .get()));
-				point.add(new DelayedRemovalComponent().setDelay(1f));
+				point.add(new DelayedRemovalComponent().setDelay(0.25f));
 				world.addEntity(point);
 			}
 		}

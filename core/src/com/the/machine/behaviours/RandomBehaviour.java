@@ -32,7 +32,7 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 			if (context.getSprintTime() > 0) {
 				response.setTurningSpeed(MathUtils.random() * 20 - 10);
 			} else  {
-				response.setTurningSpeed(MathUtils.random() * 180 - 90);
+				response.setTurningSpeed(MathUtils.random() * 90 - 45);
 			}
 			state.nextTurnChange = nextTime(0.5f)*1;
 		}

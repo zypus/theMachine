@@ -116,7 +116,7 @@ import com.the.machine.systems.TowerSystem;
 import com.the.machine.systems.VictorySystem;
 import com.the.machine.systems.VisionRangeDebugSystem;
 import com.the.machine.systems.VisionSystem;
-import com.the.machine.systems.VisonDebugSystem;
+import com.the.machine.systems.VisionDebugSystem;
 import com.the.machine.systems.WindowSystem;
 import com.the.machine.systems.ZoomIndependenceSystem;
 
@@ -165,7 +165,7 @@ public class MapEditorSceneBuilder
 //		world.addSystem(new DiscretizedMapDebugSystem());
 		world.addSystem(new VisionRangeDebugSystem());
 		world.addSystem(new VisionSystem());
-		world.addSystem(new VisonDebugSystem());
+		world.addSystem(new VisionDebugSystem());
 		world.addSystem(new RotationSystem());
 		world.addSystem(new MarkerSystem(), MarkerEvent.class, ResetEvent.class);
 		world.addSystem(new TowerSystem(), TowerEnterEvent.class, TowerLeaveEvent.class);
@@ -676,7 +676,7 @@ public class MapEditorSceneBuilder
 		world.setSystemStatus(DizzinessSystem.class, enabled);
 		world.setSystemStatus(SprintSystem.class, enabled);
 		world.setSystemStatus(IntruderSpawnSystem.class, enabled);
-		world.setSystemStatus(VisonDebugSystem.class, enabled);
+		world.setSystemStatus(VisionDebugSystem.class, enabled);
 		world.setSystemStatus(WindowSystem.class, enabled);
 		world.setSystemStatus(DoorSystem.class, enabled);
 		world.setSystemStatus(TowerSystem.class, enabled);

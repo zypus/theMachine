@@ -63,6 +63,7 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 		recomputeMap = true;
 		transforms.get(entity).addObserver(this);
 		dimensions.get(entity).addObserver(this);
+		areas.get(entity).addObserver(this);
 	}
 
 	@Override
@@ -72,6 +73,8 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 				  .deleteObserver(this);
 		dimensions.get(entity)
 				  .deleteObserver(this);
+		areas.get(entity)
+			 .deleteObserver(this);
 	}
 
 	@Override
@@ -107,15 +110,15 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 			for (Entity element : elements) {
 				TransformComponent tf = transforms.get(element);
 				DimensionComponent dm = dimensions.get(element);
-				float lx = -dm.getWidth()/2 + Math.round(tf.getX());
-				float ly = -dm.getHeight()/2 + Math.round(tf.getY());
+				float lx = -dm.getWidth()/2 + tf.getX();
+				float ly = -dm.getHeight()/2 + tf.getY();
 				AreaComponent areaComponent = areas.get(element);
-				for (int x = 0; x < (int)dm.getWidth(); x++) {
-					for (int y = 0; y < (int)dm.getHeight(); y++) {
-						if (!areaComponent.getType().isStructure() || x == 0 || x == (int)dm.getWidth()-1 || y == 0 || y == (int) dm.getHeight() - 1) {
+				for (int x = 0; x <= (int)dm.getWidth(); x++) {
+					for (int y = 0; y <= (int)dm.getHeight(); y++) {
+						if (!areaComponent.getType().isStructure() || x == 0 || x == (int)dm.getWidth() || y == 0 || y == (int) dm.getHeight()) {
 							float c = lx + x;
 							float r = ly + y;
-							if (Utils.isInbound(c, r, 1, 1, mapDimension.getWidth(), mapDimension.getHeight())) {
+							if (Utils.isInbound(c, r, -mapDimension.getWidth() / 2, -mapDimension.getHeight() / 2, mapDimension.getWidth(), mapDimension.getHeight())) {
 								discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(c, r))
 																				  .setType(areaComponent
 																								   .getType()));

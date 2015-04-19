@@ -36,6 +36,8 @@ public class AreaComponent extends AbstractComponent{
 
 	public AreaComponent setType(AreaType type) {
 		this.type = type;
+		setChanged();
+		notifyObservers();
 		dirty = true;
 		return this;
 	}
@@ -74,7 +76,7 @@ public class AreaComponent extends AbstractComponent{
 		}
 
 		public boolean isStructure() {
-			return this == AreaType.WALL || this == AreaType.WINDOW || this == AreaType.WINDOW_BROKEN || this == AreaType.DOOR_OPEN || this == AreaType.DOOR_CLOSED;
+			return this == OUTER_WALL || this == AreaType.WALL || this == AreaType.WINDOW || this == AreaType.WINDOW_BROKEN || this == AreaType.DOOR_OPEN || this == AreaType.DOOR_CLOSED;
 		}
 
 		public boolean isTower() {

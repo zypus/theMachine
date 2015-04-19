@@ -66,8 +66,8 @@ public class VictorySystem extends IteratingSystem {
 				if (agentEntity != null && sprints.has(agentEntity)) {
 					TransformComponent atf = EntityUtilities.computeAbsoluteTransform(agentEntity);
 					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(entity);
-					float dst2 = atf.getPosition()
-									.dst2(tf.getPosition());
+					float dst2 = atf.get2DPosition()
+									.dst2(tf.get2DPosition());
 					if (dst2 < 1.5 * 1.5) {
 						MapEditorSceneBuilder.toggleSimulationSystems(world, false);
 						System.out.println("Guards won!");

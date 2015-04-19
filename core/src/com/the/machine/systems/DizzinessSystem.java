@@ -8,6 +8,7 @@ import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.components.DizzinessComponent;
 import com.the.machine.components.VisionComponent;
 import com.the.machine.framework.IteratingSystem;
+import com.the.machine.framework.components.SubEntityComponent;
 import com.the.machine.framework.components.physics.Light2dComponent;
 
 /**
@@ -23,6 +24,7 @@ public class DizzinessSystem extends IteratingSystem {
 	transient private ComponentMapper<VisionComponent> visions = ComponentMapper.getFor(VisionComponent.class);
 	transient private ComponentMapper<Light2dComponent> lights = ComponentMapper.getFor(Light2dComponent.class);
 	transient private ComponentMapper<AgentComponent> agents = ComponentMapper.getFor(AgentComponent.class);
+	transient private ComponentMapper<SubEntityComponent> subs = ComponentMapper.getFor(SubEntityComponent.class);
 
 	public DizzinessSystem() {
 		super(Family.all(DizzinessComponent.class, AngularVelocityComponent.class, VisionComponent.class, Light2dComponent.class)
@@ -51,6 +53,14 @@ public class DizzinessSystem extends IteratingSystem {
 		} else {
 			light2dComponent.setDistance(visionComponent.getMaxDistance() * agentComponent.getVisionModifier());
 			light2dComponent.setAngle(visionComponent.getAngle());
+			SubEntityComponent sub = subs.get(entity);
+			if (sub.size() > 0) {
+				Entity entity1 = sub.get(0);
+				Light2dComponent light2dComponent1 = lights.get(entity1);
+				if (light2dComponent1 != null) {
+					light2dComponent1.setAngle(visionComponent.getAngle());
+				}
+			}
 		}
 	}
 }
