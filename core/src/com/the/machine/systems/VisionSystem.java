@@ -10,6 +10,7 @@ import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.components.MarkerComponent;
+import com.the.machine.components.SprintComponent;
 import com.the.machine.components.VisionComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.DimensionComponent;
@@ -37,8 +38,10 @@ public class VisionSystem
 	transient private ComponentMapper<DimensionComponent>   dimensions   = ComponentMapper.getFor(DimensionComponent.class);
 	transient private ComponentMapper<VisionComponent>      visions      = ComponentMapper.getFor(VisionComponent.class);
 	transient private ComponentMapper<AgentComponent> agents = ComponentMapper.getFor(AgentComponent.class);
-	transient private ComponentMapper<Light2dComponent> lights = ComponentMapper.getFor(Light2dComponent.class);
-	transient private ComponentMapper<ParentComponent> parents = ComponentMapper.getFor(ParentComponent.class);
+	transient private ComponentMapper<SprintComponent>  sprints = ComponentMapper.getFor(SprintComponent.class);
+	transient private ComponentMapper<Light2dComponent> lights  = ComponentMapper.getFor(Light2dComponent.class);
+	transient private ComponentMapper<ParentComponent>  parents = ComponentMapper.getFor(ParentComponent.class);
+	transient private ComponentMapper<MarkerComponent>  markers = ComponentMapper.getFor(MarkerComponent.class);
 	private ImmutableArray<Entity> mapEntities;
 	private ImmutableArray<Entity> agentEntities;
 	private ImmutableArray<Entity> markerEntities;
@@ -57,7 +60,7 @@ public class VisionSystem
 		agentEntities = world.getEntitiesFor(Family.all(AgentComponent.class)
 												   .get());
 		markerEntities = world.getEntitiesFor(Family.all(MarkerComponent.class)
-												   .get());
+													.get());
 	}
 
 	@Override
@@ -72,8 +75,8 @@ public class VisionSystem
 	protected void processEntity(Entity entity, float deltaTime) {
 		// TODO line of sight
 		Entity agent = parents.get(entity)
-								.getParent()
-								.get();
+							  .getParent()
+							  .get();
 		if (agent != null) {
 			VisionComponent visionComponent = visions.get(agent);
 			List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
@@ -161,25 +164,29 @@ public class VisionSystem
 			if (markerEntities.size() > 0 && !visions.get(agent)
 													.isBlind()) {
 				AgentComponent agentComponent = agents.get(agent);
+				boolean intruder = sprints.has(agent);
 				float min = visionComponent.getMinDistance() * agentComponent.getVisionModifier();
 				min *= min;
 				float max = visionComponent.getMaxDistance() * agentComponent.getVisionModifier();
 				max *= max;
 				float angle = visionComponent.getAngle();
 				for (Entity aEntity : markerEntities) {
-					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
-					TransformComponent atf = EntityUtilities.computeAbsoluteTransform(aEntity);
-//					AgentComponent aComponent = agents.get(aEntity);
-					float rotation = normAngle(tf.getZRotation());
-					Vector2 delta = atf.get2DPosition()
-									   .cpy()
-									   .sub(tf.get2DPosition());
-					float dst2 = delta.len2();
-					float deltaAngle = normAngle(delta.angle());
-					if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-//						if (aComponent.getEnvironmentType() != AreaComponent.AreaType.COVER || dst2 <= max / 4) {
+					MarkerComponent markerComponent = markers.get(aEntity);
+					if ((markerComponent.isGuardMarker() && !intruder) || (!markerComponent.isGuardMarker() && intruder)) {
+						TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
+						TransformComponent atf = EntityUtilities.computeAbsoluteTransform(aEntity);
+						//					AgentComponent aComponent = agents.get(aEntity);
+						float rotation = normAngle(tf.getZRotation());
+						Vector2 delta = atf.get2DPosition()
+										   .cpy()
+										   .sub(tf.get2DPosition());
+						float dst2 = delta.len2();
+						float deltaAngle = normAngle(delta.angle());
+						if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
+							//						if (aComponent.getEnvironmentType() != AreaComponent.AreaType.COVER || dst2 <= max / 4) {
 							visibleMarkers.add(new WeakReference<>(aEntity));
-//						}
+							//						}
+						}
 					}
 				}
 			}
