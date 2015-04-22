@@ -1,0 +1,146 @@
+
+assets.png
+size: 1024,1024
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+agent
+  rotate: false
+  xy: 2, 328
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+badlogic
+  rotate: false
+  xy: 2, 716
+  size: 256, 256
+  orig: 256, 256
+  offset: 0, 0
+  index: -1
+cover
+  rotate: false
+  xy: 260, 586
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+door_closed
+  rotate: false
+  xy: 2, 458
+  size: 256, 256
+  orig: 256, 256
+  offset: 0, 0
+  index: -1
+door_open
+  rotate: false
+  xy: 260, 716
+  size: 256, 256
+  orig: 256, 256
+  offset: 0, 0
+  index: -1
+floor
+  rotate: false
+  xy: 518, 844
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+guard1
+  rotate: false
+  xy: 2, 2
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+guard2
+  rotate: false
+  xy: 908, 908
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+guard3
+  rotate: false
+  xy: 518, 778
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+handle_corner
+  rotate: false
+  xy: 2, 198
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+handle_edge
+  rotate: false
+  xy: 648, 844
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+marker_guard
+  rotate: false
+  xy: 2, 68
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+marker_intruder
+  rotate: false
+  xy: 778, 844
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+target
+  rotate: false
+  xy: 132, 328
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+tower
+  rotate: false
+  xy: 132, 198
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+tower_used
+  rotate: false
+  xy: 132, 68
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+wall
+  rotate: false
+  xy: 390, 586
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+white
+  rotate: false
+  xy: 392, 583
+  size: 1, 1
+  orig: 1, 1
+  offset: 0, 0
+  index: -1
+window
+  rotate: false
+  xy: 262, 456
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+window_broken
+  rotate: false
+  xy: 262, 326
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
