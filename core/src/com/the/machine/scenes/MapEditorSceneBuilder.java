@@ -144,7 +144,7 @@ public class MapEditorSceneBuilder
 		world.addSystem(new CameraRenderSystem(), AssetLoadingFinishedEvent.class);
 		world.addSystem(new TableSystem());
 		world.addSystem(new TableCellSystem());
-		world.addSystem(new CameraZoomSystem(), ScrolledEvent.class);
+		world.addSystem(new CameraZoomSystem(), KeyDownEvent.class, ScrolledEvent.class);
 		world.addSystem(new ZoomIndependenceSystem());
 		world.addSystem(new DraggingSystem(), TouchDownEvent.class, TouchDraggedEvent.class, TouchUpEvent.class);
 		world.addSystem(new SelectionSystem(), TouchUpEvent.class);
