@@ -93,7 +93,7 @@ public class MarkerSystem extends IteratingSystem
 		float strength = markerComponent.getStrength();
 		float rate = markerComponent.getDecayRate();
 		float newStrength = strength - deltaTime * rate * strength;
-		if (newStrength <= 0) {
+		if (newStrength <= 0.001) {
 			world.removeEntity(entity);
 		} else {
 			markerComponent.setStrength(newStrength);
