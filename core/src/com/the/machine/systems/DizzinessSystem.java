@@ -33,38 +33,34 @@ public class DizzinessSystem extends IteratingSystem {
 
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
-		
-		//TODO: Replace This By Working Dizziness System ... FABIAN!
-		return;
-		
-//		DizzinessComponent dizzinessComponent = dizziness.get(entity);
-//		AngularVelocityComponent angularVelocityComponent = angularVelocities.get(entity);
-//		VisionComponent visionComponent = visions.get(entity);
-//		Light2dComponent light2dComponent = lights.get(entity);
-//		AgentComponent agentComponent = agents.get(entity);
-//		if (Math.abs(angularVelocityComponent.getAngularVelocity()) > 45) {
-//			visionComponent.setBlind(true);
-//			light2dComponent.setDistance(0);
-//			dizzinessComponent.setDizzinessDelay(0.5f);
-//			visionComponent.notifyObservers();
-//		} else if (dizzinessComponent.getDizzinessDelay() > 0) {
-//			dizzinessComponent.setDizzinessDelay(dizzinessComponent.getDizzinessDelay() - deltaTime);
-//			if (dizzinessComponent.getDizzinessDelay() <= 0) {
-//				visionComponent.setBlind(false);
-//				light2dComponent.setDistance(visionComponent.getMaxDistance() * agentComponent.getVisionModifier());
-//				visionComponent.notifyObservers();
-//			}
-//		} else {
-//			light2dComponent.setDistance(visionComponent.getMaxDistance() * agentComponent.getVisionModifier());
-//			light2dComponent.setAngle(visionComponent.getAngle());
-//			SubEntityComponent sub = subs.get(entity);
-//			if (sub.size() > 0) {
-//				Entity entity1 = sub.get(0);
-//				Light2dComponent light2dComponent1 = lights.get(entity1);
-//				if (light2dComponent1 != null) {
-//					light2dComponent1.setAngle(visionComponent.getAngle());
-//				}
-//			}
-//		}
+		DizzinessComponent dizzinessComponent = dizziness.get(entity);
+		AngularVelocityComponent angularVelocityComponent = angularVelocities.get(entity);
+		VisionComponent visionComponent = visions.get(entity);
+		Light2dComponent light2dComponent = lights.get(entity);
+		AgentComponent agentComponent = agents.get(entity);
+		if (Math.abs(angularVelocityComponent.getAngularVelocity()) > 45) {
+			visionComponent.setBlind(true);
+			light2dComponent.setDistance(0);
+			dizzinessComponent.setDizzinessDelay(0.5f);
+			visionComponent.notifyObservers();
+		} else if (dizzinessComponent.getDizzinessDelay() > 0) {
+			dizzinessComponent.setDizzinessDelay(dizzinessComponent.getDizzinessDelay() - deltaTime);
+			if (dizzinessComponent.getDizzinessDelay() <= 0) {
+				visionComponent.setBlind(false);
+				light2dComponent.setDistance(visionComponent.getMaxDistance() * agentComponent.getVisionModifier());
+				visionComponent.notifyObservers();
+			}
+		} else {
+			light2dComponent.setDistance(visionComponent.getMaxDistance() * agentComponent.getVisionModifier());
+			light2dComponent.setAngle(visionComponent.getAngle());
+			SubEntityComponent sub = subs.get(entity);
+			if (sub.size() > 0) {
+				Entity entity1 = sub.get(0);
+				Light2dComponent light2dComponent1 = lights.get(entity1);
+				if (light2dComponent1 != null) {
+					light2dComponent1.setAngle(visionComponent.getAngle());
+				}
+			}
+		}
 	}
 }

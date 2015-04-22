@@ -36,7 +36,6 @@ public class BasicSimulationScene implements SceneBuilder {
         world.addSystem(new MovementSystem());
         world.addSystem(new RotationSystem());
         world.addSystem(new BehaviourSystem());
-        world.addSystem(new RandomBehaviourSystem());
         world.addSystem(new AgentSightSystem(1));
         world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
         world.addSystem(new DelayedRemovalSystem());

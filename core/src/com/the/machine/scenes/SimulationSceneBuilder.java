@@ -21,7 +21,6 @@ import com.the.machine.systems.DirectionalMovementSystem;
 import com.the.machine.systems.GrowthSystem;
 import com.the.machine.systems.InputControlledMovementSystem;
 import com.the.machine.systems.MovementSystem;
-import com.the.machine.systems.RandomBehaviourSystem;
 import com.the.machine.systems.RandomNoiseSystem;
 import com.the.machine.systems.RotationSystem;
 import com.the.machine.systems.SoundDirectionDebugSystem;
@@ -50,7 +49,6 @@ public class SimulationSceneBuilder
 		world.addSystem(new AudioIndicatorSystem(), AudioEvent.class);
 		world.addSystem(new AudioListeningSystem(), AudioEvent.class);
 		world.addSystem(new BehaviourSystem());
-		world.addSystem(new RandomBehaviourSystem());
 		world.addSystem(new WorldMappingSystem(2)); // Must have a higher priority than AgentSightSystem
 		world.addSystem(new AgentSightSystem(1));
 		world.addSystem(new SoundDirectionDebugSystem());
