@@ -23,7 +23,7 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 		float delta = context.getPastTime();
 		state.nextSpeedChange -= delta;
 		state.nextTurnChange -= delta;
-		BehaviourComponent.BehaviourResponse<RandomBehaviourState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0);
+		BehaviourComponent.BehaviourResponse<RandomBehaviourState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0, 0);
 		if (state.nextSpeedChange <= 0) {
 			response.setMovementSpeed(MathUtils.random()*2);
 			state.nextSpeedChange = nextTime(0.5f)*10;
@@ -61,6 +61,7 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 			response.getActions()
 					.add(ActionSystem.Action.MARKER_PLACE);
 			response.setMarkerNumber(0);
+			response.setDecayRate(0.5f);
 		}
 		return response;
 	}

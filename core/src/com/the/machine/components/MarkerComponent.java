@@ -17,4 +17,6 @@ import lombok.experimental.Accessors;
 public class MarkerComponent extends AbstractComponent {
 	boolean guardMarker;
 	int markerNumber;
+	float strength;
+	float decayRate;
 }

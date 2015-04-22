@@ -20,6 +20,8 @@ import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
+import static com.the.machine.components.AreaComponent.AreaType.*;
+
 /**
  * TODO Add description
  *
@@ -115,7 +117,7 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 				AreaComponent areaComponent = areas.get(element);
 				for (int x = 0; x <= (int)dm.getWidth(); x++) {
 					for (int y = 0; y <= (int)dm.getHeight(); y++) {
-						if (!areaComponent.getType().isStructure() || x == 0 || x == (int)dm.getWidth() || y == 0 || y == (int) dm.getHeight()) {
+						if ((areaComponent.getType() != WALL && areaComponent.getType() != DOOR_CLOSED) || x == 0 || x == (int)dm.getWidth() || y == 0 || y == (int) dm.getHeight()) {
 							float c = lx + x;
 							float r = ly + y;
 							if (Utils.isInbound(c, r, -mapDimension.getWidth() / 2, -mapDimension.getHeight() / 2, mapDimension.getWidth(), mapDimension.getHeight())) {

@@ -29,6 +29,7 @@ public class VisionComponent extends AbstractComponent {
 
 	@Setter private List<DiscreteMapComponent.MapCell> visibleCells = new ArrayList<>();
 	@Setter private List<WeakReference<Entity>> visibleAgents = new ArrayList<>();
+	@Setter private List<WeakReference<Entity>> visibleMarkers = new ArrayList<>();
 
 	public VisionComponent setMinDistance(float minDistance) {
 		if (this.minDistance != minDistance) {

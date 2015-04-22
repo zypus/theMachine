@@ -39,6 +39,7 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		AreaComponent.AreaType environment;
 		List<DiscreteMapComponent.MapCell> vision;
 		List<WeakReference<Entity>> agents;
+		List<WeakReference<Entity>> markers;
 		List<Vector2>               soundDirections;
 		boolean                     canSprint;
 		float                       sprintTime;
@@ -55,6 +56,7 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		List<ActionSystem.Action> actions;
 		T                         nextBehaviourState;
 		int markerNumber;
+		float decayRate;
 	}
 
 }

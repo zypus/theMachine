@@ -58,6 +58,7 @@ public class BehaviourSystem
 		VisionComponent visionComponent = visions.get(entity);
 		List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
 		List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
+		List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
 		ListenerComponent listenerComponent = listeners.get(entity);
 		List<Vector2> directions;
 		if (listenerComponent.isDeaf()) {
@@ -86,7 +87,7 @@ public class BehaviourSystem
 		  .transform(dir);
 
 		// context
-		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower());
+		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower());
 
 		BehaviourComponent behaviourComponent = behaviours.get(entity);
 
@@ -123,7 +124,7 @@ public class BehaviourSystem
 				} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
 					world.dispatchEvent(new WindowDestroyEvent(weakReference));
 				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
-					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), response.getMarkerNumber()));
+					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), response.getMarkerNumber(), response.getDecayRate()));
 				}
 				// TODO perform the action
 			} else {

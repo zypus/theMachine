@@ -1,5 +1,6 @@
 package com.the.machine.systems;
 
+import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -9,7 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.the.machine.components.MarkerComponent;
 import com.the.machine.events.MarkerEvent;
 import com.the.machine.events.ResetEvent;
-import com.the.machine.framework.AbstractSystem;
+import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.assets.Asset;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
@@ -24,17 +25,24 @@ import com.the.machine.framework.utility.BitBuilder;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 23/03/15
  */
-public class MarkerSystem extends AbstractSystem implements EventListener {
+public class MarkerSystem extends IteratingSystem
+		implements EventListener {
 
+	transient private ComponentMapper<MarkerComponent> markerMap = ComponentMapper.getFor(MarkerComponent.class);
 
-	private static final Color[] COLORS = new Color[]{Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.PURPLE};
+	private static final Color[] COLORS = new Color[] { Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.PURPLE };
 
 	transient private ImmutableArray<Entity> markers;
+
+	public MarkerSystem() {
+		super(Family.all(MarkerComponent.class).get());
+	}
 
 	@Override
 	public void addedToEngine(Engine engine) {
 		super.addedToEngine(engine);
-		markers = world.getEntitiesFor(Family.all(MarkerComponent.class).get());
+		markers = world.getEntitiesFor(Family.all(MarkerComponent.class)
+											 .get());
 	}
 
 	@Override
@@ -50,7 +58,9 @@ public class MarkerSystem extends AbstractSystem implements EventListener {
 			MarkerEvent markerEvent = (MarkerEvent) event;
 			marker.add(new TransformComponent().setPosition(markerEvent.getLocation()));
 			marker.add(new MarkerComponent().setGuardMarker(markerEvent.isGuardMarker())
-											.setMarkerNumber(markerEvent.getMarkerNumber()));
+											.setMarkerNumber(markerEvent.getMarkerNumber())
+											.setDecayRate(markerEvent.getDecayRate())
+											.setStrength(1));
 			SpriteRenderComponent spriteRenderComponent = new SpriteRenderComponent();
 			if (markerEvent.isGuardMarker()) {
 				spriteRenderComponent.setTextureRegion(Asset.fetch("marker_guard", TextureRegion.class));
@@ -74,6 +84,19 @@ public class MarkerSystem extends AbstractSystem implements EventListener {
 			for (Entity entity : array) {
 				world.removeEntity(entity);
 			}
+		}
+	}
+
+	@Override
+	protected void processEntity(Entity entity, float deltaTime) {
+		MarkerComponent markerComponent = markerMap.get(entity);
+		float strength = markerComponent.getStrength();
+		float rate = markerComponent.getDecayRate();
+		float newStrength = strength - deltaTime * rate * strength;
+		if (newStrength <= 0) {
+			world.removeEntity(entity);
+		} else {
+			markerComponent.setStrength(newStrength);
 		}
 	}
 }
