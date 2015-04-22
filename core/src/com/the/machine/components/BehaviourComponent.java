@@ -3,6 +3,7 @@ package com.the.machine.components;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
+import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,6 +47,7 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		float                       sprintCooldown;
 		boolean                     hidden;
 		boolean                     inTower;
+		Placebo	placebo;
 	}
 
 	@Data
