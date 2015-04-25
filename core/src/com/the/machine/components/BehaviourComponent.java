@@ -3,6 +3,7 @@ package com.the.machine.components;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
+import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,12 +40,14 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		AreaComponent.AreaType environment;
 		List<DiscreteMapComponent.MapCell> vision;
 		List<WeakReference<Entity>> agents;
+		List<WeakReference<Entity>> markers;
 		List<Vector2>               soundDirections;
 		boolean                     canSprint;
 		float                       sprintTime;
 		float                       sprintCooldown;
 		boolean                     hidden;
 		boolean                     inTower;
+		Placebo	placebo;
 	}
 
 	@Data
@@ -55,6 +58,7 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		List<ActionSystem.Action> actions;
 		T                         nextBehaviourState;
 		int markerNumber;
+		float decayRate;
 	}
 
 }

@@ -1,8 +1,10 @@
 package com.the.machine.systems;
 
 import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -23,6 +25,7 @@ import com.the.machine.events.TowerLeaveEvent;
 import com.the.machine.events.WindowDestroyEvent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.misc.Placebo;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -41,10 +44,26 @@ public class BehaviourSystem
 	private transient ComponentMapper<ListenerComponent>        listeners         = ComponentMapper.getFor(ListenerComponent.class);
 	private transient ComponentMapper<VisionComponent>          visions           = ComponentMapper.getFor(VisionComponent.class);
 	private transient ComponentMapper<SprintComponent>          sprints           = ComponentMapper.getFor(SprintComponent.class);
+	private transient ComponentMapper<DiscreteMapComponent>          discretes           = ComponentMapper.getFor(DiscreteMapComponent.class);
 
 	public BehaviourSystem() {
 		super(Family.all(VelocityComponent.class, AngularVelocityComponent.class, AgentComponent.class, ListenerComponent.class, VisionComponent.class, BehaviourComponent.class)
 					.get());
+	}
+
+	ImmutableArray<Entity> maps;
+
+	@Override
+	public void addedToEngine(Engine engine) {
+		super.addedToEngine(engine);
+		maps = engine.getEntitiesFor(Family.all(DiscreteMapComponent.class)
+										   .get());
+	}
+
+	@Override
+	public void removedFromEngine(Engine engine) {
+		super.removedFromEngine(engine);
+		maps = null;
 	}
 
 	@Override
@@ -58,6 +77,7 @@ public class BehaviourSystem
 		VisionComponent visionComponent = visions.get(entity);
 		List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
 		List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
+		List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
 		ListenerComponent listenerComponent = listeners.get(entity);
 		List<Vector2> directions;
 		if (listenerComponent.isDeaf()) {
@@ -85,8 +105,11 @@ public class BehaviourSystem
 		tf.getRotation()
 		  .transform(dir);
 
+		Placebo placebo = new Placebo(tf.get2DPosition(), discretes.get(maps.first())
+																   .getSparseMap());
+
 		// context
-		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower());
+		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), placebo);
 
 		BehaviourComponent behaviourComponent = behaviours.get(entity);
 
@@ -123,7 +146,7 @@ public class BehaviourSystem
 				} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
 					world.dispatchEvent(new WindowDestroyEvent(weakReference));
 				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
-					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), response.getMarkerNumber()));
+					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), response.getMarkerNumber(), response.getDecayRate()));
 				}
 				// TODO perform the action
 			} else {

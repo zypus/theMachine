@@ -17,4 +17,5 @@ public class MarkerEvent extends Event {
 	Vector3 location;
 	boolean guardMarker;
 	int markerNumber;
+	float decayRate;
 }
