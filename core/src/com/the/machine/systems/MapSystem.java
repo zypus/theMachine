@@ -16,6 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.the.machine.behaviours.AntColonyBehaviour;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AgentSightComponent;
@@ -473,8 +474,7 @@ public class MapSystem
 				newAgent.add(sightComponent);
 				newAgent.add(new ListenerComponent());
 				newAgent.add(new NameComponent().setName("Agent"));
-				newAgent.add(new BehaviourComponent<RandomBehaviour.RandomBehaviourState>().setBehaviour(new RandomBehaviour())
-																						   .setState(new RandomBehaviour.RandomBehaviourState(0, 0)));
+				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(new AntColonyBehaviour.AntColonyBehaviourState(0, 0)));
 				newAgent.add(new VelocityComponent());
 				newAgent.add(new AngularVelocityComponent());
 				newAgent.add(new AgentComponent());
