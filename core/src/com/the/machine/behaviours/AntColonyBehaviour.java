@@ -17,17 +17,26 @@ import java.util.ArrayList;
 @NoArgsConstructor
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
     public enum AgentType { GUARD, INTRUDER };
+    public final float timeBetweenPheromones = 2.5f;
 
     @Override
     public BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
         float delta = context.getPastTime();
         state.nextSpeedChange -= delta;
         state.nextTurnChange -= delta;
+        state.nextMarkerDrop -= delta;
         BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0, 0);
+
+        // Update nextSpeedChange
         if (state.nextSpeedChange <= 0) {
             response.setMovementSpeed(MathUtils.random()*2);
             state.nextSpeedChange = nextTime(0.5f)*10;
         }
+
+        // Increase the speed if there are a lot of pheromones
+        //response.setMovementSpeed(2 + 5 * context.getMarkers().size());
+
+        // Update nextTurnChange
         if (state.nextTurnChange <= 0) {
             if (context.getSprintTime() > 0) {
                 response.setTurningSpeed(MathUtils.random() * 20 - 10);
@@ -36,6 +45,13 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             }
             state.nextTurnChange = nextTime(0.5f)*1;
         }
+
+        // Update nextMarkerDrop
+        if (state.nextMarkerDrop <= 0) {
+            addMarker(getMarkerNumberForAgentType(state.agentType), 0.2f, response);
+            state.nextMarkerDrop += timeBetweenPheromones;
+        }
+
         if (context.isCanSprint()) {
             addActionWithProbability(ActionSystem.Action.SPRINT, 0.1, response);
         }
@@ -58,8 +74,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             addAction(ActionSystem.Action.DOOR_OPEN_SILENT, response);
         }
 
-        addMarkerWithProbability(0.001, getMarkerNumberForAgentType(state.agentType), 0.5f, response);
-
         return response;
     }
 
@@ -72,6 +86,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float nextSpeedChange;
         float nextTurnChange;
         AgentType agentType;
+        float nextMarkerDrop;
     }
 
     /**
@@ -98,18 +113,15 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     /**
-     * Let the agent place a marker with a given probability. The marker can be given a number, and a decay rate.
-     * @param probability
+     * Let the agent place a marker. The marker can be given a number, and a decay rate.
      * @param marketNumber
      * @param decayRate
      * @param response
      */
-    private void addMarkerWithProbability(double probability, int marketNumber, float decayRate, BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response) {
-        if (MathUtils.random() < probability) {
-            addAction(ActionSystem.Action.MARKER_PLACE, response);
-            response.setMarkerNumber(marketNumber);
-            response.setDecayRate(0.001f);
-        }
+    private void addMarker(int marketNumber, float decayRate, BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response) {
+        addAction(ActionSystem.Action.MARKER_PLACE, response);
+        response.setMarkerNumber(marketNumber);
+        response.setDecayRate(decayRate);
     }
 
     private int getMarkerNumberForAgentType(AgentType agentType) {

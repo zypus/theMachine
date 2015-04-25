@@ -148,7 +148,7 @@ public class IntruderSpawnSystem
 		newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(0, 7.5f, 45, 10, 18)));
 		newAgent.add(new ListenerComponent());
 		newAgent.add(new NameComponent().setName("Intruder"));
-		newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(new AntColonyBehaviour.AntColonyBehaviourState(0, 0, AntColonyBehaviour.AgentType.INTRUDER)));
+		newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(new AntColonyBehaviour.AntColonyBehaviourState(0, 0, AntColonyBehaviour.AgentType.INTRUDER, 0)));
 		newAgent.add(new VelocityComponent());
 		newAgent.add(new AngularVelocityComponent());
 		newAgent.add(new AgentComponent().setBaseViewingDistance(7.5f));
