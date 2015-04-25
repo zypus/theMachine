@@ -1,6 +1,7 @@
 package com.the.machine.behaviours;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.systems.ActionSystem;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 
 @NoArgsConstructor
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
+    public enum AgentType { GUARD, INTRUDER };
 
     @Override
     public BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
@@ -56,7 +58,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             addAction(ActionSystem.Action.DOOR_OPEN_SILENT, response);
         }
 
-        //addMarkerWithProbability(0.001, 0, 0.5f, response);
+        addMarkerWithProbability(0.001, getMarkerNumberForAgentType(state.agentType), 0.5f, response);
 
         return response;
     }
@@ -69,6 +71,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     public static class AntColonyBehaviourState implements BehaviourComponent.BehaviourState {
         float nextSpeedChange;
         float nextTurnChange;
+        AgentType agentType;
     }
 
     /**
@@ -105,7 +108,17 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         if (MathUtils.random() < probability) {
             addAction(ActionSystem.Action.MARKER_PLACE, response);
             response.setMarkerNumber(marketNumber);
-            response.setDecayRate(0.5f);
+            response.setDecayRate(0.001f);
         }
+    }
+
+    private int getMarkerNumberForAgentType(AgentType agentType) {
+        if (agentType == AgentType.GUARD) {
+            return 0;
+        }
+        else if (agentType == AgentType.INTRUDER) {
+            return 1;
+        }
+        else return 100;
     }
 }
