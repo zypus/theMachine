@@ -47,6 +47,8 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		float                       sprintCooldown;
 		boolean                     hidden;
 		boolean                     inTower;
+		float visionRange;
+		float visionAngle;
 		Placebo	placebo;
 	}
 

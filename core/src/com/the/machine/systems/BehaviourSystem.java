@@ -109,7 +109,7 @@ public class BehaviourSystem
 																   .getSparseMap());
 
 		// context
-		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), placebo);
+		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), agentComponent.getVisionModifier()*agentComponent.getBaseViewingDistance(), agentComponent.getViewingAngle(), placebo);
 
 		BehaviourComponent behaviourComponent = behaviours.get(entity);
 
