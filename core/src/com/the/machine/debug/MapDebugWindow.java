@@ -69,7 +69,7 @@ public class MapDebugWindow
 				for (int j = 0; j < height; j++) {
 					float v = map[i][height-1-j];
 					if (v > 1) {
-						g2.setColor(new Color(0,0,1));
+						g2.setColor(new Color(0.4117647f, 0.5019608f,1f));
 					} else {
 						g2.setColor(new Color(v, 0, 0));
 					}

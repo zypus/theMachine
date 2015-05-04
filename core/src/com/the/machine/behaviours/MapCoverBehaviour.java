@@ -25,15 +25,26 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
  */
 public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
+	static private MapCoverBehaviourState sharedState = null;
+	static private int shareCount = 0;
+
 	@Override
 	public BehaviourComponent.BehaviourResponse<MapCoverBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
+		// shared state between all guard agents, EXPERIMENTAL
+		if (state == null) {
+			shareCount++;
+		}
+		if (sharedState != null) {
+			state = sharedState;
+		}
 		// if the state is null, that means that this is the first time the behaviour is evaluate, so lets construct the first state
 		if (state == null) {
 			state = generateState(context);
+			sharedState = state; // comment this line to disable shared state
 			MapDebugWindow.debug(state.coverage, 0.5f);
 		}
 		updateCoverage(context, state);
-		Vector2 centerOfGravitation = determineGlobalCenterOfGravitation(state);
+		Vector2 centerOfGravitation = determineGlobalCenterOfGravitation(context, state);
 		Vector2 pos = context.getPlacebo()
 							 .getPos();
 		Vector2 delta = centerOfGravitation.cpy()
@@ -54,7 +65,7 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 			for (int j = 0; j < coverage[0].length; j++) {
 				// ignores values which are 1, (values which are 2 and should be ignored anyway)
 				if (coverage[i][j] < 1) {
-					coverage[i][j] += 0.001f;
+					coverage[i][j] += 0.001f*context.getPastTime()*((sharedState != null) ? 1f/shareCount : 1); // compensate for additional agents
 					// makes sure the number is never bigger than 1
 					if (coverage[i][j] > 1) {
 						coverage[i][j] = 1;
@@ -93,23 +104,29 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		}
 	}
 
-	private Vector2 determineGlobalCenterOfGravitation(MapCoverBehaviourState state) {
-		int x = 0;
-		int y = 0;
-		int count = 0;
+	private Vector2 determineGlobalCenterOfGravitation(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
+		float x = 0;
+		float y = 0;
+		float count = 0;
 		float[][] coverage = state.getCoverage();
+		Vector2 pos = context.getPlacebo()
+							 .getPos()
+							 .cpy()
+							 .add(state.getOffset());
 		for (int i = 0; i < coverage.length; i++) {
 			for (int j = 0; j < coverage[0].length; j++) {
-				float v = coverage[i][j];
+				// weight the power of attraction based on manhattan distance to bot
+				float distWeight = MathUtils.clamp(1-((float)Math.pow(Math.abs(pos.x - i) + Math.abs(pos.y - j), 2f) / coverage.length),0,1);
+				float v = coverage[i][j] * distWeight;
 				if (v <= 1) {
 					x += v*i;
 					y += v*j;
-					count++;
+					count += v;
 				}
 			}
 		}
 		Vector2 offset = state.getOffset();
-		return new Vector2((float)x/count - offset.x, (float)y/count - offset.y);
+		return new Vector2(x/count - offset.x, y/count - offset.y);
 	}
 
 	private MapCoverBehaviourState generateState(BehaviourComponent.BehaviourContext context) {
