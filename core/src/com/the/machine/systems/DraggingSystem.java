@@ -24,6 +24,7 @@ import com.the.machine.framework.events.input.TouchDownEvent;
 import com.the.machine.framework.events.input.TouchDraggedEvent;
 import com.the.machine.framework.events.input.TouchUpEvent;
 import com.the.machine.framework.utility.EntityUtilities;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import java.util.Map;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 14/03/15
  */
+@EqualsAndHashCode
 public class DraggingSystem
 		extends AbstractSystem
 		implements EventListener {
@@ -157,11 +159,13 @@ public class DraggingSystem
 							Vector3 delta = coordinates.cpy()
 													   .sub(dragPoint);
 							DraggableComponent draggableComponent = draggables.get(entity);
-							if (!draggableComponent.isXAxis()) {
-								delta.x = 0;
-							}
-							if (!draggableComponent.isYAxis()) {
-								delta.y = 0;
+							if (draggableComponent != null) {
+								if (!draggableComponent.isXAxis()) {
+									delta.x = 0;
+								}
+								if (!draggableComponent.isYAxis()) {
+									delta.y = 0;
+								}
 							}
 							transformComponent.setPosition(transformComponent.getPosition()
 																			 .cpy()

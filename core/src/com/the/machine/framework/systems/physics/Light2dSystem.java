@@ -151,11 +151,15 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		if (light != null) {
 			light.setColor(lc.getColor());
 			light.setActive(lc.isEnabled());
-			light.setDistance(lc.getDistance());
+			light.setDistance(0.2f *lc.getDistance());
 			light.setSoft(lc.isSoft());
 			light.setSoftnessLength(lc.getSoftnessLength());
 			light.setStaticLight(lc.isStaticLight());
 			light.setXray(lc.isXray());
+			if (light instanceof ConeLight) {
+				((ConeLight) light).setConeDegree(lc.getAngle()/2);
+			}
+			Light.setContactFilter(lc.getFilter());
 		}
 	}
 
@@ -171,16 +175,16 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		Light light = null;
 		switch (lc.getType()) {
 			case POINT:
-				light = new PointLight(rayHandler, lc.getRays(), lc.getColor(), lc.getDistance(), tf.getX(), tf.getY());
+				light = new PointLight(rayHandler, lc.getRays(), lc.getColor(), 0.2f*lc.getDistance(), tf.getX(), tf.getY());
 				break;
 			case DIRECTIONAL:
 				light = new DirectionalLight(rayHandler, lc.getRays(), lc.getColor(), tf.getZRotation());
 				break;
 			case CONE:
-				light = new ConeLight(rayHandler, lc.getRays(), lc.getColor(), lc.getDistance(), tf.getX(), tf.getY(), tf.getZRotation(), lc.getAngle());
+				light = new ConeLight(rayHandler, lc.getRays(), lc.getColor(), 0.2f *lc.getDistance(), tf.getX(), tf.getY(), tf.getZRotation(), lc.getAngle()/2);
 				break;
 			case CHAIN:
-				light = new ChainLight(rayHandler, lc.getRays(), lc.getColor(), lc.getDistance(), lc.getDirection(), lc.getChain());
+				light = new ChainLight(rayHandler, lc.getRays(), lc.getColor(), 0.2f *lc.getDistance(), lc.getDirection(), lc.getChain());
 				break;
 		}
 		light.setPosition(tf.get2DPosition());
@@ -188,6 +192,7 @@ public class Light2dSystem extends IteratingSystem implements Observer, EntityLi
 		light.setSoftnessLength(lc.getSoftnessLength());
 		light.setStaticLight(lc.isStaticLight());
 		light.setXray(lc.isXray());
+		Light.setContactFilter(lc.getFilter());
 		lc.setLight(light);
 	}
 }

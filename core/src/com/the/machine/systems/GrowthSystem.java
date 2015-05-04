@@ -7,6 +7,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.the.machine.components.GrowthComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.TransformComponent;
+import lombok.EqualsAndHashCode;
 
 /**
  * TODO Add description
@@ -14,6 +15,7 @@ import com.the.machine.framework.components.TransformComponent;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 17/03/15
  */
+@EqualsAndHashCode
 public class GrowthSystem extends IteratingSystem{
 
 	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);

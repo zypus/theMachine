@@ -533,6 +533,13 @@ public class World implements ApplicationListener, InputProcessor {
 		engine.removeSystem(system);
 	}
 
+	public void setSystemStatus(Class<? extends EntitySystem> systemClass, boolean enabled) {
+		EntitySystem system = engine.getSystem(systemClass);
+		if (system != null) {
+			system.setProcessing(enabled);
+		}
+	}
+
 	public void removeEntityListener(EntityListener listener) {
 		engine.removeEntityListener(listener);
 	}

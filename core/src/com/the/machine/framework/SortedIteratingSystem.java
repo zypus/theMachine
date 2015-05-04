@@ -66,7 +66,7 @@ public abstract class SortedIteratingSystem extends AbstractSystem implements En
 		shouldSort = true;
 	}
 
-	private void sort() {
+	protected void sort() {
 		if (shouldSort) {
 			sortedEntities.sort(comparator);
 			shouldSort = false;

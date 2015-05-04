@@ -7,14 +7,22 @@ import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.the.machine.behaviours.RandomBehaviour;
+import com.the.machine.components.AgentComponent;
+import com.the.machine.components.AgentSightComponent;
+import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.components.AreaComponent;
+import com.the.machine.components.BehaviourComponent;
+import com.the.machine.components.DizzinessComponent;
 import com.the.machine.components.DragComponent;
 import com.the.machine.components.DraggableComponent;
 import com.the.machine.components.HandleComponent;
@@ -23,7 +31,10 @@ import com.the.machine.components.ResizableComponent;
 import com.the.machine.components.SelectableComponent;
 import com.the.machine.components.SelectionComponent;
 import com.the.machine.components.SelectorComponent;
+import com.the.machine.components.SprintComponent;
+import com.the.machine.components.StepComponent;
 import com.the.machine.components.VelocityComponent;
+import com.the.machine.components.VisionComponent;
 import com.the.machine.events.MapEditorHotbarEvent;
 import com.the.machine.events.MapEditorLoadEvent;
 import com.the.machine.events.MapEditorLoadPrefabEvent;
@@ -38,6 +49,7 @@ import com.the.machine.framework.components.DisabledComponent;
 import com.the.machine.framework.components.LayerComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.ReferenceComponent;
+import com.the.machine.framework.components.ShapeRenderComponent;
 import com.the.machine.framework.components.SpriteRenderComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.physics.ColliderComponent;
@@ -51,6 +63,7 @@ import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +77,7 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 04/03/15
  */
+@EqualsAndHashCode
 public class MapSystem
 		extends AbstractSystem
 		implements EventListener, EntityListener, Observer {
@@ -79,18 +93,22 @@ public class MapSystem
 	transient private ComponentMapper<HandleComponent>       handleComponents = ComponentMapper.getFor(HandleComponent.class);
 	transient private ComponentMapper<ColliderComponent>     colliders        = ComponentMapper.getFor(ColliderComponent.class);
 	transient private ComponentMapper<Physics2dComponent>    bodies           = ComponentMapper.getFor(Physics2dComponent.class);
+	transient private ComponentMapper<SprintComponent>       sprints          = ComponentMapper.getFor(SprintComponent.class);
+	transient private ComponentMapper<AgentComponent>        agents           = ComponentMapper.getFor(AgentComponent.class);
+	transient private ComponentMapper<Light2dComponent>      lights           = ComponentMapper.getFor(Light2dComponent.class);
 
 	transient private final double DOUBLE_TAP_TIME = 0.3f;
 	transient private       double lastTap         = -2 * DOUBLE_TAP_TIME;
 
-	transient private ImmutableArray<Entity> mapElements = null;
-	transient private ImmutableArray<Entity> selected    = null;
-	transient private ImmutableArray<Entity> selectedAgents    = null;
-	transient private ImmutableArray<Entity> selectors   = null;
+	transient private ImmutableArray<Entity> mapElements    = null;
+	transient private ImmutableArray<Entity> selected       = null;
+	transient private ImmutableArray<Entity> selectedAgents = null;
+	transient private ImmutableArray<Entity> selectors      = null;
 
 	transient private AreaComponent.AreaType currentType = WALL;
-	transient private String prefabName = null;
-	transient private boolean loadPrefab = false;
+	transient private String                 prefabName  = null;
+	transient private boolean                loadPrefab  = false;
+	transient private boolean                makeAgent   = false;
 
 	transient private List<Entity> toBeRemoved = new ArrayList<>();
 
@@ -109,7 +127,8 @@ public class MapSystem
 		selected = engine.getEntitiesFor(Family.all(AreaComponent.class)
 											   .one(SelectionComponent.class, DragComponent.class)
 											   .get());
-		selectedAgents = engine.getEntitiesFor(Family.all(TransformComponent.class, SelectionComponent.class, Light2dComponent.class).get());
+		selectedAgents = engine.getEntitiesFor(Family.all(TransformComponent.class, SelectionComponent.class, Light2dComponent.class)
+													 .get());
 		selectors = engine.getEntitiesFor(Family.all(SelectorComponent.class, NameComponent.class, CameraComponent.class)
 												.get());
 	}
@@ -127,22 +146,24 @@ public class MapSystem
 	@Override
 	public void entityAdded(Entity entity) {
 		dimensions.get(entity)
-					  .addObserver(this);
+				  .addObserver(this);
 	}
 
 	@Override
 	public void entityRemoved(Entity entity) {
 		dimensions.get(entity)
-					  .deleteObserver(this);
+				  .deleteObserver(this);
 	}
 
 	@Override
 	public void update(Observable o, Object arg) {
 		DimensionComponent dm = (DimensionComponent) o;
 		Entity entity = dm.getOwner()
-										  .get();
+						  .get();
 		if (entity != null && colliders.has(entity)) {
-			if (areas.get(entity).getType() == GROUND) {
+			AreaComponent.AreaType type = areas.get(entity)
+											   .getType();
+			if (type == GROUND || type == TOWER) {
 				float wh = dm.getWidth() / 2;
 				float hh = dm.getHeight() / 2;
 				ColliderComponent colliderComponent = colliders.get(entity);
@@ -155,11 +176,18 @@ public class MapSystem
 							.setShape(new Vector2(wh, hh), new Vector2(-wh, hh));
 				colliderList.get(3)
 							.setShape(new Vector2(-wh, hh), new Vector2(-wh, -hh));
+				if (type == TOWER) {
+					colliderList.get(4)
+								.setShape(dm.getWidth(), dm.getHeight());
+				}
 			} else {
 				ColliderComponent colliderComponent = colliders.get(entity);
-				ColliderComponent.Collider collider = colliderComponent.getColliders()
-																	   .get(0);
-				collider.setShape(dm.getWidth(), dm.getHeight());
+				ColliderComponent.Collider collider1 = colliderComponent.getColliders()
+																		.get(0);
+				ColliderComponent.Collider collider2 = colliderComponent.getColliders()
+																		.get(1);
+				collider1.setShape(dm.getWidth(), dm.getHeight());
+				collider2.setShape(dm.getWidth(), dm.getHeight());
 			}
 		}
 	}
@@ -167,17 +195,20 @@ public class MapSystem
 	@Override
 	public void handleEvent(Event event) {
 		if (event instanceof MapEditorSaveEvent) {
-			Entity[] array = new Entity[mapElements.size()];
-			int index = 0;
-			for (Entity element : mapElements) {
-				if (selected.contains(element, true)) {
-					element.remove(SelectionComponent.class);
+			if (mapElements.size() > 0) {
+				Entity[] array = new Entity[mapElements.size()];
+				int index = 0;
+				for (Entity element : mapElements) {
+					if (selected.contains(element, true)) {
+						element.remove(SelectionComponent.class);
+					}
+					array[index] = element;
+					index++;
 				}
-				array[index] = element;
-				index++;
+				world.savePrefab(((MapEditorSaveEvent) event).getName()
+															 .concat(".map"), array);
+				world.dispatchEvent(new MapEditorSaveSuccessEvent());
 			}
-			world.savePrefab(((MapEditorSaveEvent) event).getName().concat(".map"), array);
-			world.dispatchEvent(new MapEditorSaveSuccessEvent());
 		} else if (event instanceof MapEditorLoadEvent) {
 			Entity[] array = new Entity[mapElements.size()];
 			int index = 0;
@@ -185,30 +216,35 @@ public class MapSystem
 				array[index] = element;
 				index++;
 			}
-			Entity[] newEntities = world.loadPrefab(((MapEditorLoadEvent) event).getName().concat(".map"));
+			Entity[] newEntities = world.loadPrefab(((MapEditorLoadEvent) event).getName()
+																				.concat(".map"));
 			if (newEntities != null && newEntities.length > 0) {
 				for (Entity entity : array) {
 					toBeRemoved.add(entity);
 				}
 			}
 		} else if (event instanceof MapEditorSavePrefabEvent) {
-			Entity[] array = new Entity[selected.size()];
-			int index = 0;
-			for (Entity element : selected) {
-				if (!areas.has(element) || areas.get(element).getType() != GROUND ) {
-					array[index] = element;
-					index++;
+			if (selected.size() > 0) {
+				Entity[] array = new Entity[selected.size()];
+				int index = 0;
+				for (Entity element : selected) {
+					if (!areas.has(element) || areas.get(element)
+													.getType() != GROUND) {
+						array[index] = element;
+						index++;
+					}
 				}
+				world.savePrefab(((MapEditorSavePrefabEvent) event).getName()
+																   .concat(".obj"), array);
+				world.dispatchEvent(new MapEditorSaveSuccessEvent());
 			}
-			world.savePrefab(((MapEditorSavePrefabEvent) event).getName()
-														 .concat(".obj"), array);
-			world.dispatchEvent(new MapEditorSaveSuccessEvent());
 		} else if (event instanceof MapEditorLoadPrefabEvent) {
 			prefabName = ((MapEditorLoadPrefabEvent) event).getName();
 			world.dispatchEvent(new MapEditorHotbarEvent(7));
 		} else if (event instanceof MapEditorHotbarEvent) {
 			int index = ((MapEditorHotbarEvent) event).getHotbarIndex();
 			loadPrefab = false;
+			makeAgent = false;
 			switch (index) {
 				case 0:
 					currentType = WALL;
@@ -227,6 +263,9 @@ public class MapSystem
 					break;
 				case 5:
 					currentType = TARGET;
+					break;
+				case 6:
+					makeAgent = true;
 					break;
 				case 7:
 					loadPrefab = true;
@@ -262,11 +301,11 @@ public class MapSystem
 							areaComponent.setType(COVER);
 							break;
 						case 4:
-							if (areaComponent.getType() == TOWER) {
-								areaComponent.setType(TOWER_USED);
-							} else {
-								areaComponent.setType(TOWER);
-							}
+							//							if (areaComponent.getType() == TOWER) {
+							//								areaComponent.setType(TOWER_USED);
+							//							} else {
+							areaComponent.setType(TOWER);
+							//							}
 							break;
 						case 5:
 							areaComponent.setType(TARGET);
@@ -283,6 +322,24 @@ public class MapSystem
 			}
 			for (Entity entity : selectedAgents) {
 				if (index == 6) {
+					SpriteRenderComponent spriteRenderComponent = sprites.get(entity);
+					if (sprints.has(entity)) {
+						entity.remove(SprintComponent.class);
+						agents.get(entity)
+							  .setBaseViewingDistance(6f);
+						lights.get(entity)
+							  .setColor(Color.WHITE);
+						spriteRenderComponent
+								.setTint(Color.WHITE);
+
+					} else {
+						entity.add(new SprintComponent());
+						agents.get(entity)
+							  .setBaseViewingDistance(7.5f);
+						lights.get(entity)
+							  .setColor(Color.RED);
+						spriteRenderComponent.setTint(Color.RED);
+					}
 					// TODO agent / intruder
 				}
 			}
@@ -296,7 +353,7 @@ public class MapSystem
 				lastTap = tapTime;
 			}
 			boolean control = Gdx.input.isKeyPressed(CONTROL_LEFT) || Gdx.input.isKeyPressed(CONTROL_RIGHT);
-			if (doubleTap && ! control) {
+			if (doubleTap && !control && !makeAgent) {
 				Entity camera = null;
 				for (Entity selector : selectors) {
 					NameComponent nameComponent = names.get(selector);
@@ -342,9 +399,9 @@ public class MapSystem
 					if (camera != null) {
 						Vector3 unproject = EntityUtilities.getWorldCoordinates(((TouchUpEvent) event).getScreenX(), ((TouchUpEvent) event).getScreenY(), camera, world);
 						newMapElement.add(new TransformComponent().setPosition(unproject)
-																  .setZ(mapElements.size()));
+																  .setZ(0));
 					} else {
-						newMapElement.add(new TransformComponent().setZ(mapElements.size()));
+						newMapElement.add(new TransformComponent().setZ(0));
 					}
 					newMapElement.add(new DimensionComponent().setDimension(10, 10));
 					newMapElement.add(new AreaComponent().setType(currentType));
@@ -353,9 +410,11 @@ public class MapSystem
 																   .get()));
 					newMapElement.add(new SpriteRenderComponent().setTextureRegion(currentType.getTextureAsset())
 																 .setSortingLayer("Default")
-																 .setSortingOrder(mapElements.size() + 1));
+																 .setSortingOrder(1));
 					newMapElement.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
-					newMapElement.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Rectangle(-5, -5, 10, 10))));
+					ColliderComponent colliderComponent = new ColliderComponent();
+					makeColliders(colliderComponent, currentType, 10, 10);
+					newMapElement.add(colliderComponent);
 					newMapElement.add(new SelectableComponent());
 					newMapElement.add(new ResizableComponent());
 					newMapElement.add(new DraggableComponent());
@@ -375,24 +434,63 @@ public class MapSystem
 				if (camera != null) {
 					Vector3 unproject = EntityUtilities.getWorldCoordinates(((TouchUpEvent) event).getScreenX(), ((TouchUpEvent) event).getScreenY(), camera, world);
 					newAgent.add(new TransformComponent().setPosition(unproject)
-															  .setZ(mapElements.size()));
+														 .setZ(3));
 				} else {
-					newAgent.add(new TransformComponent().setZ(mapElements.size()));
+					newAgent.add(new TransformComponent().setZ(3));
 				}
-				newAgent.add(new DimensionComponent().setDimension(2, 2));
+				newAgent.add(new DimensionComponent().setDimension(1, 1));
 				newAgent.add(new LayerComponent(BitBuilder.none(32)
-															   .s(1)
-															   .get()));
-				newAgent.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("badlogic", TextureRegion.class))
-														.setSortingLayer("Default"));
+														  .s(1)
+														  .get()));
+				newAgent.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("agent", TextureRegion.class))
+														.setSortingLayer("Default").setSortingOrder(2));
 				newAgent.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
-				newAgent.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Vector2(), 1)));
+
+				Filter filter = new Filter();
+				filter.categoryBits = AreaComponent.AGENT_CATEGORY;
+				filter.maskBits = AreaComponent.AGENT_MASK;
+				filter.groupIndex = 0;
+
+				Filter lightFilter = new Filter();
+				lightFilter.categoryBits = AreaComponent.AGENT_CATEGORY;
+				lightFilter.maskBits = AreaComponent.LIGHT_MASK;
+				lightFilter.groupIndex = 0;
+
+				newAgent.add(new ColliderComponent().add(new ColliderComponent.Collider().setShape(new Vector2(), 0.5f)
+																						 .setFilter(filter)));
 				newAgent.add(new SelectableComponent());
 				newAgent.add(new DraggableComponent());
-				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE));
-				newAgent.add(new VelocityComponent().setVelocity(10f));
+				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE)
+												   .setAngle(45)
+												   .setFilter(lightFilter)
+												   .setDistance(6.5f));
+				newAgent.add(new VisionComponent());
+				newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(0, 6.5f, 45, 10, 18)));
+				AgentSightComponent sightComponent = new AgentSightComponent();
+				sightComponent.setDegreesOfSight(45);
+				sightComponent.setMaximumSightDistance(6.5f);
+				sightComponent.setMaximumSightDistance(0);
+				newAgent.add(sightComponent);
 				newAgent.add(new ListenerComponent());
+				newAgent.add(new NameComponent().setName("Agent"));
+				newAgent.add(new BehaviourComponent<RandomBehaviour.RandomBehaviourState>().setBehaviour(new RandomBehaviour())
+																						   .setState(new RandomBehaviour.RandomBehaviourState(0, 0)));
+				newAgent.add(new VelocityComponent());
+				newAgent.add(new AngularVelocityComponent());
+				newAgent.add(new AgentComponent());
+				newAgent.add(new StepComponent());
+				newAgent.add(new DizzinessComponent());
+
+				Entity vision = new Entity();
+				vision.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE)
+												 .setAngle(45)
+												 .setFilter(lightFilter)
+												 .setDistance(18)
+												 .setColor(Color.BLACK));
+				vision.add(new TransformComponent());
+				EntityUtilities.relate(newAgent, vision);
 				world.addEntity(newAgent);
+				world.addEntity(vision);
 			}
 		} else if (event instanceof KeyDownEvent) {
 			int keycode = ((KeyDownEvent) event).getKeycode();
@@ -467,26 +565,60 @@ public class MapSystem
 				if (sprites.has(element)) {
 					if (areas.has(element)) {
 						AreaComponent areaComponent = areas.get(element);
-						if (areaComponent.isDirty()) {
+						if (areaComponent.isDirty() && areaComponent.getType() != GROUND) {
+							DimensionComponent dm = dimensions.get(element);
 							SpriteRenderComponent spriteRenderComponent = sprites.get(element);
 							spriteRenderComponent
 									.setTextureRegion(areaComponent.getType()
 																   .getTextureAsset());
 							spriteRenderComponent.setDirty(true);
 							areaComponent.setDirty(false);
+
+							ColliderComponent colliderComponent = colliders.get(element);
+							makeColliders(colliderComponent, areaComponent.getType(), dm.getWidth(), dm.getHeight());
 						}
 					}
 				}
 				if (bodies.has(element)) {
 					Physics2dComponent physics2dComponent = bodies.get(element);
-					if (selected.contains(element, true) && areas.has(element) && areas.get(element).getType() != GROUND) {
+					if (selected.contains(element, true) && areas.has(element) && areas.get(element)
+																					   .getType() != GROUND) {
 						physics2dComponent.setType(BodyDef.BodyType.DynamicBody);
-					} else if (areas.has(element)){
+					} else if (areas.has(element)) {
 						physics2dComponent.setType(BodyDef.BodyType.StaticBody);
 					}
 				}
 			}
 		}
+	}
+
+	private void makeColliders(ColliderComponent colliderComponent, AreaComponent.AreaType type, float width, float height) {
+		colliderComponent.clear();
+		float wh = width / 2;
+		float hh = height / 2;
+		Filter sensorFilter = new Filter();
+		sensorFilter.categoryBits = AreaComponent.SENSOR_CATEGORY;
+		if (type == TOWER) {
+			colliderComponent.add(new ColliderComponent.Collider().setShape(new Vector2(-wh, -hh), new Vector2(wh, -hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000))
+							 .add(new ColliderComponent.Collider().setShape(new Vector2(wh, -hh), new Vector2(wh, hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000))
+							 .add(new ColliderComponent.Collider().setShape(new Vector2(wh, hh), new Vector2(-wh, hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000))
+							 .add(new ColliderComponent.Collider().setShape(new Vector2(-wh, hh), new Vector2(-wh, -hh))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000));
+		} else {
+			colliderComponent.add(new ColliderComponent.Collider().setShape(new Rectangle(-wh, -hh, width, height))
+																  .setFilter(type.getFilter())
+																  .setDensity(100000));
+		}
+		colliderComponent.add(new ColliderComponent.Collider().setShape(new Rectangle(-wh, -hh, width, height))
+															  .setFilter(sensorFilter)
+															  .setSensor(true));
 	}
 
 }

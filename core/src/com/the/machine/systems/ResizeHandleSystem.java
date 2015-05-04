@@ -29,6 +29,7 @@ import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.physics.ColliderComponent;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
+import lombok.EqualsAndHashCode;
 
 /**
  * TODO Add description
@@ -36,6 +37,7 @@ import com.the.machine.framework.utility.EntityUtilities;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 14/03/15
  */
+@EqualsAndHashCode
 public class ResizeHandleSystem
 		extends AbstractSystem {
 
@@ -71,7 +73,7 @@ public class ResizeHandleSystem
 			handle.add(new HandleComponent().setType(handleTypes[i]));
 			handle.add(new DisabledComponent());
 			handle.add(new DimensionComponent().setDimension(20, 20));
-			handle.add(new TransformComponent().setZRotation((i / 2) * 90).setZ(100));
+			handle.add(new TransformComponent().setZRotation((i / 2) * -90).setZ(100));
 			DraggableComponent draggableComponent = new DraggableComponent();
 			if (i == 1 || i == 5) {
 				draggableComponent.setXAxis(false);

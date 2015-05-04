@@ -6,6 +6,7 @@ import box2dLight.DirectionalLight;
 import box2dLight.Light;
 import box2dLight.PointLight;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.the.machine.framework.components.AbstractComponent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,11 +34,13 @@ public class Light2dComponent extends AbstractComponent {
 	boolean staticLight = false;
 	boolean xray = false;
 
+	Filter filter = new Filter();
+
 	// only applicable if type = CONE
-	float angle = 45;
+	float   angle     = 45;
 	// only applicable if type = CHAIN
-	int direction = 1;
-	float[] chain = new float[]{0};
+	int     direction = 1;
+	float[] chain     = new float[] { 0 };
 
 	@Getter
 	@AllArgsConstructor
@@ -137,6 +140,15 @@ public class Light2dComponent extends AbstractComponent {
 			dirty = true;
 		}
 		this.chain = chain;
+		return this;
+	}
+
+	public Light2dComponent setFilter(Filter filter) {
+		if (!this.filter.equals(filter)) {
+			setChanged();
+			dirty = true;
+		}
+		this.filter = filter;
 		return this;
 	}
 }

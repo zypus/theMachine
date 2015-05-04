@@ -214,6 +214,7 @@ public class CameraRenderSystem
 
 	@Override
 	public void update(float deltaTime) {
+		sort();
 		Array<Entity> entities = sortedEntities;
 		for (int c = 0; c < cameras.size(); c++) {
 			Entity cameraEntity = sortedCameras.get(c);
@@ -304,6 +305,7 @@ public class CameraRenderSystem
 								TransformComponent spriteTransform = EntityUtilities.computeAbsoluteTransform(entity);
 								sprite.setPosition(spriteTransform.getPosition());
 								sprite.setRotation(spriteTransform.getRotation());
+								sprite.setColor(spriteRenderComponent.getTint());
 								if (dimensions.has(entity)) {
 									DimensionComponent dimensionComponent = dimensions.get(entity);
 									sprite.setScale(spriteTransform.getXScale() * dimensionComponent.getWidth(), spriteTransform.getYScale() * dimensionComponent.getHeight());
@@ -363,8 +365,8 @@ public class CameraRenderSystem
 							shapeRenderer.setProjectionMatrix(camera.combined);
 							Matrix4 transformMatrix = shapeRenderer.getTransformMatrix();
 							Matrix4 newTransformMatrix = new Matrix4();
-							newTransformMatrix.rotate(transform.getRotation());
 							newTransformMatrix.translate(transform.getPosition());
+							newTransformMatrix.rotate(transform.getRotation());
 							newTransformMatrix.scl(transform.getScale());
 							shapeRenderer.setTransformMatrix(newTransformMatrix);
 							shapeRenderer.begin(ShapeRenderer.ShapeType.Line);

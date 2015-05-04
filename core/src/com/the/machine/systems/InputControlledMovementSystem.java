@@ -11,6 +11,7 @@ import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
 import com.the.machine.framework.events.input.KeyDownEvent;
 import com.the.machine.framework.events.input.KeyUpEvent;
+import lombok.EqualsAndHashCode;
 
 /**
  * TODO Add description
@@ -18,6 +19,7 @@ import com.the.machine.framework.events.input.KeyUpEvent;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 12/03/15
  */
+@EqualsAndHashCode
 public class InputControlledMovementSystem extends IteratingSystem implements EventListener {
 
 	transient private ComponentMapper<DirectionalVelocityComponent> velocities = ComponentMapper.getFor(DirectionalVelocityComponent.class);

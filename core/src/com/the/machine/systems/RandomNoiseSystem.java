@@ -15,6 +15,9 @@ import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
+import lombok.EqualsAndHashCode;
+
+import java.lang.ref.WeakReference;
 
 /**
  * TODO Add description
@@ -22,6 +25,7 @@ import com.the.machine.framework.interfaces.Observer;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 17/03/15
  */
+@EqualsAndHashCode
 public class RandomNoiseSystem
 		extends IteratingSystem implements EntityListener, Observer {
 
@@ -105,7 +109,7 @@ public class RandomNoiseSystem
 						Vector3 location = new Vector3(dm.getWidth()/2-AREA_LENGTH * (c + MathUtils.random()), dm.getHeight()/2-AREA_LENGTH * (r + MathUtils.random()), 0);
 						location.add(transforms.get(entity)
 											   .getPosition());
-						world.dispatchEvent(new AudioEvent(location, 5));
+						world.dispatchEvent(new AudioEvent(location, 5, new WeakReference<>(entity)));
 						map[c][r] = nextTime(RATE) * 60;
 					}
 				}

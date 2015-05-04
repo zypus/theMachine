@@ -1,5 +1,6 @@
 package com.the.machine.systems;
 
+import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -9,6 +10,7 @@ import com.the.machine.components.AreaComponent;
 import com.the.machine.components.MapGroundComponent;
 import com.the.machine.components.WorldMapComponent;
 import com.the.machine.framework.IteratingSystem;
+import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.TransformComponent;
 
 import java.awt.*;
@@ -22,33 +24,38 @@ import java.util.Set;
 public class WorldMappingSystem extends IteratingSystem {
     private ImmutableArray<Entity> groundComponentEntities;
 
-    public WorldMappingSystem(int priority) {
-        // Entities that show on the map
-        super(Family.all(
-                AreaComponent.class,
-                TransformComponent.class).get(), priority);
-    }
+	transient private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
 
-    @Override
-    public void addedToEngine(Engine engine) {
-        super.addedToEngine(engine);
-        groundComponentEntities = engine.getEntitiesFor(Family.all(MapGroundComponent.class).get());
-    }
+	public WorldMappingSystem(int priority) {
+		// Entities that show on the map
+		super(Family.all(
+				AreaComponent.class,
+				TransformComponent.class)
+					.get(), priority);
+	}
 
-    @Override
-    public void removedFromEngine(Engine engine) {
-        super.removedFromEngine(engine);
-        groundComponentEntities = null;
-    }
+	@Override
+	public void addedToEngine(Engine engine) {
+		super.addedToEngine(engine);
+		groundComponentEntities = engine.getEntitiesFor(Family.all(MapGroundComponent.class)
+															  .get());
+	}
 
-    @Override
-    protected void processEntity(Entity areaEntity, float deltaTime) {
+	@Override
+	public void removedFromEngine(Engine engine) {
+		super.removedFromEngine(engine);
+		groundComponentEntities = null;
+	}
+
+	@Override
+	protected void processEntity(Entity areaEntity, float deltaTime) {
         /*
          * Entities are only processed if there is at least one GroundComponent in the world
          */
-        if (groundComponentEntities.size() > 0) {
-            TransformComponent areaTransformComponent = areaEntity.getComponent(TransformComponent.class);
-            Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
+		if (groundComponentEntities.size() > 0) {
+			TransformComponent areaTransformComponent = areaEntity.getComponent(TransformComponent.class);
+			DimensionComponent dimensionComponent = dimensions.get(areaEntity);
+			Map<Vector2, Entity> worldMap = WorldMapComponent.worldMap;
 
             /*
              * If the entity is not yet on the map, add it.
@@ -63,10 +70,10 @@ public class WorldMappingSystem extends IteratingSystem {
             WorldMapComponent wmc = groundComponentEntities.get(0).getComponent(WorldMapComponent.class);
             if (!worldMap.containsValue(areaTransformComponent)) {
                 Vector2 bottomLeft = new Vector2(
-                        (float) (areaTransformComponent.getX() - 0.5 * areaTransformComponent.getXScale()),
-                        (float) (areaTransformComponent.getY() - 0.5 * areaTransformComponent.getYScale()));
+                        (float) (areaTransformComponent.getX() - 0.5 * dimensionComponent.getWidth()),
+                        (float) (areaTransformComponent.getY() - 0.5 * dimensionComponent.getHeight()));
 
-                Rectangle.Float entitySurface = new Rectangle.Float(bottomLeft.x, bottomLeft.y, areaTransformComponent.getXScale(), areaTransformComponent.getYScale());
+                Rectangle.Float entitySurface = new Rectangle.Float(bottomLeft.x, bottomLeft.y, dimensionComponent.getWidth(), dimensionComponent.getHeight());
 
                 // Areas are non-overlapping, so we can put the coordinates within the rectangle on the WorldMap
                 Set<Vector2> coordinatesOfEntity = new HashSet<>();

@@ -22,8 +22,7 @@ public class ShapeRenderComponent extends AbstractComponent implements LayerSort
 
 	private String sortingLayer = "Default";
 	private int   sortingOrder = 0;
-	private List<Shape>
-	shapes = new ArrayList<>();
+	private List<Shape> shapes = new ArrayList<>();
 
 	public ShapeRenderComponent add(Shape shape) {
 		shapes.add(shape);

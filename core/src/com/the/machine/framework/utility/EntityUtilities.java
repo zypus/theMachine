@@ -48,11 +48,19 @@ public class EntityUtilities {
 	}
 
 	public static Entity makeLabel(String text, int width, int height) {
+		return makeLabel(new LabelComponent().setText(text), 100, 20);
+	}
+
+	public static Entity makeLabel(LabelComponent labelComponent) {
+		return makeLabel(labelComponent, 100, 20);
+	}
+
+	public static Entity makeLabel(LabelComponent labelComponent, int width, int height) {
 		Entity label = new Entity();
 		label.add(new TransformComponent());
 		label.add(new DimensionComponent().setDimension(width, height));
 		label.add(new CanvasElementComponent());
-		label.add(new LabelComponent().setText(text));
+		label.add(labelComponent);
 		return label;
 	}
 
@@ -205,8 +213,8 @@ public class EntityUtilities {
 							.sub(at.getPosition());
 		localCoords.scl(1f/at.getXScale(), 1f / at.getYScale(), 1f / at.getZScale());
 		Quaternion inverseRotation = at.getRotation()
-						   .cpy()
-						   .mul(-1);
+						   .cpy().nor();
+		inverseRotation.conjugate();
 		inverseRotation.transform(localCoords);
 		return localCoords;
 	}
@@ -250,7 +258,11 @@ public class EntityUtilities {
 				bound = bound.merge(rect);
 			}
 		}
-		return bound;
+		if (bound == null) {
+			return new Rectangle();
+		} else {
+			return bound;
+		}
 	}
 
 	public static Rectangle toScreenRect(Rectangle rect, Entity camera, World world) {

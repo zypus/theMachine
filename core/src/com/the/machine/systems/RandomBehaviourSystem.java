@@ -5,18 +5,18 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
-import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector2;
-import com.the.machine.components.*;
+import com.the.machine.components.MapGroundComponent;
+import com.the.machine.components.RandomBehaviourComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.DimensionComponent;
 import com.the.machine.framework.components.TransformComponent;
-
-import java.awt.*;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by Frans on 12-3-2015.
  */
+@EqualsAndHashCode
 public class RandomBehaviourSystem extends IteratingSystem {
     private transient ComponentMapper<RandomBehaviourComponent> randomBehaviours = ComponentMapper.getFor(RandomBehaviourComponent.class);
     private ImmutableArray<Entity> groundComponentEntities;
@@ -48,11 +48,11 @@ public class RandomBehaviourSystem extends IteratingSystem {
             float newAngularVelocity = (float) ((Math.random() * 180) - 90);
             float newSpeed = (float) (Math.random() * 0.5);
 
-            BehaviourComponent behaviourComponent = new BehaviourComponent(
-                    new AngularVelocityComponent(newAngularVelocity, 360),
-                    new VelocityComponent().setVelocity(newSpeed)
-            );
-            entity.add(behaviourComponent);
+//            BehaviourComponent behaviourComponent = new BehaviourComponent(
+//                    new AngularVelocityComponent(newAngularVelocity, 360),
+//                    new VelocityComponent().setVelocity(newSpeed)
+//            );
+//            entity.add(behaviourComponent);
 
             randomBehaviourComponent.increaseTimeSinceLastRandomBehaviourWith(randomBehaviourComponent.getTimeBetweenRandomBehaviours());
 

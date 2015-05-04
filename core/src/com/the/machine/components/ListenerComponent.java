@@ -1,6 +1,6 @@
 package com.the.machine.components;
 
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,5 +21,5 @@ import java.util.List;
 public class ListenerComponent extends AbstractComponent {
 
 	boolean deaf = false;
-	private List<Vector3> soundDirections = new ArrayList<>();
+	private List<Vector2> soundDirections = new ArrayList<>();
 }

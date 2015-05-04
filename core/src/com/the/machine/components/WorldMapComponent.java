@@ -2,16 +2,11 @@ package com.the.machine.components;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.the.machine.framework.components.AbstractComponent;
 import com.the.machine.framework.components.DimensionComponent;
 
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by Frans on 15-3-2015.
