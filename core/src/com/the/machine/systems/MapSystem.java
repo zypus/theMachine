@@ -63,6 +63,7 @@ import com.the.machine.framework.interfaces.Observable;
 import com.the.machine.framework.interfaces.Observer;
 import com.the.machine.framework.utility.BitBuilder;
 import com.the.machine.framework.utility.EntityUtilities;
+
 import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;

@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.systems.ActionSystem;
+
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
