@@ -2,8 +2,6 @@ package com.the.machine.components;
 
 import com.the.machine.framework.components.AbstractComponent;
 
-//Note: This seems to not be used
-
 /**
  * Created by Frans on 12-3-2015.
  */

@@ -1,6 +1,7 @@
 package com.the.machine.behaviours;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.the.machine.behaviours.behaviorTree.TreeBehavior;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.systems.ActionSystem;
@@ -19,8 +20,14 @@ import java.util.ArrayList;
 @NoArgsConstructor
 public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehaviour.RandomBehaviourState> {
 
+	private TreeBehavior b;
 	@Override
 	public BehaviourComponent.BehaviourResponse<RandomBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, RandomBehaviourState state) {
+		
+		if(b==null)b = new TreeBehavior();
+		if(true)b.evaluate(context, state);
+		
+		//TODO: Reset This!
 		float delta = context.getPastTime();
 		state.nextSpeedChange -= delta;
 		state.nextTurnChange -= delta;
