@@ -25,7 +25,7 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 	public BehaviourComponent.BehaviourResponse<RandomBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, RandomBehaviourState state) {
 		
 		if(b==null)b = new TreeBehavior();
-		if(true)b.evaluate(context, state);
+		if(true)b.evaluate(context, new TreeBehavior.TreeBehaviorState());
 		
 		//TODO: Reset This!
 		float delta = context.getPastTime();

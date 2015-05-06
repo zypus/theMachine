@@ -1,6 +1,7 @@
 package com.the.machine.components;
 
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
 import com.the.machine.systems.ActionSystem;
@@ -51,11 +52,30 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 	@Data
 	@AllArgsConstructor
 	public static class BehaviourResponse<T extends BehaviourState> {
-		float                     movementSpeed;
-		float                     turningSpeed;
-		List<ActionSystem.Action> actions;
-		T                         nextBehaviourState;
-		int markerNumber;
+		
+		private static final float MAX_CLEAR_VISION_TURNING = 45;
+		private static final float MAX_TURNING = 180;
+		
+		private float                     movementSpeed;
+		private float                     turningSpeed;
+		private List<ActionSystem.Action> actions;
+		private T                         nextBehaviourState;
+		private int markerNumber;
+		
+		public void setTurning(BehaviourContext context, Vector2 dir, float desSpeed, boolean allowBlurryVision){
+			float angle = context.getMoveDirection().angle(dir);
+			if(angle!=0){
+				angle = angle/Math.abs(angle);
+			}
+			angle = angle * desSpeed;
+			if(!allowBlurryVision){
+				this.turningSpeed = MathUtils.clamp(angle, -MAX_CLEAR_VISION_TURNING, MAX_CLEAR_VISION_TURNING);
+			}
+			else{
+				this.turningSpeed = MathUtils.clamp(angle, -MAX_TURNING, MAX_TURNING);
+			}
+		}
+		
 	}
 
 }

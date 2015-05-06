@@ -2,6 +2,8 @@ package com.the.machine.behaviours.behaviorTree;
 
 import java.util.ArrayList;
 
+import lombok.AllArgsConstructor;
+
 import com.badlogic.gdx.ai.btree.BehaviorTree;
 import com.badlogic.gdx.ai.btree.Task;
 import com.badlogic.gdx.ai.btree.branch.Sequence;
@@ -13,7 +15,7 @@ import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
 
-public class TreeBehavior implements BehaviourComponent.Behaviour<RandomBehaviour.RandomBehaviourState> {
+public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.TreeBehaviorState> {
 	
 	private BehaviorTree<TreeContext> tree;
 	
@@ -23,13 +25,18 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<RandomBehaviou
 	}
 
 	@Override
-	public BehaviourResponse<RandomBehaviourState> evaluate(BehaviourContext context, RandomBehaviourState state) {
-		BehaviourComponent.BehaviourResponse<RandomBehaviourState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0);
+	public BehaviourResponse<TreeBehaviorState> evaluate(BehaviourContext context, TreeBehaviorState state) {
+		BehaviourComponent.BehaviourResponse<TreeBehaviorState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0);
 		TreeContext treeContext = new TreeContext();
 		treeContext.setResponse(response);
 		tree.setObject(treeContext);
 		tree.step();
 		return response;
+	}
+	
+	@AllArgsConstructor
+	public static class TreeBehaviorState implements BehaviourComponent.BehaviourState{
+		
 	}
 
 }
