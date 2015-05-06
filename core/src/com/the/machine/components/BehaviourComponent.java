@@ -25,7 +25,7 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 	T state;
 
 	public static interface Behaviour<T extends BehaviourState> {
-		BehaviourResponse<T> evaluate(BehaviourContext context, T state);
+		List<BehaviourResponse> evaluate(BehaviourContext context, T state);
 	}
 
 	public static interface BehaviourState{};
@@ -53,12 +53,8 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 	@Data
 	@AllArgsConstructor
 	public static class BehaviourResponse<T extends BehaviourState> {
-		float                     movementSpeed;
-		float                     turningSpeed;
-		List<ActionSystem.Action> actions;
-		T                         nextBehaviourState;
-		int markerNumber;
-		float decayRate;
+		ActionSystem.Action       action;
+		Object data;
 	}
 
 }

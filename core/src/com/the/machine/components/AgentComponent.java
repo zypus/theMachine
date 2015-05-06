@@ -17,6 +17,8 @@ import lombok.experimental.Accessors;
 public class AgentComponent
 		extends AbstractComponent {
 	AreaComponent.AreaType environmentType = AreaComponent.AreaType.GROUND;
+	float goalAngle = 0;
+	float angularSpeed = 0;
 	float visionModifier = 1;
 	float viewingAngle = 45;
 	float maxMovementSpeed = 1.4f;
