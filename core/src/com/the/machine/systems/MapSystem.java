@@ -474,7 +474,7 @@ public class MapSystem
 				newAgent.add(sightComponent);
 				newAgent.add(new ListenerComponent());
 				newAgent.add(new NameComponent().setName("Agent"));
-				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(new AntColonyBehaviour.AntColonyBehaviourState(0, 0, AntColonyBehaviour.AgentType.GUARD, 0)));
+				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(new AntColonyBehaviour.AntColonyBehaviourState(0, 0, AntColonyBehaviour.AgentType.GUARD, 0, newAgent)));
 				newAgent.add(new VelocityComponent());
 				newAgent.add(new AngularVelocityComponent());
 				newAgent.add(new AgentComponent());

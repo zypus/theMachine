@@ -1,14 +1,20 @@
 package com.the.machine.behaviours;
 
+import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.MathUtils;
-import com.the.machine.components.AgentSightComponent;
-import com.the.machine.components.AreaComponent;
-import com.the.machine.components.BehaviourComponent;
+import com.badlogic.gdx.math.Vector2;
+import com.the.machine.components.*;
+import com.the.machine.framework.components.NameComponent;
+import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Frans on 25-4-2015.
@@ -18,6 +24,7 @@ import java.util.ArrayList;
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
     public enum AgentType { GUARD, INTRUDER };
     public final float timeBetweenPheromones = 2.5f;
+    transient private ComponentMapper<TransformComponent> transforms            = ComponentMapper.getFor(TransformComponent.class);
 
     @Override
     public BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
@@ -29,21 +36,28 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         // Update nextSpeedChange
         if (state.nextSpeedChange <= 0) {
-            response.setMovementSpeed(MathUtils.random()*2);
+            response.setMovementSpeed(2);               // Only possible speed is 2 now
             state.nextSpeedChange = nextTime(0.5f)*10;
         }
 
         // Increase the speed if there are a lot of pheromones
-        //response.setMovementSpeed(2 + 5 * context.getMarkers().size());
 
         // Update nextTurnChange
         if (state.nextTurnChange <= 0) {
-            if (context.getSprintTime() > 0) {
-                response.setTurningSpeed(MathUtils.random() * 20 - 10);
-            } else  {
-                response.setTurningSpeed(MathUtils.random() * 90 - 45);
+            state.nextTurnChange = nextTime(1f);
+            TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
+            Vector2 averageLocationOfVisibleMarkers = getAverageLocationOfVisibleMarkers(state, context);
+
+            // If the agent can see markers, there is a chance that he will go to the avg location
+            if (!canSeeMarkers(context) || Math.random() <= 0.5) {
+                // Set the turnspeed to a low value to have a broader view
+                response.setTurningSpeed((float) (50 * Math.random() - 25));
             }
-            state.nextTurnChange = nextTime(0.5f)*1;
+            else {
+                float averageAngleOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition()).angle();
+                float currentAngle = transformComponent.getZRotation();
+                response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, averageAngleOfVisibleMarkers, 1f));      // For debugging, make the agent always rotate towards the average location of the visible markers
+            }
         }
 
         // Update nextMarkerDrop
@@ -87,6 +101,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float nextTurnChange;
         AgentType agentType;
         float nextMarkerDrop;
+        Entity agent;           // Can probably be accessed in another way
     }
 
     /**
@@ -132,5 +147,30 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             return 1;
         }
         else return 100;
+    }
+
+    private boolean canSeeMarkers(BehaviourComponent.BehaviourContext context) {
+        return context.getMarkers().size() != 0;
+    }
+
+    private Vector2 getAverageLocationOfVisibleMarkers(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+        Vector2 locationSummed = new Vector2();
+
+        List<WeakReference<Entity>> markerList = context.getMarkers();
+        for (int i = 0; i < markerList.size(); i++) {
+            Entity markerComponent = markerList.get(i).get();
+            TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
+
+            locationSummed.add(otherTransform.get2DPosition());
+        }
+        return locationSummed.scl((float) 1.0 / markerList.size());
+    }
+
+    // TODO doesn't take into account maximum rotation speed
+    private float turnSpeedForRotatingFromTo(float currentAngle, float goalAngle, float timeToRotate) {
+        float angleDifference = goalAngle - currentAngle;
+        float rotationSpeed = angleDifference / timeToRotate;
+
+        return rotationSpeed;
     }
 }
