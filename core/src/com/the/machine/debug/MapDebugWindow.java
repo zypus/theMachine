@@ -1,5 +1,7 @@
 package com.the.machine.debug;
 
+import com.badlogic.gdx.math.MathUtils;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -20,7 +22,7 @@ public class MapDebugWindow
 	private static Thread active;
 
 	private MapDebugWindow(float[][] map) {
-		this.setBounds(0, 0, (int)(map.length*SCALE), (int)(map[0].length*SCALE));
+		this.setBounds(0, 0, (int)(map.length*SCALE), (int)(map[0].length*SCALE) + 20);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setTitle("Map Debugger");
 		this.setContentPane(new DebugPanel(map, SCALE));
@@ -65,13 +67,22 @@ public class MapDebugWindow
 			super.paint(g);
 			Graphics2D g2 = (Graphics2D) g;
 			Rectangle2D pixel = new Rectangle2D.Double(0,0,1,1);
+			// determine max value in the map
+			float max = 0;
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					if (map[i][j] > max) {
+						max = map[i][j];
+					}
+				}
+			}
 			for (int i = 0; i < width; i++) {
 				for (int j = 0; j < height; j++) {
 					float v = map[i][height-1-j];
-					if (v > 1) {
+					if (v < 0) {
 						g2.setColor(new Color(0.4117647f, 0.5019608f,1f));
 					} else {
-						g2.setColor(new Color(v, 0, 0));
+						g2.setColor(new Color(MathUtils.clamp(v/max, 0, 1), 0f, 0f));
 					}
 					pixel.setRect(i*scale, j*scale, 1*scale, 1*scale);
 					g2.fill(pixel);

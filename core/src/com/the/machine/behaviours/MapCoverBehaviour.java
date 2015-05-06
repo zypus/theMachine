@@ -40,7 +40,7 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		// if the state is null, that means that this is the first time the behaviour is evaluate, so lets construct the first state
 		if (state == null) {
 			state = generateState(context);
-			sharedState = state; // comment this line to disable shared state
+//			sharedState = state; // comment this line to disable shared state
 			MapDebugWindow.debug(state.coverage, 0.5f);
 		}
 		updateCoverage(context, state);
@@ -64,12 +64,12 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		for (int i = 0; i < coverage.length; i++) {
 			for (int j = 0; j < coverage[0].length; j++) {
 				// ignores values which are 1, (values which are 2 and should be ignored anyway)
-				if (coverage[i][j] < 1) {
+				if (coverage[i][j] >= 0) {
 					coverage[i][j] += 0.001f*context.getPastTime()*((sharedState != null) ? 1f/shareCount : 1); // compensate for additional agents
 					// makes sure the number is never bigger than 1
-					if (coverage[i][j] > 1) {
-						coverage[i][j] = 1;
-					}
+//					if (coverage[i][j] > 1) {
+//						coverage[i][j] = 1;
+//					}
 				}
 			}
 		}
@@ -94,7 +94,7 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 							int xx = (int) pos.x + dx;
 							int yy = (int) pos.y + dy;
 						if (Utils.isInbound(xx, yy, 0, 0, coverage.length-1, coverage[0].length-1)) {
-							if (coverage[xx][yy] <= 1) {
+							if (coverage[xx][yy] >= 0) {
 								coverage[xx][(yy)] = 0;
 							}
 						}
@@ -116,9 +116,9 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		for (int i = 0; i < coverage.length; i++) {
 			for (int j = 0; j < coverage[0].length; j++) {
 				// weight the power of attraction based on manhattan distance to bot
-				float distWeight = MathUtils.clamp(1-((float)Math.pow(Math.abs(pos.x - i) + Math.abs(pos.y - j), 2f) / coverage.length),0,1);
+				float distWeight = MathUtils.clamp(1-((float)Math.pow(Math.abs(pos.x - i) + Math.abs(pos.y - j), 2f) / (coverage.length+coverage.length)),0,1);
 				float v = coverage[i][j] * distWeight;
-				if (v <= 1) {
+				if (v >= 0) {
 					x += v*i;
 					y += v*j;
 					count += v;
@@ -190,7 +190,7 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 				if (area[i][j] == GROUND) {
 					coverage[i][j] = 1.0f; // this is a valid field
 				} else {
-					coverage[i][j] = 2.0f; // this is an unreachable field
+					coverage[i][j] = -1.0f; // this is an unreachable field
 				}
 			}
 		}
