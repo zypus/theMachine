@@ -1,8 +1,10 @@
 package com.the.machine.systems;
 
 import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -23,6 +25,7 @@ import com.the.machine.events.TowerLeaveEvent;
 import com.the.machine.events.WindowDestroyEvent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.misc.Placebo;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -41,10 +44,26 @@ public class BehaviourSystem
 	private transient ComponentMapper<ListenerComponent>        listeners         = ComponentMapper.getFor(ListenerComponent.class);
 	private transient ComponentMapper<VisionComponent>          visions           = ComponentMapper.getFor(VisionComponent.class);
 	private transient ComponentMapper<SprintComponent>          sprints           = ComponentMapper.getFor(SprintComponent.class);
+	private transient ComponentMapper<DiscreteMapComponent>          discretes           = ComponentMapper.getFor(DiscreteMapComponent.class);
 
 	public BehaviourSystem() {
 		super(Family.all(VelocityComponent.class, AngularVelocityComponent.class, AgentComponent.class, ListenerComponent.class, VisionComponent.class, BehaviourComponent.class)
 					.get());
+	}
+
+	ImmutableArray<Entity> maps;
+
+	@Override
+	public void addedToEngine(Engine engine) {
+		super.addedToEngine(engine);
+		maps = engine.getEntitiesFor(Family.all(DiscreteMapComponent.class)
+										   .get());
+	}
+
+	@Override
+	public void removedFromEngine(Engine engine) {
+		super.removedFromEngine(engine);
+		maps = null;
 	}
 
 	@Override
@@ -58,6 +77,7 @@ public class BehaviourSystem
 		VisionComponent visionComponent = visions.get(entity);
 		List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
 		List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
+		List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
 		ListenerComponent listenerComponent = listeners.get(entity);
 		List<Vector2> directions;
 		if (listenerComponent.isDeaf()) {
@@ -85,32 +105,52 @@ public class BehaviourSystem
 		tf.getRotation()
 		  .transform(dir);
 
+		Placebo placebo = new Placebo(tf.get2DPosition(), discretes.get(maps.first())
+																   .getSparseMap());
+
 		// context
-		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower());
+		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), placebo);
 
 		BehaviourComponent behaviourComponent = behaviours.get(entity);
 
 		// evaluate the behaviour
-		BehaviourComponent.BehaviourResponse response = behaviourComponent.getBehaviour()
+		List<BehaviourComponent.BehaviourResponse> responses = behaviourComponent.getBehaviour()
 																		  .evaluate(context, behaviourComponent.getState());
 
 		// set the new velocities, but keep them in their bound
 		if (agentComponent.isActing()) {
 			velocityComponent.setVelocity(0);
-		} else {
-			if (sprintTime > 0) {
-				velocityComponent.setVelocity(MathUtils.clamp(response.getMovementSpeed(), agentComponent.getMaxMovementSpeed(), agentComponent.getMaxMovementSpeed()));
-			} else {
-				velocityComponent.setVelocity(MathUtils.clamp(response.getMovementSpeed(), 0, agentComponent.getMaxMovementSpeed()));
-			}
 		}
-		angularVelocityComponent.setAngularVelocity(MathUtils.clamp(response.getTurningSpeed(), -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
+
+		float currentAngle = new Vector2(dir.x, dir.y).angle();
+		float turn = currentAngle-agentComponent.getGoalAngle();
+		if (turn != 0) {
+			turn = turn/Math.abs(turn);
+		}
+		turn *= agentComponent.getAngularSpeed();
+		angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
 
 		WeakReference<Entity> weakReference = new WeakReference<>(entity);
-		for (Object o : response.getActions()) {
-			ActionSystem.Action action = (ActionSystem.Action) o;
+		for (BehaviourComponent.BehaviourResponse o : responses) {
+			ActionSystem.Action action = (ActionSystem.Action) o.getAction();
 			if (!agentComponent.isActing()) {
-				if (action == ActionSystem.Action.SPRINT) {
+				if (action == ActionSystem.Action.MOVE) {
+					ActionSystem.MoveData data = (ActionSystem.MoveData) o.getData();
+					if (!agentComponent.isActing()) {
+						if (sprintTime > 0) {
+							velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), agentComponent.getMaxMovementSpeed(), agentComponent.getMaxMovementSpeed()));
+						} else {
+							velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), 0, agentComponent.getMaxMovementSpeed()));
+						}
+					}
+				}
+				else if (action == ActionSystem.Action.TURN) {
+					ActionSystem.TurnData data = (ActionSystem.TurnData) o.getData();
+					agentComponent.setGoalAngle(data.getAngle());
+					agentComponent.setAngularSpeed(data.getSpeed());
+
+				}
+				else if (action == ActionSystem.Action.SPRINT) {
 					world.dispatchEvent(new SprintEvent(weakReference));
 				} else if (action == ActionSystem.Action.TOWER_ENTER) {
 					world.dispatchEvent(new TowerEnterEvent(weakReference));
@@ -123,7 +163,11 @@ public class BehaviourSystem
 				} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
 					world.dispatchEvent(new WindowDestroyEvent(weakReference));
 				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
-					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), response.getMarkerNumber()));
+					ActionSystem.MarkerData data = (ActionSystem.MarkerData) o.getData();
+					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity),  data.getNumber(), data.getDecay()));
+				} else if (action == ActionSystem.Action.STATE) {
+					ActionSystem.StateData data = (ActionSystem.StateData) o.getData();
+					behaviourComponent.setState(data.getState());
 				}
 				// TODO perform the action
 			} else {
@@ -136,6 +180,6 @@ public class BehaviourSystem
 		listenerComponent.getSoundDirections()
 						 .clear();
 
-		behaviourComponent.setState(response.getNextBehaviourState());
+
 	}
 }

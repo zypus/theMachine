@@ -1,6 +1,9 @@
 package com.the.machine.systems;
 
+import com.the.machine.components.BehaviourComponent;
 import com.the.machine.framework.AbstractSystem;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 /**
  * TODO Add description
@@ -19,6 +22,35 @@ public class ActionSystem extends AbstractSystem {
 		TOWER_ENTER,
 		TOWER_LEAVE,
 		SPRINT,
-		MARKER_PLACE
+		MARKER_PLACE,
+		STATE,
+		TURN,
+		MOVE
+	}
+
+	@Data
+	@AllArgsConstructor
+	public static class MarkerData {
+		int number;
+		float decay;
+	}
+
+	@Data
+	@AllArgsConstructor
+	public static class TurnData {
+		float angle;
+		float speed;
+	}
+
+	@Data
+	@AllArgsConstructor
+	public static class MoveData {
+		float speed;
+	}
+
+	@Data
+	@AllArgsConstructor
+	public static class StateData {
+		BehaviourComponent.BehaviourState state;
 	}
 }

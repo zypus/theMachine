@@ -1,15 +1,15 @@
 package com.the.machine.behaviours;
+package com.the.machine.behaviours;
 
 import com.badlogic.gdx.math.MathUtils;
-import com.the.machine.behaviours.behaviorTree.TreeBehavior;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.systems.ActionSystem;
-
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TODO Add description
@@ -20,57 +20,42 @@ import java.util.ArrayList;
 @NoArgsConstructor
 public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehaviour.RandomBehaviourState> {
 
-	private TreeBehavior b;
 	@Override
-	public BehaviourComponent.BehaviourResponse<RandomBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, RandomBehaviourState state) {
-		
-		if(b==null)b = new TreeBehavior();
-		if(true)b.evaluate(context, new TreeBehavior.TreeBehaviorState());
-		
-		//TODO: Reset This!
+	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, RandomBehaviourState state) {
 		float delta = context.getPastTime();
 		state.nextSpeedChange -= delta;
 		state.nextTurnChange -= delta;
-		BehaviourComponent.BehaviourResponse<RandomBehaviourState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0);
+		List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
 		if (state.nextSpeedChange <= 0) {
-			response.setMovementSpeed(MathUtils.random()*2);
-			state.nextSpeedChange = nextTime(0.5f)*10;
+			responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(MathUtils.random() * 2)));
 		}
 		if (state.nextTurnChange <= 0) {
 			if (context.getSprintTime() > 0) {
-				response.setTurningSpeed(MathUtils.random() * 20 - 10);
+				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(MathUtils.random()*360 ,MathUtils.random() * 20 - 10)));
 			} else  {
-				response.setTurningSpeed(MathUtils.random() * 90 - 45);
+				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(MathUtils.random() * 360, MathUtils.random() * 90 - 45)));
 			}
 			state.nextTurnChange = nextTime(0.5f)*1;
 		}
 		if (context.isCanSprint()) {
 			if (MathUtils.random() < 0.1) {
-				response.getActions()
-						.add(ActionSystem.Action.SPRINT);
+				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.SPRINT, null));
 			}
 		}
 		if (context.getEnvironment() == AreaComponent.AreaType.TOWER && MathUtils.random() < 0.1) {
-			response.getActions()
-					.add(ActionSystem.Action.TOWER_LEAVE);
+			responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_LEAVE, null));
 		}
-		response.getActions()
-				.add(ActionSystem.Action.TOWER_ENTER);
-		response.getActions()
-				.add(ActionSystem.Action.WINDOW_DESTROY);
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null));
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null));
 		if (MathUtils.random() < 0.5) {
-			response.getActions()
-					.add(ActionSystem.Action.DOOR_OPEN);
+			responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN, null));
 		} else {
-			response.getActions()
-					.add(ActionSystem.Action.DOOR_OPEN_SILENT);
+			responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN_SILENT, null));
 		}
 		if (MathUtils.random() < 0.001) {
-			response.getActions()
-					.add(ActionSystem.Action.MARKER_PLACE);
-			response.setMarkerNumber(0);
+			responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.MARKER_PLACE, new ActionSystem.MarkerData(0, 0.5f)));
 		}
-		return response;
+		return responses;
 	}
 
 	private float nextTime(float rate) {
@@ -84,4 +69,3 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 	}
 
 }
-
