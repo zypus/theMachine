@@ -1,5 +1,4 @@
 package com.the.machine.behaviours;
-package com.the.machine.behaviours;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.the.machine.components.AreaComponent;
