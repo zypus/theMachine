@@ -7,8 +7,7 @@ import com.the.machine.behaviours.behaviorTree.TreeContext;
 public class TestLeaf extends LeafTask<TreeContext>{
 
 	@Override
-	public void run(TreeContext object) {
-		System.out.println("hi");
+	public void run(TreeContext context) {
 		this.running();
 	}
 

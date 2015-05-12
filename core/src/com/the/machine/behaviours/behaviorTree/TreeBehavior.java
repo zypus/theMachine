@@ -30,7 +30,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	@Override
 	public List<BehaviourResponse> evaluate(BehaviourContext context, TreeBehaviorState state) {
 		List<BehaviourResponse> responseList = new ArrayList<BehaviourResponse>();
-		BehaviourComponent.BehaviourResponse<TreeBehaviorState> response = new BehaviourResponse<TreeBehaviorState>(ActionSystem.Action.MOVE, state);
+		BehaviourComponent.BehaviourResponse<TreeBehaviorState> response = new BehaviourResponse<TreeBehaviorState>(ActionSystem.Action.TURN, new ActionSystem.TurnData(3,  6));
 //		TreeContext treeContext = new TreeContext();
 //		treeContext.setResponse(response);
 //		tree.setObject(treeContext);
