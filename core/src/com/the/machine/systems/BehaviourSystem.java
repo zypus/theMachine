@@ -151,6 +151,8 @@ public class BehaviourSystem
 					world.dispatchEvent(new DoorOpenEvent(weakReference, false));
 				} else if (action == ActionSystem.Action.DOOR_OPEN_SILENT) {
 					world.dispatchEvent(new DoorOpenEvent(weakReference, true));
+				} else if (action == ActionSystem.Action.DOOR_CANCEL) {
+					world.dispatchEvent(new DoorCancelEvent(weakReference));
 				} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
 					world.dispatchEvent(new WindowDestroyEvent(weakReference));
 				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
