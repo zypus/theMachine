@@ -102,7 +102,7 @@ public class World implements ApplicationListener, InputProcessor {
 	@Getter @Setter private com.badlogic.gdx.physics.box2d.World box2dWorld = null;
 
 	@Getter private float t        = 0;
-	private         float timeFlow = 100f;
+	private         float timeFlow = 1f;
 
 	private boolean stableOnly = false;
 

@@ -1,5 +1,6 @@
 package com.the.machine.components;
 
+import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,15 +18,15 @@ import lombok.experimental.Accessors;
 public class AgentComponent
 		extends AbstractComponent {
 	AreaComponent.AreaType environmentType = AreaComponent.AreaType.GROUND;
-	float goalAngle = 0;
-	float angularSpeed = 0;
-	float visionModifier = 1;
-	float viewingAngle = 45;
-	float maxMovementSpeed = 1.4f;
-	float maxTurningSpeed = 180;
-	boolean hidden = false;
-	boolean inTower = false;
-	boolean acting = false;
+	Vector2 goalDir          = new Vector2(0, 0);
+	float   angularSpeed     = 0;
+	float   visionModifier   = 1;
+	float   viewingAngle     = 45;
+	float   maxMovementSpeed = 1.4f;
+	float   maxTurningSpeed  = 180;
+	boolean hidden           = false;
+	boolean inTower          = false;
+	boolean acting           = false;
 
 	public AgentComponent setVisionModifier(float mod) {
 		if (visionModifier != mod) {
@@ -36,7 +37,7 @@ public class AgentComponent
 	}
 
 	float baseViewingDistance = 6.5f;
-	float baseViewingAngle = 45;
-	float baseMovementSpeed = 1.4f;
+	float baseViewingAngle    = 45;
+	float baseMovementSpeed   = 1.4f;
 	float baseMaxTurningSpeed = 180;
 }

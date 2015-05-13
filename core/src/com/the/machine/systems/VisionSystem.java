@@ -18,10 +18,13 @@ import com.the.machine.framework.components.ParentComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.physics.Light2dComponent;
 import com.the.machine.framework.utility.EntityUtilities;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
+
+import static com.the.machine.components.AreaComponent.AreaType.*;
 
 /**
  * TODO Add description
@@ -73,15 +76,16 @@ public class VisionSystem
 
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
-		// TODO line of sight
 		Entity agent = parents.get(entity)
 							  .getParent()
 							  .get();
 		if (agent != null) {
 			VisionComponent visionComponent = visions.get(agent);
+			List<EnvironmentVisual> environmentVisuals = visionComponent.getEnvironmentVisuals();
 			List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
 			List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
 			List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
+			environmentVisuals.clear();
 			visibleAgents.clear();
 			cells.clear();
 			if (mapEntities.size() > 0 && !visions.get(agent)
@@ -121,16 +125,19 @@ public class VisionSystem
 											.sub(tf.get2DPosition());
 						float dst2 = delta.len2();
 						if (dst2 <= max && dst2 >= min) {
-							if (cell.getType() != AreaComponent.AreaType.COVER || dst2 <= max/4) {
+							if (cell.getType() != COVER || dst2 <= max/4) {
 									cells.add(new DiscreteMapComponent.MapCell(cell));
+								environmentVisuals.add(new EnvironmentVisual(delta, cell.getType()));
 							}
 						} else if (cell.getType()
 									   .isStructure() && dst2 <= 100) {
 							cells.add(new DiscreteMapComponent.MapCell(cell));
+							environmentVisuals.add(new EnvironmentVisual(delta, cell.getType()));
 						} else if (cell.getType()
 									   .isTower()) {
 							DiscreteMapComponent.MapCell tower = new DiscreteMapComponent.MapCell(cell);
-							tower.setType(AreaComponent.AreaType.TOWER);
+							environmentVisuals.add(new EnvironmentVisual(delta, TOWER));
+							tower.setType(TOWER);
 							cells.add(cell);
 						}
 					}
@@ -155,7 +162,7 @@ public class VisionSystem
 					float dst2 = delta.len2();
 					float deltaAngle = normAngle(delta.angle());
 					if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-						if (aComponent.getEnvironmentType() != AreaComponent.AreaType.COVER || dst2 <= max/4) {
+						if (aComponent.getEnvironmentType() != COVER || dst2 <= max/4) {
 							visibleAgents.add(new WeakReference<>(aEntity));
 						}
 					}
@@ -195,5 +202,54 @@ public class VisionSystem
 
 	private float normAngle(float angle) {
 		return (angle%360);
+	}
+
+	/**
+	 * Classes that encodes the smallest element an agent can perceive, stores the information about the distance from the agent two the element and what kind of element is perceived.
+	 */
+	@Data
+	public static abstract class Visual {
+		final Vector2 delta;
+	}
+
+	@Data
+	@EqualsAndHashCode(callSuper = true)
+	public static class EnvironmentVisual
+			extends Visual {
+		final AreaComponent.AreaType type;
+
+		public EnvironmentVisual(Vector2 delta, AreaComponent.AreaType type) {
+			super(delta);
+			this.type = type;
+		}
+	}
+
+	@Data
+	@EqualsAndHashCode(callSuper = true)
+	public static class AgentVisual extends Visual {
+
+		AgentType type;
+		WeakReference<Entity> agent;
+
+		public AgentVisual(Vector2 delta) {
+			super(delta);
+		}
+
+		public static enum AgentType {
+			GUARD,
+			INTRUDER
+		}
+	}
+
+	@Data
+	@EqualsAndHashCode(callSuper = true)
+	public static class MarkerVisual
+			extends Visual {
+
+		int markerNumber;
+
+		public MarkerVisual(Vector2 delta) {
+			super(delta);
+		}
 	}
 }

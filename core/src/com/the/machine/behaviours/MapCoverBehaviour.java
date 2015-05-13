@@ -8,11 +8,13 @@ import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.debug.MapDebugWindow;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.misc.Placebo;
+import com.the.machine.systems.ActionSystem;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.the.machine.components.AreaComponent.AreaType.*;
@@ -29,7 +31,7 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 	static private int shareCount = 0;
 
 	@Override
-	public BehaviourComponent.BehaviourResponse<MapCoverBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
+	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
 		// shared state between all guard agents, EXPERIMENTAL
 		if (state == null) {
 			shareCount++;
@@ -44,15 +46,20 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 			MapDebugWindow.debug(state.coverage, 0.5f);
 		}
 		updateCoverage(context, state);
-		Vector2 centerOfGravitation = determineGlobalCenterOfGravitation(context, state);
+//		Vector2 goal = determineGlobalCenterOfGravitation(context, state);
+		Vector2 goal = closestMax(context, state, 10);
 		Vector2 pos = context.getPlacebo()
 							 .getPos();
-		Vector2 delta = centerOfGravitation.cpy()
-										   .sub(pos);
+		Vector2 delta = goal.cpy()
+										   .sub((int) pos.x, (int) pos.y);
+
 		// determine the rotation to the center of gravity, because we want to go there
 		float angle = context.getMoveDirection().angle(delta);
-		BehaviourComponent.BehaviourResponse response = new BehaviourComponent.BehaviourResponse<MapCoverBehaviourState>(10, MathUtils.clamp(angle, -44, 44), new ArrayList<>(), state, 0, 0);
-		return response;
+		List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)));
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(delta, 45)));
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.STATE, new ActionSystem.StateData(state)));
+		return responses;
 	}
 
 	private void updateCoverage(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -102,6 +109,32 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 				}
 			}
 		}
+	}
+
+	private Vector2 closestMax(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state, int radius) {
+		float max = 0;
+		List<Vector2> tie = new ArrayList<>();
+		float[][] coverage = state.getCoverage();
+		Vector2 pos = context.getPlacebo()
+							 .getPos()
+							 .cpy()
+							 .add(state.getOffset());
+		for (int i = Math.max(0, (int) pos.x - radius); i < Math.min((int) pos.x + radius, coverage.length); i++) {
+			for (int j = Math.max(0, (int) pos.y - radius); j < Math.min((int) pos.y + radius, coverage[0].length); j++) {
+				int manhatten = Math.abs(i-(int)pos.x)+ Math.abs(j - (int) pos.y);
+				float v = coverage[i][j] - manhatten;
+				if (v > max) {
+					max = v;
+					tie.clear();
+					tie.add(new Vector2(i,j));
+				} else if (v == max) {
+					tie.add(new Vector2(i, j));
+				}
+			}
+		}
+		Vector2 offset = state.getOffset();
+		Collections.shuffle(tie);
+		return tie.get(0).sub(offset.x, offset.y);
 	}
 
 	private Vector2 determineGlobalCenterOfGravitation(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
