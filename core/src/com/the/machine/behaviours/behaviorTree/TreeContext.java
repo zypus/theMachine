@@ -32,4 +32,9 @@ public class TreeContext {
 		this.responseList.add( new BehaviourResponse<TreeBehaviorState>(action, actionData));
 	}
 	
+	/** Clears The Response list */
+	public void clearResponseList(){
+		this.responseList.clear();
+	}
+	
 }

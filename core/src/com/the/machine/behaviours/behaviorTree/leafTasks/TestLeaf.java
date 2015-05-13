@@ -9,7 +9,9 @@ public class TestLeaf extends LeafTask<TreeContext>{
 
 	@Override
 	public void run(TreeContext context) {
-		context.addResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(3, 6));
+		context.addResponse(
+				ActionSystem.Action.TURN, 
+				new ActionSystem.TurnData(3, 6));
 		this.running();
 	}
 
