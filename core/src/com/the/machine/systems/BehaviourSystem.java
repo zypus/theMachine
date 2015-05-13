@@ -122,14 +122,6 @@ public class BehaviourSystem
 			velocityComponent.setVelocity(0);
 		}
 
-		float currentAngle = new Vector2(dir.x, dir.y).angle();
-		float turn = currentAngle-agentComponent.getGoalAngle();
-		if (turn != 0) {
-			turn = turn/Math.abs(turn);
-		}
-		turn *= agentComponent.getAngularSpeed();
-		angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
-
 		WeakReference<Entity> weakReference = new WeakReference<>(entity);
 		for (BehaviourComponent.BehaviourResponse o : responses) {
 			ActionSystem.Action action = (ActionSystem.Action) o.getAction();
@@ -146,9 +138,8 @@ public class BehaviourSystem
 				}
 				else if (action == ActionSystem.Action.TURN) {
 					ActionSystem.TurnData data = (ActionSystem.TurnData) o.getData();
-					agentComponent.setGoalAngle(data.getAngle());
+					agentComponent.setGoalDir(data.getDir());
 					agentComponent.setAngularSpeed(data.getSpeed());
-
 				}
 				else if (action == ActionSystem.Action.SPRINT) {
 					world.dispatchEvent(new SprintEvent(weakReference));
@@ -176,6 +167,13 @@ public class BehaviourSystem
 				}
 			}
 		}
+
+		float turn = new Vector2(dir.x, dir.y).angle(agentComponent.getGoalDir());
+		if (turn != 0) {
+			turn = turn / Math.abs(turn);
+		}
+		turn *= agentComponent.getAngularSpeed();
+		angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
 
 		listenerComponent.getSoundDirections()
 						 .clear();

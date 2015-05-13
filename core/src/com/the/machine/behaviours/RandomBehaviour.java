@@ -1,6 +1,7 @@
 package com.the.machine.behaviours;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.systems.ActionSystem;
@@ -30,9 +31,9 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 		}
 		if (state.nextTurnChange <= 0) {
 			if (context.getSprintTime() > 0) {
-				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(MathUtils.random()*360 ,MathUtils.random() * 20 - 10)));
+				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(new Vector2(MathUtils.random() * 2 - 1, MathUtils.random() * 2 - 1) ,MathUtils.random() * 20 - 10)));
 			} else  {
-				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(MathUtils.random() * 360, MathUtils.random() * 90 - 45)));
+				responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(new Vector2(MathUtils.random()*2-1, MathUtils.random() * 2 - 1), MathUtils.random() * 90 - 45)));
 			}
 			state.nextTurnChange = nextTime(0.5f)*1;
 		}
