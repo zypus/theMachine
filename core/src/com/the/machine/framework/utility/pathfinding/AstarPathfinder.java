@@ -16,18 +16,7 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
 
 //import static com.the.machine.components.AreaComponent.AreaType.*;
 
-public class theAstar {
-
-	public void astar(AreaComponent.AreaType[][] area, Vector2i start, Vector2i goal) {
-
-		List<Vector2i> next = new ArrayList<>();
-		next.add(start);
-
-		while (!next.isEmpty() && start != goal) {
-			findPath(area, start, goal);
-		}
-
-	}
+public class AstarPathfinder {
 
 	public List<Node> findPath(AreaComponent.AreaType[][] area, Vector2i start, Vector2i goal) {
 
@@ -63,7 +52,7 @@ public class theAstar {
 				int x = current.tile.getX();
 				int y = current.tile.getY();
 				int xDirections = (i % 3) - 1;
-				int yDirections = (i % 3) - 1;
+				int yDirections = (i / 3) - 1;
 
 				// the agent at that location.
 				AreaComponent.AreaType at = getArea(area, x + xDirections, y + yDirections);
@@ -104,9 +93,10 @@ public class theAstar {
 	}
 
 	private double getDistance(Vector2i tile, Vector2i goal) {
-		double dx = tile.getX() - goal.getX();
-		double dy = tile.getY() - goal.getY();
-		return Math.sqrt((dx * dx) + (dy * dy));
+		double dx = Math.abs(tile.getX() - goal.getX());
+		double dy = Math.abs(tile.getY() - goal.getY());
+//		return Math.sqrt((dx * dx) + (dy * dy));
+		return dx+dy;
 	}
 
 	private Comparator<Node> nodeSorter = new Comparator<Node>() {

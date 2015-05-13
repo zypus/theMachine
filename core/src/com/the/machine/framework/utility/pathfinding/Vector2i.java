@@ -13,6 +13,10 @@ private int x, y;
 		set(x,y);
 	}
 
+	public Vector2i(float x, float y) {
+		set((int)x, (int)y);
+	}
+
 	public Vector2i( Vector2i vector){
 		set( vector.x, vector.y);
 	}

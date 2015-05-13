@@ -15,6 +15,16 @@ import java.util.List;
 public class SparseToFullMapConverter {
 
 	/**
+	 * Converts a sparse mapcell map into a fully expressed 2d areatype map. Computes the relevant informations from the sparse map.
+	 * @param sparseMap The sparse map.
+	 * @return The fully expressed map.
+	 */
+	public static AreaComponent.AreaType[][] convert(List<DiscreteMapComponent.MapCell> sparseMap) {
+		int[] mapStats = computeMapCharacteristics(sparseMap);
+		return convert(sparseMap, new Vector2(mapStats[2], mapStats[3]), mapStats[0], mapStats[1]);
+	}
+
+	/**
 	 * Converts a sparse mapcell map into a fully expressed 2d areatype map.
 	 * @param sparseMap The sparse map.
 	 * @param offset The offset, vector from the lower left point of the sparse map to its center. Required because an array used positive indices but the sparse maps center is at the origin, hence there are negative coordinates.
@@ -28,6 +38,9 @@ public class SparseToFullMapConverter {
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 				map[i][j] = AreaComponent.AreaType.GROUND;
+				if (i == 0 || j == 0 || i == width-1 || j == height-1) {
+					map[i][j] = AreaComponent.AreaType.OUTER_WALL;
+				}
 			}
 		}
 		update(map, sparseMap, offset);
@@ -47,6 +60,37 @@ public class SparseToFullMapConverter {
 			int y = (int) cell.getPosition().y + (int) offset.y;
 			map[x][y] = cell.getType();
 		}
+	}
+
+	/**
+	 * Computes the width, height and the offset from the lower left corner to the center of the sparse map.
+	 * @param sparseMap The sparse map.
+	 * @return A int array containing 4 elements which encodes the following {width, height, offset.x, offset.y}.
+	 */
+	public static int[] computeMapCharacteristics(List<DiscreteMapComponent.MapCell> sparseMap) {
+		int minX = 10000;
+		int minY = 10000;
+		int maxX = -10000;
+		int maxY = -10000;
+		// finds the dimensions of the map
+		for (DiscreteMapComponent.MapCell cell : sparseMap) {
+			Vector2 position = cell.getPosition();
+			if (minX > position.x) {
+				minX = (int) position.x;
+			}
+			if (maxX < position.x) {
+				maxX = (int) position.x;
+			}
+			if (minY > position.y) {
+				minY = (int) position.y;
+			}
+			if (maxY < position.y) {
+				maxY = (int) position.y;
+			}
+		}
+		int width = maxX - minX + 2; // +2 because of the outer walls
+		int height = maxY - minY + 2;
+		return new int[] {width, height, width/2, height/2};
 	}
 
 }
