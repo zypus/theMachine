@@ -1,7 +1,9 @@
 package com.the.machine.systems;
 
+import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.framework.AbstractSystem;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -38,7 +40,7 @@ public class ActionSystem extends AbstractSystem {
 	@Data
 	@AllArgsConstructor
 	public static class TurnData {
-		float angle;
+		Vector2 dir;
 		float speed;
 	}
 

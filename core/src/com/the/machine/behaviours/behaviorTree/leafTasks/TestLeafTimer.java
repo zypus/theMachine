@@ -23,7 +23,7 @@ public class TestLeafTimer extends LeafTask<TreeContext>{
 		}
 		else{
 			current--;
-			fail();
+			running();
 		}
 	}
 

@@ -16,7 +16,7 @@ public class ResLeaf extends LeafTask<TreeContext>{
 	}
 
 	@Override
-	/** A Returned Success Here Does Not Actually Imply Succesfull Action Completion */
+	/** A Returned Success Here Does Not Actually Imply Successful Action Completion */
 	public void run(TreeContext context) {
 		context.addResponse(action, actionData);
 		super.success();
