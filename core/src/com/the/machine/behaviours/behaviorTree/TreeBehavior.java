@@ -6,15 +6,17 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 
 import com.badlogic.gdx.ai.btree.BehaviorTree;
+import com.badlogic.gdx.ai.btree.LeafTask;
 import com.badlogic.gdx.ai.btree.Task;
 import com.badlogic.gdx.ai.btree.branch.Sequence;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.RandomBehaviour.RandomBehaviourState;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
-import com.the.machine.behaviours.behaviorTree.leafTasks.TestLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.TestLeafTimer;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.ResLeaf;
+import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TurnToTargetLocationLeaf;
+import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.HearingLeaf;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
@@ -28,24 +30,17 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		int time = 5;
 		this.tree = new BehaviorTree<TreeContext>();
 		List<Task<TreeContext>> list = new ArrayList<>();
-		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(10f)));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)));
-		list.add(new ResLeaf(ActionSystem.Action.TURN, new ActionSystem.TurnData(new Vector2(1, 1), 30)));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(10f)));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)));
-		list.add(new ResLeaf(ActionSystem.Action.TURN, new ActionSystem.TurnData(new Vector2(1, -1), 30)));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(10f)));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.TOWER_ENTER, "Poopi"));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.MARKER_PLACE, new ActionSystem.MarkerData(4, 0.8f)));
-		list.add(new TestLeafTimer(time));
-		list.add(new ResLeaf(ActionSystem.Action.TOWER_LEAVE, "Poopi"));
-		Task<TreeContext> seq = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
+		
+		List<Task<TreeContext>> list2 = new ArrayList<>();
+		
+		list2.add(new HearingLeaf());
+		list2.add(new TurnToTargetLocationLeaf(500));
+		list2.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(500)));
+		
+		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
+		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
+		Task<TreeContext> seq = new Sequence<TreeContext>(sound, normal);
+		
 		tree.addChild(new com.badlogic.gdx.ai.btree.decorator.UntilFail<TreeContext>(seq));
 		TreeContext treeContext = new TreeContext();
 		tree.setObject(treeContext);
@@ -54,7 +49,9 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	@Override
 	public List<BehaviourResponse> evaluate(BehaviourContext context, TreeBehaviorState state) {
 		List<BehaviourResponse> responseList = new ArrayList<BehaviourResponse>();
-		tree.getObject().clearResponseList();
+		TreeContext treeContext = tree.getObject();
+		treeContext.clearResponseList();
+		treeContext.setBehaviorContext(context);
 		tree.step();
 		responseList = tree.getObject().getResponseList();
 		for(BehaviourResponse b : responseList){

@@ -5,8 +5,10 @@ import java.util.List;
 
 import lombok.Data;
 
+import com.badlogic.gdx.math.Vector2;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
 import com.the.machine.components.BehaviourComponent;
+import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
 import com.the.machine.systems.ActionSystem;
 
@@ -14,8 +16,16 @@ import com.the.machine.systems.ActionSystem;
 /** This Class Contains All The Context Which Is Used For Operations Concerning Behavior Trees */
 public class TreeContext {
 	
+	/** The Actual Behavior Context */
+	private BehaviourContext behaviorContext;
+	
+	/** Target Location Can Be Declared To Then later be used */
+	private Vector2 targetLocation;
+	
 	/** List Storing All Responses To Be Taken This Iteration */
 	private List<BehaviourResponse> responseList;
+	
+	
 	
 	/** Constructor */
 	public TreeContext(){
