@@ -28,14 +28,15 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	
 	public TreeBehavior(){
 		int time = 5;
+		float speed = 50;
 		this.tree = new BehaviorTree<TreeContext>();
 		List<Task<TreeContext>> list = new ArrayList<>();
 		
 		List<Task<TreeContext>> list2 = new ArrayList<>();
 		
 		list2.add(new HearingLeaf());
-		list2.add(new TurnToTargetLocationLeaf(500));
-		list2.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(500)));
+		list2.add(new TurnToTargetLocationLeaf(speed));
+		list2.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
 		
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));

@@ -42,6 +42,10 @@ public class ActionSystem extends AbstractSystem {
 	public static class TurnData {
 		Vector2 dir;
 		float speed;
+		
+		public static Vector2 convertGlobalTurn(Vector2 globalTurn, Vector2 currentDir){
+			return currentDir.cpy().rotate(currentDir.angle(globalTurn) + currentDir.angle());
+		}
 	}
 
 	@Data
