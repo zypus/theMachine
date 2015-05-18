@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 
 import com.badlogic.gdx.ai.btree.LeafTask;
 import com.badlogic.gdx.ai.btree.Task;
+import com.badlogic.gdx.math.Vector2;
 import com.the.machine.behaviours.behaviorTree.TreeContext;
 import com.the.machine.systems.ActionSystem;
 
@@ -15,7 +16,8 @@ public class TurnToTargetLocationLeaf extends LeafTask<TreeContext>{
 	@Override
 	public void run(TreeContext context) {
 		if(object.getTargetLocation()!=null){
-			context.addResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(context.getBehaviorContext().getMoveDirection().cpy().rotate(context.getBehaviorContext().getMoveDirection().angle(context.getTargetLocation())-90), speed));
+			Vector2 dir = context.getBehaviorContext().getMoveDirection().cpy().rotate(context.getBehaviorContext().getMoveDirection().angle(context.getTargetLocation()) + context.getBehaviorContext().getMoveDirection().angle());
+			context.addResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(dir, speed));
 			context.setTargetLocation(null);
 			super.success();
 		}
