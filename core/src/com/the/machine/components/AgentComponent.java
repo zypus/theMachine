@@ -19,7 +19,7 @@ public class AgentComponent
 	AreaComponent.AreaType environmentType = AreaComponent.AreaType.GROUND;
 	float visionModifier = 1;
 	float viewingAngle = 45;
-	float maxMovementSpeed = 1.4f;
+	float maxMovementSpeed = 2.8f;	// Changed from 1.4f to 2.8f to see the difference for the ant algorithm
 	float maxTurningSpeed = 180;
 	boolean hidden = false;
 	boolean inTower = false;
