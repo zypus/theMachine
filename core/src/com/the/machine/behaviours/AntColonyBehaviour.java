@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
+import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
@@ -42,7 +43,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         // Update nextTurnChange
         if (state.nextTurnChange <= 0) {
-            state.nextTurnChange = 0.05f;
+            state.nextTurnChange = 0.5f;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             Vector2 averageLocationOfVisibleMarkers = getAverageLocationOfVisibleMarkers(context.getMarkers());
             boolean agentIsAlreadyUpdatingPosition = false;
@@ -61,13 +62,24 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 // Move to the opposite direction
                 // Intruders want to move away from guards, and if they also move away from other intruders they will
                 // cover a bigger area
-                Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
-                if (nearestAgentVector != null) {
-                    System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
-                    float angleOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
+                Vector2 nearestTargetArea = getNearestTargetArea(state, context);
+                if (nearestTargetArea != null) {
+                    System.out.println("Moving towards targat area");
+                    float angleOfTargetArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition()).angle();
                     float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(-turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 0.015f));
+                    response.setTurningSpeed(-turnSpeedForRotatingFromTo(currentAngle, angleOfTargetArea, 0.015f));
                     agentIsAlreadyUpdatingPosition = true;
+                }
+                else {
+                    Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
+                    if (nearestAgentVector != null) {
+                        System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
+                        // Turn to the opposite direction
+                        float angleOppositeOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
+                        float currentAngle = transformComponent.getZRotation();
+                        response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, angleOppositeOfNearestAgent, 0.015f));
+                        agentIsAlreadyUpdatingPosition = true;
+                    }
                 }
             }
 
@@ -156,13 +168,14 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         Vector2 nearestNoisePosition = null;
         // If no agent can be seen, listen if there is a sound
-        for (Vector2 noiseLocation : context.getSoundDirections()) {
-            float distanceWithThisNoise = noiseLocation.dst2(transformComponent.get2DPosition());
-            if (distanceWithThisNoise == Math.min(distanceWithNearestAgent, distanceWithThisNoise)) {
-                distanceWithNearestAgent = distanceWithThisNoise;
-                nearestNoisePosition = noiseLocation;
-            }
-        }
+        // TODO don't make intruders run away from their own sound
+//        for (Vector2 noiseLocation : context.getSoundDirections()) {
+//            float distanceWithThisNoise = noiseLocation.dst2(transformComponent.get2DPosition());
+//            if (distanceWithThisNoise == Math.min(distanceWithNearestAgent, distanceWithThisNoise)) {
+//                distanceWithNearestAgent = distanceWithThisNoise;
+//                nearestNoisePosition = noiseLocation;
+//            }
+//        }
 
         return nearestNoisePosition;
     }
@@ -253,5 +266,36 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float rotationSpeed = angleDifference / timeToRotate;
 
         return rotationSpeed;
+    }
+
+    private boolean agentSeesTargetArea(BehaviourComponent.BehaviourContext context) {
+        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
+        for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
+            if (visibleArea.getType() == AreaComponent.AreaType.TARGET) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Vector2 getNearestTargetArea(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+
+        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
+        DiscreteMapComponent.MapCell nearestArea = null;
+        float distanceToNearestArea = Float.MAX_VALUE;
+        TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
+
+        for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
+            if (visibleArea.getType() == AreaComponent.AreaType.TARGET) {
+                float distanceToArea = visibleArea.getPosition().dst2(transformComponent.get2DPosition());
+                if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
+                    distanceToNearestArea = distanceToArea;
+                    nearestArea = visibleArea;
+                    System.out.println("Found target area");
+                }
+            }
+        }
+
+        return nearestArea == null ? null : nearestArea.getPosition();
     }
 }
