@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
+import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
 import lombok.AllArgsConstructor;
@@ -39,11 +40,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             state.nextSpeedChange = 2;
         }
 
-        // Increase the speed if there are a lot of pheromones
-
         // Update nextTurnChange
         if (state.nextTurnChange <= 0) {
-            state.nextTurnChange = 0.1f;
+            state.nextTurnChange = 0.05f;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             Vector2 averageLocationOfVisibleMarkers = getAverageLocationOfVisibleMarkers(context.getMarkers());
             boolean agentIsAlreadyUpdatingPosition = false;
@@ -54,7 +53,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 if (nearestAgentVector != null) {
                     float angleOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
                     float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 1f));
+                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 0.015f));
                     agentIsAlreadyUpdatingPosition = true;
                 }
             }
@@ -64,9 +63,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 // cover a bigger area
                 Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
                 if (nearestAgentVector != null) {
+                    System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
                     float angleOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
                     float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(-turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 1f));
+                    response.setTurningSpeed(-turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 0.015f));
                     agentIsAlreadyUpdatingPosition = true;
                 }
             }
@@ -82,7 +82,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 else {
                     float averageAngleOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition()).angle();
                     float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, averageAngleOfVisibleMarkers, 1f));
+                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, averageAngleOfVisibleMarkers, 0.015f));
                 }
             }
         }
@@ -124,7 +124,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float nextTurnChange;
         AgentType agentType;
         float nextMarkerDrop;
-        Entity agent;           // Can probably be accessed in another way
+        Entity agent;
     }
 
     /**
@@ -143,7 +143,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         for (WeakReference<Entity> visibleAgentReference : visibleAgents) {
             Entity visibleAgent = visibleAgentReference.get();
             float distanceWithThisAgent = visibleAgent.getComponent(TransformComponent.class).get2DPosition().dst2(transformComponent.get2DPosition());
-            if (distanceWithThisAgent == Math.min(distanceWithNearestAgent, distanceWithThisAgent)) {
+            // Don't run away from yourself
+            if (distanceWithThisAgent == Math.min(distanceWithNearestAgent, distanceWithThisAgent) && distanceWithThisAgent >= 0.01) {
                 distanceWithNearestAgent = distanceWithThisAgent;
                 nearestAgentTransform = visibleAgent.getComponent(TransformComponent.class);
             }
