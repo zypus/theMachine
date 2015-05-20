@@ -1,13 +1,11 @@
 package com.the.machine.behaviours;
 
-import com.badlogic.ashley.core.Component;
-import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.the.machine.components.*;
-import com.the.machine.framework.components.NameComponent;
+import com.the.machine.components.AgentComponent;
+import com.the.machine.components.AreaComponent;
+import com.the.machine.components.BehaviourComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
 import lombok.AllArgsConstructor;
@@ -38,32 +36,54 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         // Update nextSpeedChange
         if (state.nextSpeedChange <= 0) {
             response.setMovementSpeed(agentComponent.getBaseMovementSpeed());
-            state.nextSpeedChange = nextTime(0.5f)*10;
+            state.nextSpeedChange = 2;
         }
 
         // Increase the speed if there are a lot of pheromones
 
         // Update nextTurnChange
         if (state.nextTurnChange <= 0) {
-            state.nextTurnChange = nextTime(1f);
+            state.nextTurnChange = 0.1f;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             Vector2 averageLocationOfVisibleMarkers = getAverageLocationOfVisibleMarkers(context.getMarkers());
+            boolean agentIsAlreadyUpdatingPosition = false;
 
-//            // If the guard can see an intruder, move towards it
-//            if (state.agentType == AgentType.GUARD) {
-//                if ()
-//            }
-            // If the agent can see markers, there is a chance that he will go to the avg location
-            if (!canSeeMarkers(context) || Math.random() <= 0.5) {
-                // Search for other entities (by looking around) while walking normally
-
-                // Set the turnspeed to a low value to have a broader view
-                response.setTurningSpeed((float) (50 * Math.random() - 25));
+            // Guards should move to the nearest agent // TODO a near intruder has a higher priority
+            if (state.agentType == AgentType.GUARD) {
+                Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
+                if (nearestAgentVector != null) {
+                    float angleOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
+                    float currentAngle = transformComponent.getZRotation();
+                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 1f));
+                    agentIsAlreadyUpdatingPosition = true;
+                }
             }
-            else {
-                float averageAngleOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition()).angle();
-                float currentAngle = transformComponent.getZRotation();
-                response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, averageAngleOfVisibleMarkers, 1f));
+            else { // if state.agentType == AgentType.Intruder
+                // Move to the opposite direction
+                // Intruders want to move away from guards, and if they also move away from other intruders they will
+                // cover a bigger area
+                Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
+                if (nearestAgentVector != null) {
+                    float angleOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
+                    float currentAngle = transformComponent.getZRotation();
+                    response.setTurningSpeed(-turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 1f));
+                    agentIsAlreadyUpdatingPosition = true;
+                }
+            }
+
+            if (!agentIsAlreadyUpdatingPosition) {
+                // If the agent can see markers, there is a chance that he will go to the avg location
+                if (!canSeeMarkers(context) || Math.random() <= 0.5) {
+                    // Search for other entities (by turning a bit) while walking normally
+
+                    // Set the turnspeed to a low value to have a broader view
+                    response.setTurningSpeed((float) (50 * Math.random() - 25));
+                }
+                else {
+                    float averageAngleOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition()).angle();
+                    float currentAngle = transformComponent.getZRotation();
+                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, averageAngleOfVisibleMarkers, 1f));
+                }
             }
         }
 
@@ -98,10 +118,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         return response;
     }
 
-    private float nextTime(float rate) {
-        return (float) (-Math.log(1 - MathUtils.random()) / rate);
-    }
-
     @AllArgsConstructor
     public static class AntColonyBehaviourState implements BehaviourComponent.BehaviourState {
         float nextSpeedChange;
@@ -109,6 +125,45 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         AgentType agentType;
         float nextMarkerDrop;
         Entity agent;           // Can probably be accessed in another way
+    }
+
+    /**
+     * Returns the TransformComponent of the nearest agent
+     * @param state
+     * @param context
+     * @return
+     */
+    private Vector2 getNearestAgentTransform(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+        TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
+        List<WeakReference<Entity>> visibleAgents = context.getAgents();
+
+        TransformComponent nearestAgentTransform = null;
+        float distanceWithNearestAgent = Float.MAX_VALUE;   // Everything is nearer than this
+
+        for (WeakReference<Entity> visibleAgentReference : visibleAgents) {
+            Entity visibleAgent = visibleAgentReference.get();
+            float distanceWithThisAgent = visibleAgent.getComponent(TransformComponent.class).get2DPosition().dst2(transformComponent.get2DPosition());
+            if (distanceWithThisAgent == Math.min(distanceWithNearestAgent, distanceWithThisAgent)) {
+                distanceWithNearestAgent = distanceWithThisAgent;
+                nearestAgentTransform = visibleAgent.getComponent(TransformComponent.class);
+            }
+        }
+
+        if (nearestAgentTransform != null) {
+            return nearestAgentTransform.get2DPosition();
+        }
+
+        Vector2 nearestNoisePosition = null;
+        // If no agent can be seen, listen if there is a sound
+        for (Vector2 noiseLocation : context.getSoundDirections()) {
+            float distanceWithThisNoise = noiseLocation.dst2(transformComponent.get2DPosition());
+            if (distanceWithThisNoise == Math.min(distanceWithNearestAgent, distanceWithThisNoise)) {
+                distanceWithNearestAgent = distanceWithThisNoise;
+                nearestNoisePosition = noiseLocation;
+            }
+        }
+
+        return nearestNoisePosition;
     }
 
     /**
