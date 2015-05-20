@@ -1,12 +1,13 @@
 package com.the.machine.behaviours;
 
+import com.badlogic.gdx.ai.pfa.GraphPath;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
-import com.the.machine.framework.utility.pathfinding.AstarPathfinder;
-import com.the.machine.framework.utility.pathfinding.Node;
 import com.the.machine.framework.utility.pathfinding.Vector2i;
+import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledNode;
+import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledPathFinder;
 import com.the.machine.misc.Placebo;
 import com.the.machine.misc.SparseToFullMapConverter;
 import com.the.machine.systems.ActionSystem;
@@ -26,7 +27,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AstarTestBehaviour implements BehaviourComponent.Behaviour<AstarTestBehaviour.AstarTestState> {
 
-	AstarPathfinder pathfinder = new AstarPathfinder();
+	TiledPathFinder pathfinder = new TiledPathFinder();
 
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, AstarTestState state) {
@@ -39,9 +40,12 @@ public class AstarTestBehaviour implements BehaviourComponent.Behaviour<AstarTes
 			int height = characteristics[1];
 			Vector2 offset = new Vector2(characteristics[2], characteristics[3]);
 			AreaComponent.AreaType[][] map = SparseToFullMapConverter.convert(placebo.getDiscretizedMap(), offset, width, height);
-			state = new AstarTestState().setMap(map).setWidth(width).setHeight(height).setOffset(offset);
+			state = new AstarTestState().setMap(TiledPathFinder.typeMapToSimpleValueMap(map))
+										.setWidth(width)
+										.setHeight(height)
+										.setOffset(offset);
 		}
-		List<Node> path = state.getPath();
+		List<TiledNode> path = state.getPath();
 		Vector2 offset = state.getOffset();
 		Vector2 offsettedPos = placebo.getPos()
 									  .cpy()
@@ -51,26 +55,34 @@ public class AstarTestBehaviour implements BehaviourComponent.Behaviour<AstarTes
 
 			Vector2i goal = null;
 			int counter = 0;
-			while (path == null || path.isEmpty()) {
+			GraphPath<TiledNode> foundPath = null;
+			while (foundPath == null || foundPath.getCount() == 0) {
 				goal = new Vector2i(MathUtils.random() * state.getWidth(), MathUtils.random() * state.getHeight());
-				path = pathfinder.findPath(state.getMap(), start, goal);
+				foundPath = pathfinder.findPath(state.getMap(), start, goal);
 				counter++;
 			}
-			System.out.println(counter);
-			state.setPath(path);
-			System.out.println("Start: " + start.getX() + ";" + start.getY());
-			System.out.println("Goal: "+ goal.getX()+";"+ goal.getY());
-			for (Node node : path) {
-				System.out.print("(" + node.tile.getX() + ";" + node.tile.getY() + ") <- ");
+			if (path == null) {
+				path = new ArrayList<>(foundPath.getCount());
+			} else {
+				path.clear();
 			}
-			System.out.println();
-
+			for (TiledNode tn : foundPath) {
+				path.add(tn);
+			}
+			System.out.println(path.get(path.size()-1));
+			state.setPath(path);
+//			System.out.println("Start: " + start.getX() + ";" + start.getY());
+//			System.out.println("Goal: " + goal.getX() + ";" + goal.getY());
+//			for (Node node : path) {
+//				System.out.print("(" + node.tile.getX() + ";" + node.tile.getY() + ") <- ");
+//			}
+//			System.out.println();
 		}
-		Node node = path.get(path.size()-1);
-		Vector2 delta = new Vector2(node.tile.getX(), node.tile.getY()).sub(offsettedPos);
+		TiledNode node = path.get(0);
+		Vector2 delta = new Vector2(node.getX(), node.getY()).sub(offsettedPos);
 		float len2 = delta.len2();
 		if (len2 <= 0.5) {
-			path.remove(path.size() - 1);
+			path.remove(0);
 		}
 
 		List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
@@ -86,10 +98,10 @@ public class AstarTestBehaviour implements BehaviourComponent.Behaviour<AstarTes
 	@Accessors(chain = true)
 	public static class AstarTestState
 			implements BehaviourComponent.BehaviourState {
-		AreaComponent.AreaType[][] map;
+		float[][] map;
 		int width;
 		int height;
 		Vector2 offset;
-		List<Node> path = null;
+		List<TiledNode> path = null;
 	}
 }
