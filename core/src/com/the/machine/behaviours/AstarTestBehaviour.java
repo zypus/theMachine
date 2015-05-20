@@ -50,12 +50,15 @@ public class AstarTestBehaviour implements BehaviourComponent.Behaviour<AstarTes
 		Vector2 offsettedPos = placebo.getPos()
 									  .cpy()
 									  .add(offset);
+		// if the current path the agents follows is not yet created or empty to the goal was reached, create a new path.
 		if (path == null || path.isEmpty()) {
+			// the current position will be the start position of the astar
 			Vector2i start = new Vector2i(offsettedPos.x, offsettedPos.y);
 
 			Vector2i goal = null;
 			int counter = 0;
 			GraphPath<TiledNode> foundPath = null;
+			// try to find the path to a random goal position, if there is non try another
 			while (foundPath == null || foundPath.getCount() == 0) {
 				goal = new Vector2i(MathUtils.random() * state.getWidth(), MathUtils.random() * state.getHeight());
 				foundPath = pathfinder.findPath(state.getMap(), start, goal);
