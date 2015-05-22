@@ -27,17 +27,23 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     public final float timeBetweenPheromones = 2.5f;
 
     @Override
-    public BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
+    public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
         float delta = context.getPastTime();
         state.nextSpeedChange -= delta;
         state.nextTurnChange -= delta;
         state.nextMarkerDrop -= delta;
-        BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response = new BehaviourComponent.BehaviourResponse<>(context.getCurrentMovementSpeed(), context.getCurrentTurningSpeed(), new ArrayList<>(), state, 0, 0);
+
+        List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
+
         AgentComponent agentComponent = state.agent.getComponent(AgentComponent.class); // The agentComponent is required to determine the movement speed
 
         // Update nextSpeedChange
         if (state.nextSpeedChange <= 0) {
-            response.setMovementSpeed(agentComponent.getBaseMovementSpeed());
+            responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.MOVE,
+                            new ActionSystem.MoveData(agentComponent.getBaseMovementSpeed())
+                    )
+            );
             state.nextSpeedChange = 2;
         }
 
@@ -52,9 +58,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             if (state.agentType == AgentType.GUARD) {
                 Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
                 if (nearestAgentVector != null) {
-                    float angleOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
-                    float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, angleOfNearestAgent, 0.015f));
+                    Vector2 relativePosOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
+//                    float currentAngle = transformComponent.getZRotation();
+                    responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.TURN,
+                            new ActionSystem.TurnData(relativePosOfNearestAgent, 30f)));
                     agentIsAlreadyUpdatingPosition = true;
                 }
             }
@@ -65,9 +73,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 Vector2 nearestTargetArea = getNearestTargetArea(state, context);
                 if (nearestTargetArea != null) {
                     System.out.println("Moving towards targat area");
-                    float angleOfTargetArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition()).angle();
-                    float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(-turnSpeedForRotatingFromTo(currentAngle, angleOfTargetArea, 0.015f));
+                    Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
+//                    float currentAngle = transformComponent.getZRotation();
+                    responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.TURN,
+                            new ActionSystem.TurnData(relativePosOfNearestArea, 30f)
+                    ));
                     agentIsAlreadyUpdatingPosition = true;
                 }
                 else {
@@ -75,9 +86,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     if (nearestAgentVector != null) {
                         System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
                         // Turn to the opposite direction
-                        float angleOppositeOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition()).angle();
-                        float currentAngle = transformComponent.getZRotation();
-                        response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, angleOppositeOfNearestAgent, 0.015f));
+                        Vector2 negRelativePositionOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
+//                        float currentAngle = transformComponent.getZRotation();
+                        responses.add(new BehaviourComponent.BehaviourResponse(
+                                ActionSystem.Action.TURN,
+                                new ActionSystem.TurnData(negRelativePositionOfNearestAgent, 30f)
+                        ));
                         agentIsAlreadyUpdatingPosition = true;
                     }
                 }
@@ -89,45 +103,55 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     // Search for other entities (by turning a bit) while walking normally
 
                     // Set the turnspeed to a low value to have a broader view
-                    response.setTurningSpeed((float) (50 * Math.random() - 25));
+//                    response.setTurningSpeed((float) (50 * Math.random() - 25));
+                    Vector2 currentDirection = context.getMoveDirection();
+                    Vector2 newDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
+                    responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.TURN,
+                            new ActionSystem.TurnData(newDirection, 30f)
+                    ));
                 }
                 else {
-                    float averageAngleOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition()).angle();
-                    float currentAngle = transformComponent.getZRotation();
-                    response.setTurningSpeed(turnSpeedForRotatingFromTo(currentAngle, averageAngleOfVisibleMarkers, 0.015f));
+                    Vector2 averageDirectionOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition());
+                    responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.TURN,
+                            new ActionSystem.TurnData(averageDirectionOfVisibleMarkers, 30f)
+                    ));
                 }
             }
         }
 
         // Update nextMarkerDrop
         if (state.nextMarkerDrop <= 0) {
-            addMarker(getMarkerNumberForAgentType(state.agentType), 0.2f, response);
+            addMarker(getMarkerNumberForAgentType(state.agentType), 0.2f, responses);
             state.nextMarkerDrop += timeBetweenPheromones;
         }
 
         if (context.isCanSprint()) {
-            addActionWithProbability(ActionSystem.Action.SPRINT, 0.1, response);
+            addActionWithProbability(ActionSystem.Action.SPRINT, 0.1, responses);
         }
         if (context.getEnvironment() == AreaComponent.AreaType.TOWER) {
-            addActionWithProbability(ActionSystem.Action.TOWER_LEAVE, 0.1, response);
+            addActionWithProbability(ActionSystem.Action.TOWER_LEAVE, 0.1, responses);
         }
 
         // Always try to enter a tower (even if there is no tower nearby)
-        if (!response.getActions().contains(ActionSystem.Action.TOWER_LEAVE)) {
-            addAction(ActionSystem.Action.TOWER_ENTER, response);
-        }
+//        if (!responses.getActions().contains(ActionSystem.Action.TOWER_LEAVE)) {
+            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null), responses);
+//        }
 
         // Also, always try to destroy a window (even if there are none nearby)
-        addAction(ActionSystem.Action.WINDOW_DESTROY, response);
+        addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null), responses);
 
         // A 50% chance of opening a door normally. If the door isn't opened normally,
         // it will be opened silently.
-        addActionWithProbability(ActionSystem.Action.DOOR_OPEN, 0.5, response);
-        if (!response.getActions().contains(ActionSystem.Action.DOOR_OPEN)) {
-            addAction(ActionSystem.Action.DOOR_OPEN_SILENT, response);
+        if (Math.random() <= 0.5) {
+            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN, null), responses);
+        }
+        else {
+            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN_SILENT, null), responses);
         }
 
-        return response;
+        return responses;
     }
 
     @AllArgsConstructor
@@ -181,26 +205,26 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     /**
-     * Add a given action with a given probability.
+     * Add a given action with a given probability. Only if the response requires no additional data
      * @param action the action to be added to the behaviour
      * @param probability the probability that the action will be added
      * @param response the response to which the action will be added
      */
     private void addActionWithProbability(ActionSystem.Action action,
                                           double probability,
-                                          BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response) {
+                                          List<BehaviourComponent.BehaviourResponse> responses) {
         if (MathUtils.random() < probability) {
-            addAction(action, response);
+            addResponse(new BehaviourComponent.BehaviourResponse(action, null), responses);
         }
     }
 
     /**
      * Add a given action to the response
-     * @param action action to be added
-     * @param response the response to which the action should be added
+     * @param respone response to be added
+     * @param responses the response to which the action should be added
      */
-    private void addAction(ActionSystem.Action action, BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response) {
-        response.getActions().add(action);
+    private void addResponse(BehaviourComponent.BehaviourResponse response, List<BehaviourComponent.BehaviourResponse> responses) {
+        responses.add(response);
     }
 
     /**
@@ -209,10 +233,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @param decayRate
      * @param response
      */
-    private void addMarker(int marketNumber, float decayRate, BehaviourComponent.BehaviourResponse<AntColonyBehaviourState> response) {
-        addAction(ActionSystem.Action.MARKER_PLACE, response);
-        response.setMarkerNumber(marketNumber);
-        response.setDecayRate(decayRate);
+    private void addMarker(int marketNumber, float decayRate, List<BehaviourComponent.BehaviourResponse> responses) {
+        addResponse(new BehaviourComponent.BehaviourResponse(
+                ActionSystem.Action.MARKER_PLACE,
+                new ActionSystem.MarkerData(marketNumber, decayRate)
+        ), responses);
     }
 
     private int getMarkerNumberForAgentType(AgentType agentType) {
