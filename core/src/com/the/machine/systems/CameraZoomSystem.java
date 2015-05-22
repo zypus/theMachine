@@ -5,13 +5,20 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.the.machine.components.ControlComponent;
 import com.the.machine.components.ZoomableComponent;
 import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.components.CameraComponent;
 import com.the.machine.framework.events.Event;
 import com.the.machine.framework.events.EventListener;
+import com.the.machine.framework.events.input.KeyDownEvent;
 import com.the.machine.framework.events.input.ScrolledEvent;
+import static com.badlogic.gdx.Input.Keys.*;
 import lombok.EqualsAndHashCode;
+
+import java.security.Key;
 
 /**
  * TODO Add description
@@ -23,7 +30,6 @@ import lombok.EqualsAndHashCode;
 public class CameraZoomSystem extends AbstractSystem implements EventListener {
 
 	transient private ComponentMapper<CameraComponent> cameraComponents = ComponentMapper.getFor(CameraComponent.class);
-
 	transient private ImmutableArray<Entity> cameras = null;
 
 	@Override
@@ -37,6 +43,32 @@ public class CameraZoomSystem extends AbstractSystem implements EventListener {
 						zoom = 0.01f;
 					}
 					cameraComponent.setZoom(zoom);
+				}
+			}
+		}
+		else if (event instanceof KeyDownEvent) {
+			if (((KeyDownEvent) event).getKeycode() == Input.Keys.MINUS) {
+				if (cameras != null) {
+					for (Entity camera : cameras) {
+						CameraComponent cameraComponent = cameraComponents.get(camera);
+						float zoom = cameraComponent.getZoom() + 0.05f;
+						if (zoom <= 0) {
+							zoom = 0.01f;
+						}
+						cameraComponent.setZoom(zoom);
+					}
+				}
+			}
+			if (((KeyDownEvent) event).getKeycode() == Input.Keys.PLUS || ((KeyDownEvent) event).getKeycode() == Input.Keys.EQUALS) {
+				if (cameras != null) {
+					for (Entity camera : cameras) {
+						CameraComponent cameraComponent = cameraComponents.get(camera);
+						float zoom = cameraComponent.getZoom() - 0.05f;
+						if (zoom <= 0) {
+							zoom = 0.01f;
+						}
+						cameraComponent.setZoom(zoom);
+					}
 				}
 			}
 		}
