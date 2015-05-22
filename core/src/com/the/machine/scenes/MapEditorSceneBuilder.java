@@ -153,7 +153,6 @@ public class MapEditorSceneBuilder
 		world.addSystem(new CanvasElementSystem());
 		world.addSystem(new SprintSystem(), SprintEvent.class);
 		world.addSystem(new IntruderSpawnSystem());
-		world.addSystem(new MovementSystem());
 		world.addSystem(new DizzinessSystem());
 		world.addSystem(new EnvironmentSystem(), ContactBeginEvent.class, ContactEndEvent.class);
 		world.addSystem(new RandomNoiseSystem());
@@ -172,6 +171,7 @@ public class MapEditorSceneBuilder
 		world.addSystem(new DoorSystem(), DoorOpenEvent.class, DoorCancelEvent.class);
 		world.addSystem(new WindowSystem(), WindowDestroyEvent.class);
 		world.addSystem(new BehaviourSystem());
+		world.addSystem(new MovementSystem());
 		world.addSystem(new VictorySystem());
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);

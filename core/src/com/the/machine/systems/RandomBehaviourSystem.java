@@ -50,7 +50,7 @@ public class RandomBehaviourSystem extends IteratingSystem {
 
 //            BehaviourComponent behaviourComponent = new BehaviourComponent(
 //                    new AngularVelocityComponent(newAngularVelocity, 360),
-//                    new VelocityComponent().setVelocity(newSpeed)
+//                    new VelocityComponent().setVelocities(newSpeed)
 //            );
 //            entity.add(behaviourComponent);
 

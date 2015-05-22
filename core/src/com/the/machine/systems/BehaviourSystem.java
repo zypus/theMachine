@@ -25,6 +25,7 @@ import com.the.machine.events.TowerLeaveEvent;
 import com.the.machine.events.WindowDestroyEvent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.TransformComponent;
+import com.the.machine.framework.components.physics.Physics2dComponent;
 import com.the.machine.misc.Placebo;
 
 import java.lang.ref.WeakReference;
@@ -39,12 +40,13 @@ public class BehaviourSystem
 	private transient ComponentMapper<BehaviourComponent>       behaviours        = ComponentMapper.getFor(BehaviourComponent.class);
 	private transient ComponentMapper<TransformComponent>       transforms        = ComponentMapper.getFor(TransformComponent.class);
 	private transient ComponentMapper<VelocityComponent>        velocities        = ComponentMapper.getFor(VelocityComponent.class);
+	private transient ComponentMapper<Physics2dComponent>       physics           = ComponentMapper.getFor(Physics2dComponent.class);
 	private transient ComponentMapper<AngularVelocityComponent> angularVelocities = ComponentMapper.getFor(AngularVelocityComponent.class);
 	private transient ComponentMapper<AgentComponent>           agents            = ComponentMapper.getFor(AgentComponent.class);
 	private transient ComponentMapper<ListenerComponent>        listeners         = ComponentMapper.getFor(ListenerComponent.class);
 	private transient ComponentMapper<VisionComponent>          visions           = ComponentMapper.getFor(VisionComponent.class);
 	private transient ComponentMapper<SprintComponent>          sprints           = ComponentMapper.getFor(SprintComponent.class);
-	private transient ComponentMapper<DiscreteMapComponent>          discretes           = ComponentMapper.getFor(DiscreteMapComponent.class);
+	private transient ComponentMapper<DiscreteMapComponent>     discretes         = ComponentMapper.getFor(DiscreteMapComponent.class);
 
 	public BehaviourSystem() {
 		super(Family.all(VelocityComponent.class, AngularVelocityComponent.class, AgentComponent.class, ListenerComponent.class, VisionComponent.class, BehaviourComponent.class)
@@ -69,13 +71,15 @@ public class BehaviourSystem
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
 		VelocityComponent velocityComponent = velocities.get(entity);
-		float velocity = velocityComponent
-				.getVelocity();
+		float velocity = physics.get(entity).getBody().getLinearVelocity().len()*10;
+		if (velocity < 0.5) {
+			velocity = 0;
+		}
 		AngularVelocityComponent angularVelocityComponent = angularVelocities.get(entity);
 		float angularVelocity = angularVelocityComponent
 				.getAngularVelocity();
 		VisionComponent visionComponent = visions.get(entity);
-		List<DiscreteMapComponent.MapCell> cells = visionComponent.getVisibleCells();
+		List<VisionSystem.EnvironmentVisual> visuals = visionComponent.getEnvironmentVisuals();
 		List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
 		List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
 		ListenerComponent listenerComponent = listeners.get(entity);
@@ -109,7 +113,7 @@ public class BehaviourSystem
 																   .getSparseMap());
 
 		// context
-		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), agentComponent.getVisionModifier()*agentComponent.getBaseViewingDistance(), agentComponent.getViewingAngle(), placebo);
+		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), visuals, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), agentComponent.getVisionModifier()*agentComponent.getBaseViewingDistance(), agentComponent.getViewingAngle(), placebo);
 
 		BehaviourComponent behaviourComponent = behaviours.get(entity);
 
@@ -120,6 +124,7 @@ public class BehaviourSystem
 		// set the new velocities, but keep them in their bound
 		if (agentComponent.isActing()) {
 			velocityComponent.setVelocity(0);
+			velocityComponent.setDirty(true);
 		}
 
 		WeakReference<Entity> weakReference = new WeakReference<>(entity);
@@ -134,6 +139,7 @@ public class BehaviourSystem
 						} else {
 							velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), 0, agentComponent.getMaxMovementSpeed()));
 						}
+						velocityComponent.setDirty(true);
 					}
 				}
 				else if (action == ActionSystem.Action.TURN) {

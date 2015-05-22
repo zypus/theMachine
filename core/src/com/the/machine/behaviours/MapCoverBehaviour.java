@@ -6,7 +6,9 @@ import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.debug.MapDebugWindow;
+import com.the.machine.debug.MapperDebugWindow;
 import com.the.machine.framework.utility.Utils;
+import com.the.machine.map.Mapper;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
 import lombok.Data;
@@ -30,6 +32,8 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 	static private MapCoverBehaviourState sharedState = null;
 	static private int shareCount = 0;
 
+	Mapper mapper = new Mapper();
+
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
 		// shared state between all guard agents, EXPERIMENTAL
@@ -42,21 +46,27 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		// if the state is null, that means that this is the first time the behaviour is evaluate, so lets construct the first state
 		if (state == null) {
 			state = generateState(context);
-//			sharedState = state; // comment this line to disable shared state
+			//			sharedState = state; // comment this line to disable shared state
 			MapDebugWindow.debug(state.coverage, 0.5f);
+			// initialize the map builder
+			mapper.init(new Vector2(0,0), context.getMoveDirection());
+			MapperDebugWindow.debug(mapper, 1f);
 		}
+		// update the map builder
+		mapper.update(context.getMoveDirection(), context.getCurrentMovementSpeed(), context.getPastTime(), context.getVisionAngle(), context.getVisionRange(), context.getVision());
 		updateCoverage(context, state);
-//		Vector2 goal = determineGlobalCenterOfGravitation(context, state);
-		Vector2 goal = closestMax(context, state, 10);
+				Vector2 goal = determineGlobalCenterOfGravitation(context, state);
+//		Vector2 goal = closestMax(context, state, 10);
 		Vector2 pos = context.getPlacebo()
 							 .getPos();
 		Vector2 delta = goal.cpy()
-										   .sub((int) pos.x, (int) pos.y);
+							.sub((int) pos.x, (int) pos.y);
 
 		// determine the rotation to the center of gravity, because we want to go there
-		float angle = context.getMoveDirection().angle(delta);
+		float angle = context.getMoveDirection()
+							 .angle(delta);
 		List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
-		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)));
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(10)));
 		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(delta, 45)));
 		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.STATE, new ActionSystem.StateData(state)));
 		return responses;
