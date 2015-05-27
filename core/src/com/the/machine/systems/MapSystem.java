@@ -21,9 +21,7 @@ import com.the.machine.behaviours.AstarTestBehaviour;
 import com.the.machine.behaviours.AntColonyBehaviour;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior;
-
 import com.the.machine.behaviours.MapCoverBehaviour;
-
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AngularVelocityComponent;

@@ -1,6 +1,5 @@
 package com.the.machine.behaviours;
 
-import com.badlogic.gdx.ai.pfa.GraphPath;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.Constants;
@@ -10,9 +9,6 @@ import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.debug.MapDebugWindow;
 import com.the.machine.debug.MapperDebugWindow;
 import com.the.machine.framework.utility.Utils;
-import com.the.machine.framework.utility.pathfinding.Vector2i;
-import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledNode;
-import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledPathFinder;
 import com.the.machine.map.Mapper;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
@@ -47,7 +43,6 @@ public class MapCoverBehaviour
 	Mapper mapper = new Mapper();
 
 	List<AgentSighting> agentSightings = new ArrayList<>();
-	TiledPathFinder pathfinder = new TiledPathFinder();
 
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -64,7 +59,7 @@ public class MapCoverBehaviour
 			//			sharedState = state; // comment this line to disable shared state
 			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
-			mapper.init(context.getPlacebo().getPos(), context.getMoveDirection());
+			mapper.init(new Vector2(0, 0), context.getMoveDirection());
 			MapperDebugWindow.debug(mapper, 1f);
 		}
 		// update the map builder
@@ -131,39 +126,25 @@ public class MapCoverBehaviour
 	}
 
 	private Vector2 executePolicy(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
-		Vector2 current = mapper.absolutePos(mapper.getCurrentPosition());
 		// create value maps
 		float[][] currentSituation = currentSituation();
 		float[][] futureSituation = futureSituation();
 		float[][] reachable = reachable();
-		float[][] walkable = walkable();
 
 		// final map
 		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
 		float max = 0;
-		Vector2 maxPos = new Vector2();
+		Vector2 goal = new Vector2();
 		for (int x = 0; x < mapper.getWidth(); x++) {
 			for (int y = 0; y < mapper.getHeight(); y++) {
 				valueMap[x][y] = currentSituation[x][y] + ALPHA * futureSituation[x][y] + GAMMA * reachable[x][y];
 				if (valueMap[x][y] > max) {
 					max = valueMap[x][y];
-					maxPos.set(x, y);
+					goal.set(x, y);
 				}
 			}
 		}
-
-		// path find
-		Vector2i start = new Vector2i(current.x, current.y);
-
-		Vector2i goal = new Vector2i(maxPos.x, maxPos.y);
-		GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
-		if (path == null) {
-			return context.getMoveDirection();
-		} else {
-			return new Vector2(path.get(0)
-								   .getX(), path.get(0)
-												.getY()).sub(current);
-		}
+		return goal.sub(mapper.absolutePos(mapper.getCurrentPosition()));
 	}
 
 	private float[][] currentSituation() {
@@ -219,23 +200,6 @@ public class MapCoverBehaviour
 				valueMap[x][y] = (dist > delta2)
 								 ? 0f
 								 : 1f - dist / delta2;
-			}
-		}
-		return valueMap;
-	}
-
-	private float[][] walkable() {
-		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
-		for (int x = 0; x < mapper.getWidth(); x++) {
-			for (int y = 0; y < mapper.getHeight(); y++) {
-				Mapper.MapTile tile = mapper.getMap()
-											.get(x)
-											.get(y);
-				if (tile.getAreaType() == WALL || tile.getAreaType() == OUTER_WALL) {
-					valueMap[x][y] = -1;
-				} else {
-					valueMap[x][y] = 1;
-				}
 			}
 		}
 		return valueMap;
