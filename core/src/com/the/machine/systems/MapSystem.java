@@ -16,6 +16,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.the.machine.behaviours.AstarTestBehaviour;
+import com.the.machine.behaviours.AntColonyBehaviour;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior;
 import com.the.machine.components.AgentComponent;

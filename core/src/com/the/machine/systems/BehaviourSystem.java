@@ -151,11 +151,13 @@ public class BehaviourSystem
 					world.dispatchEvent(new DoorOpenEvent(weakReference, false));
 				} else if (action == ActionSystem.Action.DOOR_OPEN_SILENT) {
 					world.dispatchEvent(new DoorOpenEvent(weakReference, true));
+				} else if (action == ActionSystem.Action.DOOR_CANCEL) {
+					world.dispatchEvent(new DoorCancelEvent(weakReference));
 				} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
 					world.dispatchEvent(new WindowDestroyEvent(weakReference));
 				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
 					ActionSystem.MarkerData data = (ActionSystem.MarkerData) o.getData();
-					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity),  data.getNumber(), data.getDecay()));
+					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), data.getNumber(), data.getDecay()));
 				} else if (action == ActionSystem.Action.STATE) {
 					ActionSystem.StateData data = (ActionSystem.StateData) o.getData();
 					behaviourComponent.setState(data.getState());

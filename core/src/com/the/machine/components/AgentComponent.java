@@ -38,7 +38,7 @@ public class AgentComponent
 	}
 
 	float baseViewingDistance = 6.5f;
-	float baseViewingAngle = 45;
-	float baseMovementSpeed = 1.4f;
+	float baseViewingAngle    = 45;
+	float baseMovementSpeed   = 1.4f;
 	float baseMaxTurningSpeed = 180;
 }

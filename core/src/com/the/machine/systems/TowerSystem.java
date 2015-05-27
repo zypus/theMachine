@@ -114,7 +114,7 @@ public class TowerSystem
 			if (entity != null) {
 				AgentComponent agentComponent = agents.get(entity);
 				SprintComponent sprintComponent = sprints.get(entity);
-				if (sprintComponent != null && agentComponent
+				if (sprintComponent == null && agentComponent
 													   .getEnvironmentType() == AreaComponent.AreaType.TOWER && agentComponent.isInTower()) {
 					Entity tower = null;
 					float dst2 = 10000000f;
