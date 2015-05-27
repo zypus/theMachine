@@ -10,15 +10,11 @@ import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
-import com.the.machine.map.Mapper;
 import com.the.machine.systems.ActionSystem;
 
 @Data
 /** This Class Contains All The Context Which Is Used For Operations Concerning Behavior Trees */
 public class TreeContext {
-	
-	/** Whether this has been inited */
-	private boolean inited;
 	
 	/** The Actual Behavior Context */
 	private BehaviourContext behaviorContext;
@@ -29,30 +25,12 @@ public class TreeContext {
 	/** List Storing All Responses To Be Taken This Iteration */
 	private List<BehaviourResponse> responseList;
 	
-	/** Mapper Used For Map Coverage */
-	private Mapper mapper;
-	
 	
 	
 	/** Constructor */
 	public TreeContext(){
 		this.responseList = new ArrayList<BehaviourResponse>();
-		this.inited = false;
-		this.mapper = new Mapper();
 	}
-	
-	
-	/**Inits Anything that has to be inited */
-	public void init(BehaviourContext context){
-		this.inited = true;
-		mapper.init(new Vector2(0, 0), context.getMoveDirection());
-	}
-	
-	/** Returns whether this Context has been inited */
-	public boolean isInited(){
-		return this.inited;
-	}
-	
 	
 	/** Adds New Response To List */
 	public void addResponse(BehaviourResponse response){
@@ -69,10 +47,4 @@ public class TreeContext {
 		this.responseList.clear();
 	}
 	
-	/** Updates everything in the tree context that needs updateing */
-	public void update(){
-		if(mapper!=null){
-			mapper.update(this.behaviorContext);
-		}
-	}
 }

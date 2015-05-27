@@ -51,14 +51,14 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	public List<BehaviourResponse> evaluate(BehaviourContext context, TreeBehaviorState state) {
 		List<BehaviourResponse> responseList = new ArrayList<BehaviourResponse>();
 		TreeContext treeContext = tree.getObject();
-		if(!treeContext.isInited()){
-			treeContext.init(context);
-		}
 		treeContext.clearResponseList();
 		treeContext.setBehaviorContext(context);
 		tree.step();
-		treeContext.update();
 		responseList = tree.getObject().getResponseList();
+		for(BehaviourResponse b : responseList){
+			System.out.print(b.getAction());
+		}
+		System.out.println();
 		return responseList;
 	}
 	
