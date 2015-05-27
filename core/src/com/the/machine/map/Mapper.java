@@ -20,6 +20,7 @@ import java.util.List;
 public class Mapper {
 	@Getter List<List<MapTile>> map = new ArrayList<>();
 	Vector2 startPosition;
+	Vector2 lastPosition;
 	@Getter Vector2 currentPosition;
 	Vector2 currentDirection;
 	@Getter int width  = 0;
@@ -38,6 +39,7 @@ public class Mapper {
 	 */
 	public void init(Vector2 startPosition, Vector2 direction) {
 		this.startPosition = startPosition.cpy();
+		lastPosition = startPosition;
 		currentPosition = new Vector2(0, 0);
 		width = 1;
 		height = 1;
@@ -54,18 +56,20 @@ public class Mapper {
 	 */
 	public void update(BehaviourComponent.BehaviourContext context) {
 		Vector2 direction = context.getMoveDirection();
-		float currentSpeed = context.getCurrentMovementSpeed();
-		float deltaTime = context.getPastTime();
 		float visionAngle = context.getVisionAngle();
 		float visionRange = context.getVisionRange();
 		List<VisionSystem.EnvironmentVisual > visuals = context.getVision();
-		currentPosition.add(currentDirection.scl(currentSpeed * deltaTime));
+		currentPosition.add(context.getPlacebo().getPos().cpy().sub(lastPosition));
+		lastPosition = context.getPlacebo().getPos().cpy();
 		currentDirection = direction.cpy()
 									.nor();
 		List<Vector2> sight = inSight(visionRange, visionAngle);
 		for (Vector2 p : sight) {
 			p.add(currentPosition);
-			set(p.x, p.y, AreaComponent.AreaType.GROUND);
+			MapTile tile = get(p.x, p.y);
+			if (tile == null || tile.getAreaType() == AreaComponent.AreaType.UNSEEN) {
+				set(p.x, p.y, AreaComponent.AreaType.GROUND);
+			}
 		}
 		for (VisionSystem.EnvironmentVisual visual : visuals) {
 			Vector2 delta = visual.getDelta();
