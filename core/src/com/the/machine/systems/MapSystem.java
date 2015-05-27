@@ -478,8 +478,8 @@ public class MapSystem
 				newAgent.add(sightComponent);
 				newAgent.add(new ListenerComponent());
 				newAgent.add(new NameComponent().setName("Agent"));
-				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior())
-																						   .setState(new TreeBehavior.TreeBehaviorState()));
+				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour())
+										.setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.GUARD, newAgent)));	// Initial values for AntColonyBehaviour
 				newAgent.add(new VelocityComponent());
 				newAgent.add(new AngularVelocityComponent());
 				newAgent.add(new AgentComponent());
