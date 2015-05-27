@@ -163,7 +163,7 @@ public class BehaviourSystem
 					world.dispatchEvent(new WindowDestroyEvent(weakReference));
 				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
 					ActionSystem.MarkerData data = (ActionSystem.MarkerData) o.getData();
-					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity),  data.getNumber(), data.getDecay()));
+					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), data.getNumber(), data.getDecay()));
 				} else if (action == ActionSystem.Action.STATE) {
 					ActionSystem.StateData data = (ActionSystem.StateData) o.getData();
 					behaviourComponent.setState(data.getState());
