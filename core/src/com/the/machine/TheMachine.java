@@ -29,12 +29,12 @@ public class TheMachine extends ApplicationAdapter {
 
 	@Override
 	public void pause() {
-//		world.pause();
+		world.pause();
 	}
 
 	@Override
 	public void resume() {
-//		world.resume();
+		world.resume();
 	}
 
 	@Override

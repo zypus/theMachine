@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
-import com.the.machine.systems.VisionSystem;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,25 +40,23 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		float currentTurningSpeed;
 		Vector2 moveDirection;
 		AreaComponent.AreaType environment;
-		List<VisionSystem.EnvironmentVisual> vision;
-		List<WeakReference<Entity>>          agents;
-		List<WeakReference<Entity>>          markers;
-		List<Vector2>                        soundDirections;
-		boolean                              canSprint;
-		float                                sprintTime;
-		float                                sprintCooldown;
-		boolean                              hidden;
-		boolean                              inTower;
-		float                                visionRange;
-		float                                visionAngle;
-		Placebo                              placebo;
+		List<DiscreteMapComponent.MapCell> vision;
+		List<WeakReference<Entity>> agents;
+		List<WeakReference<Entity>> markers;
+		List<Vector2>               soundDirections;
+		boolean                     canSprint;
+		float                       sprintTime;
+		float                       sprintCooldown;
+		boolean                     hidden;
+		boolean                     inTower;
+		Placebo	placebo;
 	}
 
 	@Data
 	@AllArgsConstructor
 	public static class BehaviourResponse<T extends BehaviourState> {
-		ActionSystem.Action action;
-		Object              data;
+		ActionSystem.Action       action;
+		Object data;
 	}
 
 }
