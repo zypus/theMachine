@@ -63,7 +63,7 @@ public class MapCoverBehaviour
 			MapperDebugWindow.debug(mapper, 1f);
 		}
 		// update the map builder
-		mapper.update(context.getMoveDirection(), context.getCurrentMovementSpeed(), context.getPastTime(), context.getVisionAngle(), context.getVisionRange(), context.getVision());
+		mapper.update(context);
 		updateCoverage(context, state);
 		updateCoverage2(context, state);
 		//		Vector2 goal = determineGlobalCenterOfGravitation(context, state);

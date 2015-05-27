@@ -2,6 +2,7 @@ package com.the.machine.map;
 
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent;
+import com.the.machine.components.BehaviourComponent;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.systems.VisionSystem;
 import lombok.Data;
@@ -49,14 +50,15 @@ public class Mapper {
 
 	/**
 	 * Call this each frame, before you use the map.
-	 * @param direction The current direction you are facing.
-	 * @param currentSpeed The current movement speed.
-	 * @param deltaTime The past time since the last update.
-	 * @param visionAngle The current vision angle.
-	 * @param visionRange the current vision range.
-	 * @param visuals All visuals the agent can see.
+	 * @param context The current context.
 	 */
-	public void update(Vector2 direction, float currentSpeed, float deltaTime, float visionAngle, float visionRange, List<VisionSystem.EnvironmentVisual> visuals) {
+	public void update(BehaviourComponent.BehaviourContext context) {
+		Vector2 direction = context.getMoveDirection();
+		float currentSpeed = context.getCurrentMovementSpeed();
+		float deltaTime = context.getPastTime();
+		float visionAngle = context.getVisionAngle();
+		float visionRange = context.getVisionRange();
+		List<VisionSystem.EnvironmentVisual > visuals = context.getVision();
 		currentPosition.add(currentDirection.scl(currentSpeed * deltaTime));
 		currentDirection = direction.cpy()
 									.nor();
