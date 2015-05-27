@@ -42,7 +42,9 @@ public class TreeContext {
 	/**Inits Anything that has to be inited */
 	public void init(BehaviourContext context){
 		this.inited = true;
-		//mapper.init(new Vector2(0, 0), context.getMoveDirection());
+		
+		
+		
 	}
 	
 	/** Returns whether this Context has been inited */

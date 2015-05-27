@@ -480,6 +480,7 @@ public class MapSystem
 				newAgent.add(new NameComponent().setName("Agent"));
 				
 				
+				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior()));
 				//TODO: Add Working Behaviour
 				
 				
