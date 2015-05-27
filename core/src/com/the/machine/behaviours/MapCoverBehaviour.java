@@ -2,6 +2,7 @@ package com.the.machine.behaviours;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.the.machine.Constants;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
@@ -11,6 +12,7 @@ import com.the.machine.framework.utility.Utils;
 import com.the.machine.map.Mapper;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -27,12 +29,20 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 04/05/15
  */
-public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
+public class MapCoverBehaviour
+		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
+
+	static final float ALPHA = 0.5f;
+	static final float GAMMA = 0.5f;
+
+	static final float DELTA_TIME = 3;
 
 	static private MapCoverBehaviourState sharedState = null;
-	static private int shareCount = 0;
+	static private int                    shareCount  = 0;
 
 	Mapper mapper = new Mapper();
+
+	List<AgentSighting> agentSightings = new ArrayList<>();
 
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -49,18 +59,21 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 			//			sharedState = state; // comment this line to disable shared state
 			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
-			mapper.init(new Vector2(0,0), context.getMoveDirection());
+			mapper.init(new Vector2(0, 0), context.getMoveDirection());
 			MapperDebugWindow.debug(mapper, 1f);
 		}
 		// update the map builder
 		mapper.update(context.getMoveDirection(), context.getCurrentMovementSpeed(), context.getPastTime(), context.getVisionAngle(), context.getVisionRange(), context.getVision());
 		updateCoverage(context, state);
-				Vector2 goal = determineGlobalCenterOfGravitation(context, state);
-//		Vector2 goal = closestMax(context, state, 10);
-		Vector2 pos = context.getPlacebo()
-							 .getPos();
-		Vector2 delta = goal.cpy()
-							.sub((int) pos.x, (int) pos.y);
+		updateCoverage2(context, state);
+		//		Vector2 goal = determineGlobalCenterOfGravitation(context, state);
+		//		Vector2 goal = closestMax(context, state, 10);
+		//		Vector2 pos = context.getPlacebo()
+		//							 .getPos();
+		//		Vector2 delta = goal.cpy()
+		//							.sub((int) pos.x, (int) pos.y);
+
+		Vector2 delta = executePolicy(context, state);
 
 		// determine the rotation to the center of gravity, because we want to go there
 		float angle = context.getMoveDirection()
@@ -72,21 +85,146 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		return responses;
 	}
 
+	private void updateCoverage2(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
+		int range = (int) context.getVisionRange();
+		// makes sure that range is even, if not decrease the range a bit
+		if (range % 2 != 0) {
+			range--;
+		}
+		// determine and update spots that can be seen right now
+		int range2 = range * range;
+		Vector2 direction = context.getMoveDirection()
+								   .nor();
+		// check the square created by the vision range around the player
+		for (int i = 0; i < range; i++) {
+			for (int j = 0; j < range; j++) {
+				int dx = i - range / 2;
+				int dy = j - range / 2;
+				// check if field is in vision range
+				if (dx * dx + dy * dy < range2) {
+					Vector2 lookDir = new Vector2(dx, dy).nor();
+					float angle = Math.abs(lookDir.angle(direction));
+					// check if the vision angle covers that direction
+					Mapper.MapTile tile = mapper.getFromCurrent(dx, dy);
+					if (tile != null) {
+						if (angle < context.getVisionAngle() / 2) {
+							if (!tile.isInsight()) {
+								tile.setInsight(true);
+								tile.setValue(Math.max(tile.getValue() - 0.1f, 0));
+							}
+							AreaComponent.AreaType type = tile.getAreaType();
+							if (type == WALL || type == OUTER_WALL) {
+								tile.setValue(0);
+							}
+						} else {
+							tile.setInsight(false);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private Vector2 executePolicy(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
+		// create value maps
+		float[][] currentSituation = currentSituation();
+		float[][] futureSituation = futureSituation();
+		float[][] reachable = reachable();
+
+		// final map
+		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
+		float max = 0;
+		Vector2 goal = new Vector2();
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
+				valueMap[x][y] = currentSituation[x][y] + ALPHA * futureSituation[x][y] + GAMMA * reachable[x][y];
+				if (valueMap[x][y] > max) {
+					max = valueMap[x][y];
+					goal.set(x, y);
+				}
+			}
+		}
+		return goal.sub(mapper.absolutePos(mapper.getCurrentPosition()));
+	}
+
+	private float[][] currentSituation() {
+		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
+				valueMap[x][y] = mapper.getMap().get(x).get(y).getValue();
+			}
+		}
+		return valueMap;
+	}
+
+	private float[][] futureSituation() {
+		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
+				valueMap[x][y] = mapper.getMap()
+									   .get(x)
+									   .get(y)
+									   .getValue();
+			}
+		}
+		int delta = (int) (DELTA_TIME * Constants.AVERAGE_INTRUDER_SPEED);
+		int delta2 = (int) Math.pow(delta, 2);
+		for (AgentSighting sighting : agentSightings) {
+			int x = (int) sighting.getLocation().x;
+			int y = (int) sighting.getLocation().y;
+			for (int dx = -delta; dx < delta; dx++) {
+				for (int dy = -delta; dy < delta; dy++) {
+					int dist = dx * dx + dy * dy;
+					if (dist < delta2) {
+						Mapper.MapTile tile = mapper.getAbsolute(x+dx,y+dy);
+						if (tile != null) {
+							Vector2 absolutePos = mapper.absolutePos(new Vector2(x + dx, y + dy));
+							valueMap[((int) absolutePos.x)][((int) absolutePos.y)] += 1f - dist / delta2;
+						}
+					}
+				}
+			}
+		}
+		return valueMap;
+	}
+
+	private float[][] reachable() {
+		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
+		Vector2 currentPos = mapper.absolutePos(mapper.getCurrentPosition());
+		int delta2 = (int) Math.pow(DELTA_TIME * Constants.AGENT_SPEED, 2);
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
+				int dist = (int) currentPos.cpy()
+										   .sub(new Vector2(x, y))
+										   .len2();
+				valueMap[x][y] = (dist > delta2)
+								 ? 0f
+								 : 1f - dist / delta2;
+			}
+		}
+		return valueMap;
+	}
+
 	private void updateCoverage(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
 		Vector2 pos = context.getPlacebo()
-							 .getPos().cpy().add(state.getOffset());
-		Vector2 direction = context.getMoveDirection().nor();
+							 .getPos()
+							 .cpy()
+							 .add(state.getOffset());
+		Vector2 direction = context.getMoveDirection()
+								   .nor();
 		float[][] coverage = state.getCoverage();
 		// first lets creap up all values of the coverage back to 1 if there not 1 already
 		for (int i = 0; i < coverage.length; i++) {
 			for (int j = 0; j < coverage[0].length; j++) {
 				// ignores values which are 1, (values which are 2 and should be ignored anyway)
 				if (coverage[i][j] >= 0) {
-					coverage[i][j] += 0.001f*context.getPastTime()*((sharedState != null) ? 1f/shareCount : 1); // compensate for additional agents
+					coverage[i][j] += 0.001f * context.getPastTime() * ((sharedState != null)
+																		? 1f / shareCount
+																		: 1); // compensate for additional agents
 					// makes sure the number is never bigger than 1
-//					if (coverage[i][j] > 1) {
-//						coverage[i][j] = 1;
-//					}
+					//					if (coverage[i][j] > 1) {
+					//						coverage[i][j] = 1;
+					//					}
 				}
 			}
 		}
@@ -100,17 +238,17 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		// check the square created by the vision range around the player
 		for (int i = 0; i < range; i++) {
 			for (int j = 0; j < range; j++) {
-				int dx = i - range/2;
-				int dy = j - range/2;
+				int dx = i - range / 2;
+				int dy = j - range / 2;
 				// check if field is in vision range
-				if (dx*dx+dy*dy < range2) {
+				if (dx * dx + dy * dy < range2) {
 					Vector2 lookDir = new Vector2(dx, dy).nor();
 					float angle = Math.abs(lookDir.angle(direction));
 					// check if the vision angle covers that direction
-					if (angle < context.getVisionAngle()/2) {
-							int xx = (int) pos.x + dx;
-							int yy = (int) pos.y + dy;
-						if (Utils.isInbound(xx, yy, 0, 0, coverage.length-1, coverage[0].length-1)) {
+					if (angle < context.getVisionAngle() / 2) {
+						int xx = (int) pos.x + dx;
+						int yy = (int) pos.y + dy;
+						if (Utils.isInbound(xx, yy, 0, 0, coverage.length - 1, coverage[0].length - 1)) {
 							if (coverage[xx][yy] >= 0) {
 								coverage[xx][(yy)] = 0;
 							}
@@ -131,12 +269,12 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 							 .add(state.getOffset());
 		for (int i = Math.max(0, (int) pos.x - radius); i < Math.min((int) pos.x + radius, coverage.length); i++) {
 			for (int j = Math.max(0, (int) pos.y - radius); j < Math.min((int) pos.y + radius, coverage[0].length); j++) {
-				int manhatten = Math.abs(i-(int)pos.x)+ Math.abs(j - (int) pos.y);
+				int manhatten = Math.abs(i - (int) pos.x) + Math.abs(j - (int) pos.y);
 				float v = coverage[i][j] - manhatten;
 				if (v > max) {
 					max = v;
 					tie.clear();
-					tie.add(new Vector2(i,j));
+					tie.add(new Vector2(i, j));
 				} else if (v == max) {
 					tie.add(new Vector2(i, j));
 				}
@@ -144,7 +282,8 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		}
 		Vector2 offset = state.getOffset();
 		Collections.shuffle(tie);
-		return tie.get(0).sub(offset.x, offset.y);
+		return tie.get(0)
+				  .sub(offset.x, offset.y);
 	}
 
 	private Vector2 determineGlobalCenterOfGravitation(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -159,24 +298,24 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		for (int i = 0; i < coverage.length; i++) {
 			for (int j = 0; j < coverage[0].length; j++) {
 				// weight the power of attraction based on manhattan distance to bot
-				float distWeight = MathUtils.clamp(1-((float)Math.pow(Math.abs(pos.x - i) + Math.abs(pos.y - j), 2f) / (coverage.length+coverage.length)),0,1);
+				float distWeight = MathUtils.clamp(1 - ((float) Math.pow(Math.abs(pos.x - i) + Math.abs(pos.y - j), 2f) / (coverage.length + coverage.length)), 0, 1);
 				float v = coverage[i][j] * distWeight;
 				if (v >= 0) {
-					x += v*i;
-					y += v*j;
+					x += v * i;
+					y += v * j;
 					count += v;
 				}
 			}
 		}
 		Vector2 offset = state.getOffset();
-		return new Vector2(x/count - offset.x, y/count - offset.y);
+		return new Vector2(x / count - offset.x, y / count - offset.y);
 	}
 
 	private MapCoverBehaviourState generateState(BehaviourComponent.BehaviourContext context) {
 		MapCoverBehaviourState state = new MapCoverBehaviourState();
 		Placebo placebo = context.getPlacebo();
 		List<DiscreteMapComponent.MapCell> map = placebo
-														.getDiscretizedMap();
+				.getDiscretizedMap();
 		int minX = 10000;
 		int minY = 10000;
 		int maxX = -10000;
@@ -209,12 +348,14 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 		}
 		// populate the map with all unwalkable structures
 		for (DiscreteMapComponent.MapCell cell : map) {
-			Vector2 position = cell.getPosition().cpy().add(offset);
+			Vector2 position = cell.getPosition()
+								   .cpy()
+								   .add(offset);
 			AreaComponent.AreaType type = cell.getType();
 			if (type == OUTER_WALL || type == WALL) {
-				boolean inbound = Utils.isInbound(position.x, position.y, 0, 0, width-1, height-1);
+				boolean inbound = Utils.isInbound(position.x, position.y, 0, 0, width - 1, height - 1);
 				if (inbound) {
-					area[(int)position.x][(int)position.y] = WALL;
+					area[(int) position.x][(int) position.y] = WALL;
 				}
 			}
 		}
@@ -244,14 +385,14 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 	}
 
 	// orthogonal direction for the flood fill
-	private static Vector2[] dirs = new Vector2[]{new Vector2(1, 0), new Vector2(0 , 1), new Vector2(-1, 0), new Vector2(0,-1) };
+	private static Vector2[] dirs = new Vector2[] { new Vector2(1, 0), new Vector2(0, 1), new Vector2(-1, 0), new Vector2(0, -1) };
 
 	private void floodFill(AreaComponent.AreaType[][] area, List<Vector2> next) {
-		int x,y;
+		int x, y;
 		if (!next.isEmpty()) {
 			Vector2 vector2 = next.remove(0);
-			x = (int)vector2.x;
-			y = (int)vector2.y;
+			x = (int) vector2.x;
+			y = (int) vector2.y;
 			// if this spot is a target area, mark it as visited
 			if (area[x][y] == TARGET) {
 				area[x][y] = GROUND;
@@ -272,7 +413,14 @@ public class MapCoverBehaviour implements BehaviourComponent.Behaviour<MapCoverB
 	@Accessors(chain = true)
 	public static class MapCoverBehaviourState
 			implements BehaviourComponent.BehaviourState {
-			float[][] coverage;
-			Vector2 offset;
+		float[][] coverage;
+		Vector2   offset;
+	}
+
+	@AllArgsConstructor
+	@Data
+	public static class AgentSighting {
+		Vector2 location;
+		float   time;
 	}
 }

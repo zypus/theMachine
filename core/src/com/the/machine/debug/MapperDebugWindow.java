@@ -1,6 +1,5 @@
 package com.the.machine.debug;
 
-import com.the.machine.components.AreaComponent;
 import com.the.machine.map.Mapper;
 
 import javax.swing.JFrame;
@@ -74,8 +73,8 @@ public class MapperDebugWindow
 			int height = mapper.getHeight();
 			for (int i = 0; i < width; i++) {
 				for (int j = 0; j < height; j++) {
-					AreaComponent.AreaType type = mapper.getMap().get(i).get(height - 1 - j);
-					switch (type) {
+					Mapper.MapTile tile = mapper.getMap().get(i).get(height - 1 - j);
+					switch (tile.getAreaType()) {
 						case OUTER_WALL:
 							g2.setColor(new Color(0,0,0));
 							break;

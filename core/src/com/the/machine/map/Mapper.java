@@ -4,43 +4,58 @@ import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.systems.VisionSystem;
+import lombok.Data;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO Add description
+ * Class to iteratively construct a map.
  *
  * @author Fabian Fraenz <f.fraenz@t-online.de>
  * @created 12/05/15
  */
 public class Mapper {
-	@Getter List<List<AreaComponent.AreaType>> map = new ArrayList<>();
+	@Getter List<List<MapTile>> map = new ArrayList<>();
 	Vector2 startPosition;
-	Vector2 currentPosition;
+	@Getter Vector2 currentPosition;
 	Vector2 currentDirection;
 	@Getter int width  = 0;
 	@Getter int height = 0;
-	int posXExpantion = 0;
-	int negXExpantion = 0;
-	int posYExpantion = 0;
-	int negYExpantion = 0;
+	int posXExpansion = 0;
+	int negXExpansion = 0;
+	int posYExpansion = 0;
+	int negYExpansion = 0;
 
 	static final AreaComponent.AreaType DEFAULT_TYPE = AreaComponent.AreaType.UNSEEN;
 
+	/**
+	 * Call this before you use the mapper
+	 * @param startPosition The position you are currently on, for reference purposes only, if you don't knwo where you are specify Vector2(0,0)
+	 * @param direction The direction you are currently facing.
+	 */
 	public void init(Vector2 startPosition, Vector2 direction) {
 		this.startPosition = startPosition.cpy();
 		currentPosition = new Vector2(0, 0);
 		width = 1;
 		height = 1;
-		List<AreaComponent.AreaType> spot = new ArrayList<>(1);
-		spot.add(AreaComponent.AreaType.GROUND);
+		List<MapTile> spot = new ArrayList<>(1);
+		spot.add(new MapTile(AreaComponent.AreaType.GROUND));
 		map.add(spot);
 		currentDirection = direction.cpy()
 									.nor();
 	}
 
+	/**
+	 * Call this each frame, before you use the map.
+	 * @param direction The current direction you are facing.
+	 * @param currentSpeed The current movement speed.
+	 * @param deltaTime The past time since the last update.
+	 * @param visionAngle The current vision angle.
+	 * @param visionRange the current vision range.
+	 * @param visuals All visuals the agent can see.
+	 */
 	public void update(Vector2 direction, float currentSpeed, float deltaTime, float visionAngle, float visionRange, List<VisionSystem.EnvironmentVisual> visuals) {
 		currentPosition.add(currentDirection.scl(currentSpeed * deltaTime));
 		currentDirection = direction.cpy()
@@ -58,8 +73,8 @@ public class Mapper {
 		}
 	}
 
-	public AreaComponent.AreaType[][] toArray() {
-		AreaComponent.AreaType[][] area = new AreaComponent.AreaType[width][height];
+	public MapTile[][] toArray() {
+		MapTile[][] area = new MapTile[width][height];
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				area[x][y] = map.get(x)
@@ -94,75 +109,143 @@ public class Mapper {
 	}
 
 	private void set(int x, int y, AreaComponent.AreaType type) {
-		if (Utils.isInbound(x, y, negXExpantion, negYExpantion, width - 1, height - 1)) {
-			map.get(x - negXExpantion)
-			   .set(y - negYExpantion, type);
+		if (Utils.isInbound(x, y, negXExpansion, negYExpansion, width - 1, height - 1)) {
+			MapTile tile = map.get(x - negXExpansion)
+							  .get(y - negYExpansion);
+			tile.setAreaType(type);
 		} else {
-			if (x < negXExpantion) {
-				updateWidth(x, posXExpantion);
-			} else if (x > posXExpantion) {
-				updateWidth(negXExpantion, x);
+			if (x < negXExpansion) {
+				updateWidth(x, posXExpansion);
+			} else if (x > posXExpansion) {
+				updateWidth(negXExpansion, x);
 			}
-			if (y < negYExpantion) {
-				updateHeight(y, posYExpantion);
-			} else if (y > posYExpantion) {
-				updateHeight(negYExpantion, y);
+			if (y < negYExpansion) {
+				updateHeight(y, posYExpansion);
+			} else if (y > posYExpansion) {
+				updateHeight(negYExpansion, y);
 			}
-			map.get(x - negXExpantion)
-			   .set(y - negYExpantion, type);
+			map.get(x - negXExpansion)
+			   .set(y - negYExpansion, new MapTile(type));
 		}
 	}
 
-	private List<AreaComponent.AreaType> makeColumn(int h, AreaComponent.AreaType type) {
-		List<AreaComponent.AreaType> column = new ArrayList<>(h);
+	private List<MapTile> makeColumn(int h, AreaComponent.AreaType type) {
+		List<MapTile> column = new ArrayList<>(h);
 		for (int i = 0; i < h; i++) {
-			column.add(type);
+			column.add(new MapTile(type));
 		}
 		return column;
 	}
 
 	private void updateWidth(int newNegX, int newPosX) {
 		width = newPosX - newNegX + 1;
-		while (newNegX < negXExpantion) {
-			List<AreaComponent.AreaType> column = makeColumn(height, DEFAULT_TYPE);
+		while (newNegX < negXExpansion) {
+			List<MapTile> column = makeColumn(height, DEFAULT_TYPE);
 			map.add(0, column);
-			negXExpantion--;
+			negXExpansion--;
 		}
-		while (newPosX > posXExpantion) {
-			List<AreaComponent.AreaType> column = makeColumn(height, DEFAULT_TYPE);
+		while (newPosX > posXExpansion) {
+			List<MapTile> column = makeColumn(height, DEFAULT_TYPE);
 			map.add(column);
-			posXExpantion++;
+			posXExpansion++;
 		}
 	}
 
 	private void updateHeight(int newNegY, int newPosY) {
 		height = newPosY - newNegY + 1;
-		while (newNegY < negYExpantion) {
+		while (newNegY < negYExpansion) {
 			for (int x = 0; x < width; x++) {
 				map.get(x)
-				   .add(0, DEFAULT_TYPE);
+				   .add(0, new MapTile(DEFAULT_TYPE));
 			}
-			negYExpantion--;
+			negYExpansion--;
 		}
-		while (newPosY > posYExpantion) {
+		while (newPosY > posYExpansion) {
 			for (int x = 0; x < width; x++) {
 				map.get(x)
-				   .add(DEFAULT_TYPE);
+				   .add(new MapTile(DEFAULT_TYPE));
 			}
-			posYExpantion++;
+			posYExpansion++;
 		}
 	}
 
-	public AreaComponent.AreaType get(float x, float y) {
+	/**
+	 * Gets the maptile, based on the current position offset by the specified delta.
+	 * @param dx The x offset.
+	 * @param dy The y offset.
+	 * @return The map tile at that location.
+	 */
+	public MapTile getFromCurrent(float dx, float dy) {
+		return get(currentPosition.x + dx, currentPosition.y + dy);
+	}
+
+	/**
+	 * Gets the current map tile, uses relative position to the start point.
+	 * @param x X relative to the start point.
+	 * @param y Y relative to the start point.
+	 * @return The map tile at that location, or null if off the map
+	 */
+	public MapTile get(float x, float y) {
 		return get((int)x, (int)y);
 	}
 
-	public AreaComponent.AreaType get(int x, int y) {
-		if (Utils.isInbound(x, y, negXExpantion, negYExpantion, width - 1, height - 1)) {
-			return map.get(x - negXExpantion)
-					  .get(y - negYExpantion);
+	/**
+	 * Gets the current map tile, uses relative position to the start point.
+	 *
+	 * @param x
+	 * 		X relative to the start point.
+	 * @param y
+	 * 		Y relative to the start point.
+	 *
+	 * @return The map tile at that location, or null if off the map
+	 */
+	public MapTile get(int x, int y) {
+		if (Utils.isInbound(x, y, negXExpansion, negYExpansion, width - 1, height - 1)) {
+			return map.get(x - negXExpansion)
+					  .get(y - negYExpansion);
 		}
 		// out of bounds
 		return null;
+	}
+
+	/**
+	 * Gets the current map tile in absolute coordinates, based on the current size of the map
+	 *
+	 * @param x
+	 * 		X relative to the start point.
+	 * @param y
+	 * 		Y relative to the start point.
+	 *
+	 * @return The map tile at that location, or null if off the map
+	 */
+	public MapTile getAbsolute(int x, int y) {
+		if (Utils.isInbound(x, y, 0, 0, width - 1, height - 1)) {
+			return map.get(x)
+					  .get(y);
+		}
+		// out of bounds
+		return null;
+	}
+
+	/**
+	 * Converts a given position in relative coordinates to absolute map coordinates.
+	 * @param pos The position relative to the start point.
+	 * @return The position in map coordinates, 0-width, 0-height
+	 */
+	public Vector2 absolutePos(Vector2 pos) {
+		return new Vector2(pos.x - negXExpansion, pos.y - negYExpansion);
+	}
+
+	@Data
+	public static class MapTile {
+		AreaComponent.AreaType areaType;
+		// used for the map coverage algorithm
+		float                  value = 1;
+		boolean insight = false;
+
+		public MapTile(AreaComponent.AreaType type) {
+			this.areaType = type;
+		}
+
 	}
 }
