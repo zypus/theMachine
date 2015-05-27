@@ -47,7 +47,7 @@ public class Physics2dSystem
 
 	transient private ComponentMapper<Physics2dComponent> physicObjects = ComponentMapper.getFor(Physics2dComponent.class);
 	transient private ComponentMapper<TransformComponent> transforms    = ComponentMapper.getFor(TransformComponent.class);
-	transient private ComponentMapper<ColliderComponent> colliders  = ComponentMapper.getFor(ColliderComponent.class);
+	transient private ComponentMapper<ColliderComponent>  colliders     = ComponentMapper.getFor(ColliderComponent.class);
 
 	transient private static float BOX_TO_WORLD = 10;
 	transient private static float WORLD_TO_BOX = 1f / BOX_TO_WORLD;
@@ -67,8 +67,7 @@ public class Physics2dSystem
 		if (world.getBox2dWorld() == null) {
 			world.setBox2dWorld(new World(new Vector2(0, 0), true));
 		}
-		world.getBox2dWorld()
-			 .setContactListener(this);
+		world.getBox2dWorld().setContactListener(this);
 		Entity debugEntity = new Entity();
 		debugEntity.add(new Physics2dDebugComponent().setBox2dWorld(world.getBox2dWorld())
 													 .setBoxToWorld(BOX_TO_WORLD));
@@ -87,8 +86,7 @@ public class Physics2dSystem
 		for (Entity entity : entities) {
 			world.removeEntity(entity);
 		}
-		world.getBox2dWorld()
-			 .setContactListener(null);
+		world.getBox2dWorld().setContactListener(null);
 	}
 
 	@Override

@@ -53,8 +53,7 @@ public class AreaComponent extends AbstractComponent{
 		TARGET(Asset.fetch("target", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
 		TOWER(Asset.fetch("tower", TextureRegion.class), TRANSPARENT_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
 //		TOWER_USED(Asset.fetch("tower_used", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
-		COVER(Asset.fetch("cover", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
-		UNSEEN(Asset.fetch("unseen", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0);
+		COVER(Asset.fetch("cover", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0);
 
 		private Asset<TextureRegion> textureRegionAsset;
 
