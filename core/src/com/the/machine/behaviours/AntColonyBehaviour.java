@@ -97,7 +97,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
             if (!agentIsAlreadyUpdatingPosition) {
                 // If the agent can see markers, there is a chance that he will go to the avg location
-                if (!canSeeMarkers(context) || Math.random() <= 0.5) {
+                Vector2 avgMarkerPosition = getAverageLocationOfVisibleMarkers(context.getMarkers());
+                if (avgMarkerPosition == null || Math.random() <= 0.5) {
                     // Search for other entities (by turning a bit) while walking normally
 
                     // Set the turnspeed to a low value to have a broader view
@@ -110,10 +111,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     ));
                 }
                 else {
-                    Vector2 averageDirectionOfVisibleMarkers = new Vector2(averageLocationOfVisibleMarkers).sub(transformComponent.get2DPosition());
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(averageDirectionOfVisibleMarkers, 30f)
+                            new ActionSystem.TurnData(avgMarkerPosition, 30f)
                     ));
                 }
             }
@@ -245,15 +245,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     /**
-     * Returns true true if the agent can see any markers
-     * @param context
-     * @return
-     */
-    private boolean canSeeMarkers(BehaviourComponent.BehaviourContext context) {
-        return context.getMarkers().size() != 0;
-    }
-
-    /**
      * Calculates the average location (the center point) of the group of markers in the context.
      *
      * @param markerList the list (derived from the context) in which the markers are stored
@@ -261,41 +252,24 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      */
     private Vector2 getAverageLocationOfVisibleMarkers(List<WeakReference<Entity>> markerList) {
         Vector2 locationSummed = new Vector2();
+        boolean markerFound = false;
 
         for (int i = 0; i < markerList.size(); i++) {
+            markerFound = true;
             Entity markerComponent = markerList.get(i).get();
             TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
 
             locationSummed.add(otherTransform.get2DPosition());
         }
-        return locationSummed.scl((float) 1.0 / markerList.size());
-    }
 
-    /**
-     * Calculates the required rotation speed to end at the goal angle. (A rough estimation would be enough, as the
-     * required rotation speed is calculated again in the next frame)
-     *
-     * @param currentAngle the current angle of the agent
-     * @param goalAngle the goal towards which the agent must be rotated
-     * @param timeToRotate the time we have for rotating
-     * @return
-     */
-    private float turnSpeedForRotatingFromTo(float currentAngle, float goalAngle, float timeToRotate) {
-        float angleDifference = goalAngle - currentAngle;
-        float rotationSpeed = angleDifference / timeToRotate;
-
-        return rotationSpeed;
-    }
-
-    private boolean agentSeesTargetArea(BehaviourComponent.BehaviourContext context) {
-        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
-        for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
-            if (visibleArea.getType() == AreaComponent.AreaType.TARGET) {
-                return true;
-            }
+        if (markerFound) {
+            return locationSummed.scl((float) 1.0 / markerList.size());
         }
-        return false;
+        else {
+            return null;
+        }
     }
+
 
     private Vector2 getNearestTargetArea(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
 
