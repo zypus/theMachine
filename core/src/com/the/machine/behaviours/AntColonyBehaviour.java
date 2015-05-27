@@ -35,13 +35,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
 
-        AgentComponent agentComponent = state.agent.getComponent(AgentComponent.class); // The agentComponent is required to determine the movement speed
-
         // Update nextSpeedChange
         if (state.nextSpeedChange <= 0) {
             responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.MOVE,
-                            new ActionSystem.MoveData(agentComponent.getBaseMovementSpeed())
+                            new ActionSystem.MoveData(5)//agentComponent.getBaseMovementSpeed())
                     )
             );
             state.nextSpeedChange = 2;
@@ -123,7 +121,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         // Update nextMarkerDrop
         if (state.nextMarkerDrop <= 0) {
-            addMarker(getMarkerNumberForAgentType(state.agentType), 0.2f, responses);
+            addMarker(0, 0.2f, responses);  // Add a marker of type 0 // TODO differentiate between marker types
             state.nextMarkerDrop += timeBetweenPheromones;
         }
 
@@ -161,6 +159,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         AgentType agentType;
         float nextMarkerDrop;
         Entity agent;
+    }
+
+    public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
+        return new AntColonyBehaviour.AntColonyBehaviourState(0, 0, agentType, 2, agent);
     }
 
     /**
@@ -208,7 +210,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * Add a given action with a given probability. Only if the response requires no additional data
      * @param action the action to be added to the behaviour
      * @param probability the probability that the action will be added
-     * @param response the response to which the action will be added
+     * @param responses the responses list to which the action will be added
      */
     private void addActionWithProbability(ActionSystem.Action action,
                                           double probability,
@@ -220,7 +222,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
     /**
      * Add a given action to the response
-     * @param respone response to be added
+     * @param response response to be added
      * @param responses the response to which the action should be added
      */
     private void addResponse(BehaviourComponent.BehaviourResponse response, List<BehaviourComponent.BehaviourResponse> responses) {
@@ -228,26 +230,18 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     /**
-     * Let the agent place a marker. The marker can be given a number, and a decay rate.
+     * Let the agent place a marker. The marker can be given a number, and a decay rate. The marker placement will be added
+     * to the responses list
+     *
      * @param marketNumber
      * @param decayRate
-     * @param response
+     * @param responses
      */
     private void addMarker(int marketNumber, float decayRate, List<BehaviourComponent.BehaviourResponse> responses) {
         addResponse(new BehaviourComponent.BehaviourResponse(
                 ActionSystem.Action.MARKER_PLACE,
                 new ActionSystem.MarkerData(marketNumber, decayRate)
         ), responses);
-    }
-
-    private int getMarkerNumberForAgentType(AgentType agentType) {
-        if (agentType == AgentType.GUARD) {
-            return 0;
-        }
-        else if (agentType == AgentType.INTRUDER) {
-            return 1;
-        }
-        else return 100;
     }
 
     /**
