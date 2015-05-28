@@ -38,10 +38,10 @@ public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
 	static final float ALPHA = 0.7f;
-	static final float BETA = 0.4f;
-	static final float GAMMA = 0.6f;
+	static final float BETA = 0.6f;
+	static final float GAMMA = 0.4f;
 
-	static final float DELTA_TIME = 10;
+	static final float DELTA_TIME = 20;
 
 	static private MapCoverBehaviourState sharedState = null;
 	static private int                    shareCount  = 0;
@@ -118,7 +118,7 @@ public class MapCoverBehaviour
 						if (angle < context.getVisionAngle() / 2) {
 							if (!tile.isInsight()) {
 								tile.setInsight(true);
-								tile.setValue(Math.max(tile.getValue() - 0.5f, 0));
+								tile.setValue(Math.max(tile.getValue() - 0.2f, 0));
 							}
 							AreaComponent.AreaType type = tile.getAreaType();
 							if (type == WALL || type == OUTER_WALL) {
@@ -185,7 +185,7 @@ public class MapCoverBehaviour
 
 		ValueMapDebugger.debug(valueMap, points);
 
-		if (path == null || path.getCount() <= 1) {
+		if (path == null || path.getCount() <= 1 || path.getCount() > 2*DELTA_TIME || valueMap[((int) current.x)][((int) current.y)] == -1) {
 			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
 		} else {
 			Vector2 next = new Vector2(path.get(1)

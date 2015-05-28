@@ -30,6 +30,11 @@ public class Mapper {
 	int posYExpansion = 0;
 	int negYExpansion = 0;
 
+	int posEndX = Integer.MAX_VALUE;
+	int negEndX = -Integer.MAX_VALUE;
+	int posEndY = Integer.MAX_VALUE;
+	int negEndY = -Integer.MAX_VALUE;
+
 	static final AreaComponent.AreaType DEFAULT_TYPE = AreaComponent.AreaType.UNSEEN;
 
 	/**
