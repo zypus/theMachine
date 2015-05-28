@@ -22,7 +22,7 @@ import java.util.List;
 public class ValueMapDebugger
 		extends JFrame {
 
-	private static final float SCALE = 4;
+	private static final float SCALE = 3;
 	private static Thread active;
 	private static ValueMapDebugger window;
 	private static DebugPanel debugPanel;

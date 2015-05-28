@@ -7,8 +7,6 @@ import com.the.machine.Constants;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
-import com.the.machine.debug.MapDebugWindow;
-import com.the.machine.debug.MapperDebugWindow;
 import com.the.machine.debug.ValueMapDebugger;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.framework.utility.pathfinding.Vector2i;
@@ -38,8 +36,8 @@ public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
 	static final float ALPHA = 0.7f;
-	static final float BETA = 0.6f;
-	static final float GAMMA = 0.4f;
+	static final float BETA = 0.4f;
+	static final float GAMMA = 0.5f;
 
 	static final float DELTA_TIME = 20;
 
@@ -50,6 +48,9 @@ public class MapCoverBehaviour
 
 	List<AgentSighting> agentSightings = new ArrayList<>();
 	TiledPathFinder pathfinder = new TiledPathFinder();
+
+	Vector2 lastPos;
+	float lastDistance = 0;
 
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -62,12 +63,13 @@ public class MapCoverBehaviour
 		}
 		// if the state is null, that means that this is the first time the behaviour is evaluate, so lets construct the first state
 		if (state == null) {
+			lastPos = context.getPlacebo().getPos();
 			state = generateState(context);
 			//			sharedState = state; // comment this line to disable shared state
-			MapDebugWindow.debug(state.coverage, 0.5f);
+//			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
 			mapper.init(context.getPlacebo().getPos(), context.getMoveDirection());
-			MapperDebugWindow.debug(mapper, 1f);
+//			MapperDebugWindow.debug(mapper, 1f);
 		}
 		// update the map builder
 		mapper.update(context);
@@ -81,13 +83,15 @@ public class MapCoverBehaviour
 		//							.sub((int) pos.x, (int) pos.y);
 
 		Vector2 delta = executePolicy(context, state);
+		lastDistance = lastPos.dst(context.getPlacebo().getPos());
+		lastPos = context.getPlacebo().getPos();
 
 		// determine the rotation to the center of gravity, because we want to go there
 		float angle = context.getMoveDirection()
 							 .angle(delta);
 		List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
 		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(10)));
-		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(delta, 45)));
+		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(delta, (lastDistance < 0.1) ? 180 : 45)));
 		responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.STATE, new ActionSystem.StateData(state)));
 		return responses;
 	}
@@ -185,7 +189,7 @@ public class MapCoverBehaviour
 
 		ValueMapDebugger.debug(valueMap, points);
 
-		if (path == null || path.getCount() <= 1 || path.getCount() > 2*DELTA_TIME || valueMap[((int) current.x)][((int) current.y)] == -1) {
+		if (path == null || path.getCount() <= 1) {
 			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
 		} else {
 			Vector2 next = new Vector2(path.get(1)
@@ -195,6 +199,9 @@ public class MapCoverBehaviour
 //			current.y = Math.round(current.y);
 			Vector2 dir = next.sub(current)
 							  .nor();
+			if (lastDistance < 0.1 || reachable[((int) current.x)][((int) current.y)] == -1) {
+				dir.scl(-1);
+			}
 			return dir;
 		}
 	}
@@ -265,14 +272,35 @@ public class MapCoverBehaviour
 		while (!next.isEmpty()) {
 			floodFill(walkable, next);
 		}
-		for (int x = 0; x < mapper.getWidth(); x++) {
-			for (int y = 0; y < mapper.getHeight(); y++) {
-				int dist = (int) currentPos.cpy()
-										   .sub(new Vector2(x, y))
-										   .len();
-				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
-								 ? 0f
-								 : (float)dist / (float)delta;
+		for (int x = (int) (currentPos.x-delta); x < currentPos.x+delta; x++) {
+			for (int y = (int) (currentPos.y-delta); y < currentPos.y+delta; y++) {
+				if (Utils.isInbound(x,y,0,0, mapper.getWidth()-1, mapper.getHeight()-1)) {
+					int dist = (int) currentPos.cpy()
+											   .sub(new Vector2(x, y))
+											   .len();
+					if (dist < delta && walkable[x][y] != -1) {
+						Vector2i start = new Vector2i(currentPos.x, currentPos.y);
+
+						Vector2i goal = new Vector2i(x, y);
+						GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
+						if (path != null) {
+							if (path.getCount() > 1 && walkable[path.get(0)
+																	.getX()][path.get(0)
+																				 .getY()] == -1) {
+								valueMap[x][y] = 0;
+							} else {
+								valueMap[x][y] = 1f - (float) path.getCount() / (float) delta;
+							}
+						} else {
+							valueMap[x][y] = 0;
+						}
+					} else {
+						valueMap[x][y] = 0;
+					}
+					//				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
+					//								 ? 0f
+					//								 : 1f - (float)dist / (float)delta;
+				}
 			}
 		}
 		return valueMap;
@@ -529,7 +557,7 @@ public class MapCoverBehaviour
 			y = (int) vector2.y;
 			// if this spot is a target area, mark it as visited
 			if (area[x][y] == 1) {
-				area[x][y] = 0;
+				area[x][y] = 0.9f;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {
 					int nx = (int) (x + dir.x);
