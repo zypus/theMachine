@@ -8,12 +8,15 @@ import lombok.AllArgsConstructor;
 import com.badlogic.gdx.ai.btree.BehaviorTree;
 import com.badlogic.gdx.ai.btree.LeafTask;
 import com.badlogic.gdx.ai.btree.Task;
+import com.badlogic.gdx.ai.btree.branch.Selector;
 import com.badlogic.gdx.ai.btree.branch.Sequence;
+import com.badlogic.gdx.ai.btree.decorator.Invert;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.RandomBehaviour.RandomBehaviourState;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
 import com.the.machine.behaviours.behaviorTree.leafTasks.TestLeafTimer;
+import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.RandomMovement;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.ResLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TurnToTargetLocationLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.HearingLeaf;
@@ -32,6 +35,10 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		this.tree = new BehaviorTree<TreeContext>();
 		List<Task<TreeContext>> list = new ArrayList<>();
 		
+		list.add(new RandomMovement());
+		list.add(new TurnToTargetLocationLeaf(speed));
+		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
+		
 		List<Task<TreeContext>> list2 = new ArrayList<>();
 		
 		list2.add(new HearingLeaf());
@@ -40,9 +47,9 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(sound, normal);
+		Task<TreeContext> seq = new Selector<TreeContext>(sound, normal);
 		
-		tree.addChild(new com.badlogic.gdx.ai.btree.decorator.UntilFail<TreeContext>(seq));
+		tree.addChild((seq));
 		TreeContext treeContext = new TreeContext();
 		tree.setObject(treeContext);
 	}
