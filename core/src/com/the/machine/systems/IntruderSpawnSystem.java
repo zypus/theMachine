@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
+import com.the.machine.behaviours.AntColonyBehaviour;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AngularVelocityComponent;
@@ -147,8 +148,7 @@ public class IntruderSpawnSystem
 		newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(0, 7.5f, 45, 10, 18)));
 		newAgent.add(new ListenerComponent());
 		newAgent.add(new NameComponent().setName("Intruder"));
-		newAgent.add(new BehaviourComponent<RandomBehaviour.RandomBehaviourState>().setBehaviour(new RandomBehaviour())
-																				   .setState(new RandomBehaviour.RandomBehaviourState(0, 0)));
+		newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.INTRUDER, newAgent)));
 		newAgent.add(new VelocityComponent());
 		newAgent.add(new AngularVelocityComponent());
 		newAgent.add(new AgentComponent().setBaseViewingDistance(7.5f));

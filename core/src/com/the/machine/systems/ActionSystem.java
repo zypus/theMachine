@@ -3,6 +3,7 @@ package com.the.machine.systems;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.framework.AbstractSystem;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -40,7 +41,11 @@ public class ActionSystem extends AbstractSystem {
 	@AllArgsConstructor
 	public static class TurnData {
 		Vector2 dir;
-		float   speed;
+		float speed;
+		
+		public static Vector2 convertGlobalTurn(Vector2 globalTurn, Vector2 currentDir){
+			return currentDir.cpy().rotate(currentDir.angle(globalTurn) + currentDir.angle());
+		}
 	}
 
 	@Data

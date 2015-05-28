@@ -69,4 +69,3 @@ public class RandomBehaviour implements BehaviourComponent.Behaviour<RandomBehav
 	}
 
 }
-
