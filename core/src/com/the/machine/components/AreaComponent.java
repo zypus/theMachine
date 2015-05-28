@@ -84,6 +84,10 @@ public class AreaComponent extends AbstractComponent{
 			return this == AreaType.TOWER; /*|| this == AreaType.TOWER_USED;*/
 		}
 
+		public boolean isWall() {
+			return this == WALL || this == OUTER_WALL;
+		}
+
 	}
 
 }

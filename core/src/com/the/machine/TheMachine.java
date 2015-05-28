@@ -14,6 +14,7 @@ public class TheMachine extends ApplicationAdapter {
 	public void create () {
 		Asset.initialize();
 		world = new World();
+		world.setTimeFlow(10);
 		world.create();
 		world.buildScene(new MapEditorSceneBuilder());
 		Gdx.input.setInputProcessor(world.getInputMultiplexer());

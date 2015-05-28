@@ -9,6 +9,7 @@ import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.debug.MapDebugWindow;
 import com.the.machine.debug.MapperDebugWindow;
+import com.the.machine.debug.ValueMapDebugger;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.framework.utility.pathfinding.Vector2i;
 import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledNode;
@@ -36,10 +37,11 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
 public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
-	static final float ALPHA = 0.5f;
-	static final float GAMMA = 0.5f;
+	static final float ALPHA = 0.7f;
+	static final float BETA = 0.4f;
+	static final float GAMMA = 0.6f;
 
-	static final float DELTA_TIME = 3;
+	static final float DELTA_TIME = 10;
 
 	static private MapCoverBehaviourState sharedState = null;
 	static private int                    shareCount  = 0;
@@ -106,7 +108,8 @@ public class MapCoverBehaviour
 				int dx = i - range / 2;
 				int dy = j - range / 2;
 				// check if field is in vision range
-				if (dx * dx + dy * dy < range2) {
+				int dist = dx * dx + dy * dy;
+				if (dist < range2 && dist > 1) {
 					Vector2 lookDir = new Vector2(dx, dy).nor();
 					float angle = Math.abs(lookDir.angle(direction));
 					// check if the vision angle covers that direction
@@ -115,7 +118,7 @@ public class MapCoverBehaviour
 						if (angle < context.getVisionAngle() / 2) {
 							if (!tile.isInsight()) {
 								tile.setInsight(true);
-								tile.setValue(Math.max(tile.getValue() - 0.1f, 0));
+								tile.setValue(Math.max(tile.getValue() - 0.5f, 0));
 							}
 							AreaComponent.AreaType type = tile.getAreaType();
 							if (type == WALL || type == OUTER_WALL) {
@@ -135,6 +138,7 @@ public class MapCoverBehaviour
 		// create value maps
 		float[][] currentSituation = currentSituation();
 		float[][] futureSituation = futureSituation();
+		float[][] direction = direction(context.getMoveDirection());
 		float[][] reachable = reachable();
 		float[][] walkable = walkable();
 
@@ -144,7 +148,10 @@ public class MapCoverBehaviour
 		Vector2 maxPos = new Vector2();
 		for (int x = 0; x < mapper.getWidth(); x++) {
 			for (int y = 0; y < mapper.getHeight(); y++) {
-				valueMap[x][y] = currentSituation[x][y] + ALPHA * futureSituation[x][y] + GAMMA * reachable[x][y];
+				valueMap[x][y] = currentSituation[x][y] + ALPHA * futureSituation[x][y] + BETA * direction[x][y] + GAMMA * reachable[x][y];
+				if (walkable[x][y] == -1) {
+					valueMap[x][y] = 0;
+				}
 				if (valueMap[x][y] > max) {
 					max = valueMap[x][y];
 					maxPos.set(x, y);
@@ -152,17 +159,43 @@ public class MapCoverBehaviour
 			}
 		}
 
+//		float[][] navMap = new float[mapper.getWidth()][mapper.getHeight()];
+//		for (int x = 0; x < mapper.getWidth(); x++) {
+//			for (int y = 0; y < mapper.getHeight(); y++) {
+//				if (walkable[x][y] == -1) {
+//					navMap[x][y] = -1;
+//				} else {
+//					navMap[x][y] = max-valueMap[x][y];
+//				}
+//			}
+//		}
+
 		// path find
 		Vector2i start = new Vector2i(current.x, current.y);
 
 		Vector2i goal = new Vector2i(maxPos.x, maxPos.y);
 		GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
-		if (path == null) {
-			return context.getMoveDirection();
+
+		List<Vector2> points = new ArrayList<>();
+		if (path != null) {
+			for (TiledNode node : path) {
+				points.add(new Vector2(node.getX(), node.getY()));
+			}
+		}
+
+		ValueMapDebugger.debug(valueMap, points);
+
+		if (path == null || path.getCount() <= 1) {
+			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
 		} else {
-			return new Vector2(path.get(0)
-								   .getX(), path.get(0)
-												.getY()).sub(current);
+			Vector2 next = new Vector2(path.get(1)
+										.getX(), path.get(1)
+													 .getY());
+//			current.x = Math.round(current.x);
+//			current.y = Math.round(current.y);
+			Vector2 dir = next.sub(current)
+							  .nor();
+			return dir;
 		}
 	}
 
@@ -198,7 +231,7 @@ public class MapCoverBehaviour
 						Mapper.MapTile tile = mapper.getAbsolute(x+dx,y+dy);
 						if (tile != null) {
 							Vector2 absolutePos = mapper.absolutePos(new Vector2(x + dx, y + dy));
-							valueMap[((int) absolutePos.x)][((int) absolutePos.y)] += 1f - dist / delta2;
+							valueMap[((int) absolutePos.x)][((int) absolutePos.y)] += 1f - (float)dist / (float)delta2;
 						}
 					}
 				}
@@ -207,18 +240,39 @@ public class MapCoverBehaviour
 		return valueMap;
 	}
 
-	private float[][] reachable() {
+	private float[][] direction(Vector2 ref) {
 		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
 		Vector2 currentPos = mapper.absolutePos(mapper.getCurrentPosition());
 		int delta2 = (int) Math.pow(DELTA_TIME * Constants.AGENT_SPEED, 2);
 		for (int x = 0; x < mapper.getWidth(); x++) {
 			for (int y = 0; y < mapper.getHeight(); y++) {
+				Vector2 delta = currentPos.cpy()
+										   .sub(new Vector2(x, y));
+				float angle = delta.angle(ref);
+				valueMap[x][y] = Math.abs(angle)/180f;
+			}
+		}
+		return valueMap;
+	}
+
+	private float[][] reachable() {
+		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
+		Vector2 currentPos = mapper.absolutePos(mapper.getCurrentPosition());
+		int delta= (int) (DELTA_TIME * Constants.AGENT_SPEED);
+		float[][] walkable = walkable();
+		List<Vector2> next = new ArrayList<>();
+		next.add(currentPos);
+		while (!next.isEmpty()) {
+			floodFill(walkable, next);
+		}
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
 				int dist = (int) currentPos.cpy()
 										   .sub(new Vector2(x, y))
-										   .len2();
-				valueMap[x][y] = (dist > delta2)
+										   .len();
+				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
 								 ? 0f
-								 : 1f - dist / delta2;
+								 : (float)dist / (float)delta;
 			}
 		}
 		return valueMap;
@@ -231,7 +285,30 @@ public class MapCoverBehaviour
 				Mapper.MapTile tile = mapper.getMap()
 											.get(x)
 											.get(y);
-				if (tile.getAreaType() == WALL || tile.getAreaType() == OUTER_WALL) {
+				Mapper.MapTile right = mapper.getAbsolute(x + 1, y);
+				Mapper.MapTile up = mapper.getAbsolute(x, y+1);
+				Mapper.MapTile left = mapper.getAbsolute(x - 1, y);
+				Mapper.MapTile down = mapper.getAbsolute(x, y-1);
+				Mapper.MapTile upright = mapper.getAbsolute(x+1, y+1);
+				Mapper.MapTile upleft = mapper.getAbsolute(x-1, y+1);
+				Mapper.MapTile downright = mapper.getAbsolute(x+1, y-1);
+				Mapper.MapTile downleft = mapper.getAbsolute(x-1, y-1);
+				if (tile.getAreaType() == WALL || tile.getAreaType() == OUTER_WALL ||
+												  (right != null && (right.getAreaType().isWall())) ||
+												  (up != null && (up.getAreaType()
+																		  .isWall())) ||
+												  (left != null && (left.getAreaType()
+																		  .isWall())) ||
+					(upright != null && (upright.getAreaType()
+																		  .isWall())) ||
+					(upleft != null && (upleft.getAreaType()
+																		  .isWall())) ||
+					(downright != null && (downright.getAreaType()
+																		  .isWall())) ||
+					(downleft != null && (downleft.getAreaType()
+																		  .isWall())) ||
+												  (down != null && (down.getAreaType()
+																		  .isWall()))) {
 					valueMap[x][y] = -1;
 				} else {
 					valueMap[x][y] = 1;
@@ -432,6 +509,27 @@ public class MapCoverBehaviour
 			// if this spot is a target area, mark it as visited
 			if (area[x][y] == TARGET) {
 				area[x][y] = GROUND;
+				// flood continues on the adjacent fields
+				for (Vector2 dir : dirs) {
+					int nx = (int) (x + dir.x);
+					int ny = (int) (y + dir.y);
+					if (Utils.isInbound(nx, ny, 0, 0, area.length - 1, area[0].length - 1)) {
+						next.add(new Vector2(nx, ny));
+					}
+				}
+			}
+		}
+	}
+
+	private void floodFill(float[][] area, List<Vector2> next) {
+		int x, y;
+		if (!next.isEmpty()) {
+			Vector2 vector2 = next.remove(0);
+			x = (int) vector2.x;
+			y = (int) vector2.y;
+			// if this spot is a target area, mark it as visited
+			if (area[x][y] == 1) {
+				area[x][y] = 0;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {
 					int nx = (int) (x + dir.x);

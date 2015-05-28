@@ -101,7 +101,7 @@ public class Mapper {
 					Vector2 lookDir = new Vector2(x, y).nor();
 					float angle = Math.abs(lookDir.angle(currentDirection));
 					// check if the vision angle covers that direction
-					if (angle < visionAngle / 4) {
+					if (angle < visionAngle / 2) {
 						list.add(new Vector2(x, y));
 					}
 				}
