@@ -25,6 +25,9 @@ public class TreeContext {
 	/** Target Location Can Be Declared To Then later be used */
 	private Vector2 targetLocation;
 	
+	/** Target Location Used for the Pathfinding to declare its goal */
+	private Vector2 destination;
+	
 	/** List Storing All Responses To Be Taken This Iteration */
 	private List<BehaviourResponse> responseList;
 	
@@ -68,7 +71,7 @@ public class TreeContext {
 		this.responseList.clear();
 	}
 	
-	/** Updates everything in the tree context that needs updateing */
+	/** Updates everything in the tree context that needs updating */
 	public void update(){
 		
 	}
