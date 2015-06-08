@@ -23,7 +23,12 @@ import java.util.List;
 
 @NoArgsConstructor
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
-    // TODO if a collision has been found, move away from it
+    /*
+    TODO if a collision has been detected, move away from it
+    TODO differentiate between marker types (One for moving towards it, one for moving away)
+    TODO for guards, making moving towards an intruder has a higher priority than moving towards another guard
+    TODO remember map
+     */
     public enum AgentType { GUARD, INTRUDER };
     public final float timeBetweenPheromones = 2.5f;
 
@@ -40,7 +45,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         if (state.nextSpeedChange <= 0) {
             responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.MOVE,
-                            new ActionSystem.MoveData(5)//agentComponent.getBaseMovementSpeed())
+                            new ActionSystem.MoveData(5)
                     )
             );
             state.nextSpeedChange = 2;
@@ -51,6 +56,20 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             state.nextTurnChange = 0.5f;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             boolean agentIsAlreadyUpdatingPosition = false;
+
+
+            // Determine where the nearest potential collision will be
+            float nearestStructureDistance = Float.MAX_VALUE;
+            Vector2 relativePositionOfCollision = null;
+            for (DiscreteMapComponent.MapCell cell : context.getVision()) {
+                if (cell.getType().isStructure()) {
+                    Vector2 relativePositonOfCell = new Vector2(cell.getPosition()).sub(transformComponent.get2DPosition());
+                    if (nearestStructureDistance != Math.min(relativePositonOfCell.len(), nearestStructureDistance)) {
+                        nearestStructureDistance = relativePositonOfCell.len();
+                        relativePositionOfCollision = relativePositonOfCell;
+                    }
+                }
+            }
 
             // Guards should move to the nearest agent // TODO a near intruder has a higher priority
             if (state.agentType == AgentType.GUARD) {
@@ -77,7 +96,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     ));
                     agentIsAlreadyUpdatingPosition = true;
                 }
-                else {
+                else { // if there is no target area found
                     Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
                     if (nearestAgentVector != null) {
                         System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
@@ -98,7 +117,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 if (avgMarkerPosition == null || Math.random() <= 0.5) {
                     // Search for other entities (by turning a bit) while walking normally
                     Vector2 currentDirection = context.getMoveDirection();
-                    Vector2 newDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
+
+                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
+
+                    // If we have found a place where a collision will happen, move opposite to it
+                    Vector2 newDirection = relativePositionOfCollision == null ? randomDirection : new Vector2(relativePositionOfCollision).scl(-1);
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
                             new ActionSystem.TurnData(newDirection, 30f)
@@ -115,7 +138,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         // Update nextMarkerDrop
         if (state.nextMarkerDrop <= 0) {
-            addMarker(0, 0.2f, responses);  // Add a marker of type 0 // TODO differentiate between marker types
+            addMarker(0, 0.2f, responses);  // Add a marker of type 0
             state.nextMarkerDrop += timeBetweenPheromones;
         }
 
