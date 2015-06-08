@@ -57,15 +57,12 @@ public class PathfindingLeaf extends LeafTask<TreeContext>{
 				// the current position will be the start position of the astar
 				Vector2i start = new Vector2i(offsettedPos.x, offsettedPos.y);
 
-				Vector2i goal = new Vector2i(context.getDestination());
+				Vector2i goal = null;//new Vector2i(context.getDestination());
 				int counter = 0;
 				GraphPath<TiledNode> foundPath = null;
 				// try to find the path to a random goal position, if there is non try another
-				while (foundPath == null || foundPath.getCount() == 0) {
-					goal = new Vector2i(MathUtils.random() * state.getWidth(), MathUtils.random() * state.getHeight());
-					foundPath = pathfinder.findPath(state.getMap(), start, goal);
-					counter++;
-				}
+				goal =  new Vector2i(context.getDestination());//new Vector2i(MathUtils.random() * state.getWidth(), MathUtils.random() * state.getHeight());
+				foundPath = pathfinder.findPath(state.getMap(), start, goal);
 				if (path == null) {
 					path = new ArrayList<>(foundPath.getCount());
 				} else {
@@ -80,11 +77,11 @@ public class PathfindingLeaf extends LeafTask<TreeContext>{
 			TiledNode node = path.get(0);
 			Vector2 delta = new Vector2(node.getX(), node.getY()).sub(offsettedPos);
 			float len2 = delta.len2();
-			if (len2 <= 0.5) {
+			if (len2 <= 1) {
 				path.remove(0);
 			}
 			context.setTargetLocation(delta);
-			System.out.println(delta.x+" "+delta.y);
+			//System.out.println(delta.x+" "+delta.y);
 			this.success();
 		}
 		

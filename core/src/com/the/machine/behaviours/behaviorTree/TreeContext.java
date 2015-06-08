@@ -71,6 +71,11 @@ public class TreeContext {
 		this.responseList.clear();
 	}
 	
+	/** Whether this Agent is currently turning */
+	public boolean isCurrentlyTurning(){
+		return !(this.getTargetLocation()==null || Math.abs(this.getTargetLocation().angle()-this.getBehaviorContext().getMoveDirection().angle())<1);
+	}
+	
 	/** Updates everything in the tree context that needs updating */
 	public void update(){
 		

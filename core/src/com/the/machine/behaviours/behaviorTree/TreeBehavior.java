@@ -21,6 +21,7 @@ import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.RandomMoveme
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.ResLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TurnToTargetLocationLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.HearingLeaf;
+import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.WaitTurnMove;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
@@ -48,7 +49,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new PathfindingLeaf(), new TurnToTargetLocationLeaf(speed), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
+		Task<TreeContext> seq = new Sequence<TreeContext>(new WaitTurnMove(), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)), new PathfindingLeaf(), new TurnToTargetLocationLeaf((speed+speed)*speed*speed*speed*speed), new WaitTurnMove(), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
 		
 		
 		tree.addChild((seq));
@@ -60,7 +61,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	public List<BehaviourResponse> evaluate(BehaviourContext context, TreeBehaviorState state) {
 		List<BehaviourResponse> responseList = new ArrayList<BehaviourResponse>();
 		TreeContext treeContext = tree.getObject();
-		treeContext.setDestination(new Vector2(1, 1));
+		treeContext.setDestination(new Vector2(66, 69));
 		if(!treeContext.isInited()){
 			treeContext.init(context);
 		}
