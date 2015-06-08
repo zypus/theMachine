@@ -250,21 +250,25 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @return
      */
     private Vector2 getAverageLocationOfVisibleMarkers(List<WeakReference<Entity>> markerList) {
-        Vector2 locationSummed = new Vector2();
-        boolean markerFound = false;
+        try {
+            Vector2 locationSummed = new Vector2();
+            boolean markerFound = false;
 
-        for (int i = 0; i < markerList.size(); i++) {
-            markerFound = true;
-            Entity markerComponent = markerList.get(i).get();
-            TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
+            for (int i = 0; i < markerList.size(); i++) {
+                markerFound = true;
+                Entity markerComponent = markerList.get(i).get();
+                TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
 
-            locationSummed.add(otherTransform.get2DPosition());
+                locationSummed.add(otherTransform.get2DPosition());
+            }
+
+            if (markerFound) {
+                return locationSummed.scl((float) 1.0 / markerList.size());
+            }
+        } catch (NullPointerException e) {
+            System.err.println("Marker vanished");
         }
-
-        if (markerFound) {
-            return locationSummed.scl((float) 1.0 / markerList.size());
-        }
-        else {
+        finally {
             return null;
         }
     }
