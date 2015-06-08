@@ -23,6 +23,7 @@ import java.util.List;
 
 @NoArgsConstructor
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
+    // TODO if a collision has been found, move away from it
     public enum AgentType { GUARD, INTRUDER };
     public final float timeBetweenPheromones = 2.5f;
 
@@ -49,7 +50,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         if (state.nextTurnChange <= 0) {
             state.nextTurnChange = 0.5f;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
-            Vector2 averageLocationOfVisibleMarkers = getAverageLocationOfVisibleMarkers(context.getMarkers());
             boolean agentIsAlreadyUpdatingPosition = false;
 
             // Guards should move to the nearest agent // TODO a near intruder has a higher priority
@@ -57,7 +57,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
                 if (nearestAgentVector != null) {
                     Vector2 relativePosOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
-//                    float currentAngle = transformComponent.getZRotation();
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
                             new ActionSystem.TurnData(relativePosOfNearestAgent, 30f)));
@@ -72,7 +71,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 if (nearestTargetArea != null) {
                     System.out.println("Moving towards targat area");
                     Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
-//                    float currentAngle = transformComponent.getZRotation();
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
                             new ActionSystem.TurnData(relativePosOfNearestArea, 30f)
@@ -85,7 +83,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                         System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
                         // Turn to the opposite direction
                         Vector2 negRelativePositionOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
-//                        float currentAngle = transformComponent.getZRotation();
                         responses.add(new BehaviourComponent.BehaviourResponse(
                                 ActionSystem.Action.TURN,
                                 new ActionSystem.TurnData(negRelativePositionOfNearestAgent, 30f)
@@ -100,9 +97,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 Vector2 avgMarkerPosition = getAverageLocationOfVisibleMarkers(context.getMarkers());
                 if (avgMarkerPosition == null || Math.random() <= 0.5) {
                     // Search for other entities (by turning a bit) while walking normally
-
-                    // Set the turnspeed to a low value to have a broader view
-//                    response.setTurningSpeed((float) (50 * Math.random() - 25));
                     Vector2 currentDirection = context.getMoveDirection();
                     Vector2 newDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
                     responses.add(new BehaviourComponent.BehaviourResponse(
@@ -133,9 +127,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         }
 
         // Always try to enter a tower (even if there is no tower nearby)
-//        if (!responses.getActions().contains(ActionSystem.Action.TOWER_LEAVE)) {
-            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null), responses);
-//        }
+        addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null), responses);
 
         // Also, always try to destroy a window (even if there are none nearby)
         addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null), responses);
@@ -159,10 +151,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         AgentType agentType;
         float nextMarkerDrop;
         Entity agent;
+        Vector2 edgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
     }
 
     public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
-        return new AntColonyBehaviour.AntColonyBehaviourState(0, 0, agentType, 2, agent);
+        return new AntColonyBehaviour.AntColonyBehaviourState(0, 0, agentType, 2, agent, null);
     }
 
     /**
