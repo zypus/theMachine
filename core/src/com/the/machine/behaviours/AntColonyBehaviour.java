@@ -24,10 +24,13 @@ import java.util.List;
 @NoArgsConstructor
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
     /*
-    TODO if a collision has been detected, move away from it
-    TODO differentiate between marker types (One for moving towards it, one for moving away)
-    TODO for guards, making moving towards an intruder has a higher priority than moving towards another guard
-    TODO remember map
+    TODO 1 refactor code. Looks messy.
+    TODO 2 broken windows are also considered to be structures. Use another test to determine whether an area causes a collision
+    TODO 3 differentiate between marker types (One for moving towards it, one for moving away)
+    TODO 4 for guards, making moving towards an intruder has a higher priority than moving towards another guard
+    TODO 5 make Marker vanished error not happen
+    TODO 6 remember map (especially positions of other agents)
+    TODO 7 algorithm is really bad for guards at finding intruders. May have something to do with #6
      */
     public enum AgentType { GUARD, INTRUDER };
     public final float timeBetweenPheromones = 2.5f;
@@ -63,10 +66,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             Vector2 relativePositionOfCollision = null;
             for (DiscreteMapComponent.MapCell cell : context.getVision()) {
                 if (cell.getType().isStructure()) {
-                    Vector2 relativePositonOfCell = new Vector2(cell.getPosition()).sub(transformComponent.get2DPosition());
-                    if (nearestStructureDistance != Math.min(relativePositonOfCell.len(), nearestStructureDistance)) {
-                        nearestStructureDistance = relativePositonOfCell.len();
-                        relativePositionOfCollision = relativePositonOfCell;
+                    Vector2 relativePositionOfCell = new Vector2(cell.getPosition()).sub(transformComponent.get2DPosition());
+                    if (nearestStructureDistance != Math.min(relativePositionOfCell.len(), nearestStructureDistance)) {
+                        nearestStructureDistance = relativePositionOfCell.len();
+                        relativePositionOfCollision = relativePositionOfCell;
                     }
                 }
             }
@@ -86,9 +89,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 // Move to the opposite direction
                 // Intruders want to move away from guards, and if they also move away from other intruders they will
                 // cover a bigger area
-                Vector2 nearestTargetArea = getNearestTargetArea(state, context);
+                Vector2 nearestTargetArea = getNearest(AreaComponent.AreaType.TARGET, state, context);
                 if (nearestTargetArea != null) {
-                    System.out.println("Moving towards targat area");
+                    System.out.println("Moving towards target area");
                     Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
@@ -266,44 +269,44 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @return
      */
     private Vector2 getAverageLocationOfVisibleMarkers(List<WeakReference<Entity>> markerList) {
-        try {
-            Vector2 locationSummed = new Vector2();
-            boolean markerFound = false;
+        Vector2 locationSummed = new Vector2();
+        boolean markerFound = false;
 
-            for (int i = 0; i < markerList.size(); i++) {
-                markerFound = true;
-                Entity markerComponent = markerList.get(i).get();
-                TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
-
-                locationSummed.add(otherTransform.get2DPosition());
+        for (WeakReference<Entity> aMarkerList : markerList) {
+            markerFound = true;
+            Entity markerComponent = aMarkerList.get();
+            TransformComponent otherTransform = null;
+            if (markerComponent != null) {
+                otherTransform = markerComponent.getComponent(TransformComponent.class);
+            }
+            else {
+                // If markerComponent == null
+                // Old markers can still be found, but they don't have a markerComponent
+                return null;
             }
 
-            if (markerFound) {
-                return locationSummed.scl((float) 1.0 / markerList.size());
-            }
-        } catch (NullPointerException e) {
-            System.err.println("Marker vanished");
+            locationSummed.add(otherTransform.get2DPosition());
         }
-        finally {
-            return null;
+
+        if (markerFound) {
+            return locationSummed.scl((float) 1.0 / markerList.size());
         }
+        return null;
     }
 
-
-    private Vector2 getNearestTargetArea(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
-
+    private Vector2 getNearest(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
         List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
         DiscreteMapComponent.MapCell nearestArea = null;
         float distanceToNearestArea = Float.MAX_VALUE;
         TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
 
         for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
-            if (visibleArea.getType() == AreaComponent.AreaType.TARGET) {
+            if (visibleArea.getType() == areaType) {
                 float distanceToArea = visibleArea.getPosition().dst2(transformComponent.get2DPosition());
                 if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
                     distanceToNearestArea = distanceToArea;
                     nearestArea = visibleArea;
-                    System.out.println("Found target area");
+                    System.out.println("Found area of type " + areaType);
                 }
             }
         }
