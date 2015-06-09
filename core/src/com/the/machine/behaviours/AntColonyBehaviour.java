@@ -40,21 +40,16 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
 
-        // Update nextSpeedUpdate
-        if (state.nextSpeedUpdate <= 0) {
-            responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.MOVE,
-                            new ActionSystem.MoveData(5)
-                    )
-            );
-            state.nextSpeedUpdate = 2;
+        // Initialize speed
+        if (context.getCurrentMovementSpeed() == 0) {
+            initializeSpeed(state, responses);
         }
 
         // Update nextRotationUpdate
         if (state.nextRotationUpdate <= 0) {
             state.nextRotationUpdate = state.rotationResetTime;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
-            boolean agentIsAlreadyUpdatingPosition = false;
+            boolean agentIsAlreadyUpdatingRotation = false;
 
 
             // Determine where the nearest potential collision will be
@@ -78,7 +73,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
                             new ActionSystem.TurnData(relativePosOfNearestAgent, 30f)));
-                    agentIsAlreadyUpdatingPosition = true;
+                    agentIsAlreadyUpdatingRotation = true;
                 }
             }
             else { // if state.agentType == AgentType.Intruder
@@ -93,7 +88,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                             ActionSystem.Action.TURN,
                             new ActionSystem.TurnData(relativePosOfNearestArea, 30f)
                     ));
-                    agentIsAlreadyUpdatingPosition = true;
+                    agentIsAlreadyUpdatingRotation = true;
                 }
                 else { // if there is no target area found
                     Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
@@ -105,12 +100,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                                 ActionSystem.Action.TURN,
                                 new ActionSystem.TurnData(negRelativePositionOfNearestAgent, 30f)
                         ));
-                        agentIsAlreadyUpdatingPosition = true;
+                        agentIsAlreadyUpdatingRotation = true;
                     }
                 }
             }
 
-            if (!agentIsAlreadyUpdatingPosition) {
+            if (!agentIsAlreadyUpdatingRotation) {
                 // If the agent can see markers, there is a chance that he will go to the avg location
                 Vector2 avgMarkerPosition = getAverageLocationOfVisibleMarkers(context.getMarkers());
                 if (avgMarkerPosition == null || Math.random() <= 0.5) {
@@ -137,8 +132,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         // Update nextMarkerdropUpdate
         if (state.nextMarkerdropUpdate <= 0) {
-            addMarker(0, 0.2f, responses);  // Add a marker of type 0
             state.nextMarkerdropUpdate += state.markerDropResetTime;
+            addMarker(0, 0.2f, responses);  // Add a marker of type 0
         }
 
         if (context.isCanSprint()) {
@@ -168,18 +163,18 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
     @AllArgsConstructor
     public static class AntColonyBehaviourState implements BehaviourComponent.BehaviourState {
-        AgentType agentType;
-        Entity agent;
+        final AgentType agentType;
+        final Entity agent;
         Vector2 edgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
+        final float agentSpeed;
 
         // The time until the next update of speed, rotation, etc.
-        float nextSpeedUpdate;
         float nextRotationUpdate;
         float nextMarkerdropUpdate;
 
         // The amount to which the timers are reset when they have reached 0
-        float markerDropResetTime;
-        float rotationResetTime;
+        final float markerDropResetTime;
+        final float rotationResetTime;
     }
 
     /**
@@ -189,11 +184,16 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @return
      */
     public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
-        return new AntColonyBehaviour.AntColonyBehaviourState(agentType, agent, null, 0, 0, 0, 2.5f, 0.5f);
+        return new AntColonyBehaviour.AntColonyBehaviourState(agentType, agent, null, 5, 0, 0, 2f, 0.5f);
     }
 
+    private void initializeSpeed(AntColonyBehaviourState state, List<BehaviourComponent.BehaviourResponse> responses) {
+        responses.add(new BehaviourComponent.BehaviourResponse(
+                ActionSystem.Action.MOVE,
+                new ActionSystem.MoveData(state.agentSpeed)
+        ));
+    }
     private void updateCountdowns(AntColonyBehaviourState state, float delta) {
-        state.nextSpeedUpdate -= delta;
         state.nextRotationUpdate -= delta;
         state.nextMarkerdropUpdate -= delta;
     }
