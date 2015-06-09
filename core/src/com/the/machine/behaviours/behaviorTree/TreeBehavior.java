@@ -49,7 +49,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)), new WaitTurnMove(), new PathfindingLeaf(), new TurnToTargetLocationLeaf(1), new WaitTurnMove(), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
+		Task<TreeContext> seq = new Sequence<TreeContext>(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)), new WaitTurnMove(), new PathfindingLeaf(), new TurnToTargetLocationLeaf(speed));
 		
 		
 		tree.addChild((seq));
