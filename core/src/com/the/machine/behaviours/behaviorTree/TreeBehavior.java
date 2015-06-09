@@ -16,6 +16,7 @@ import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.RandomBehaviour.RandomBehaviourState;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
 import com.the.machine.behaviours.behaviorTree.leafTasks.TestLeafTimer;
+import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.MoveUntilLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.PathfindingLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.RandomMovement;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.ResLeaf;
@@ -37,19 +38,26 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		this.tree = new BehaviorTree<TreeContext>();
 		List<Task<TreeContext>> list = new ArrayList<>();
 		
-		list.add(new RandomMovement());
-		list.add(new TurnToTargetLocationLeaf(speed));
-		list.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
+		list.add(new PathfindingLeaf());
+		list.add(new WaitTurnMove());
+		list.add(new MoveUntilLeaf());
 		
 		List<Task<TreeContext>> list2 = new ArrayList<>();
 		
-		list2.add(new HearingLeaf());
-		list2.add(new TurnToTargetLocationLeaf(speed));
-		list2.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
+		list2.add(new Invert(new WaitTurnMove()));
+		list2.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)));
+		
+		List<Task<TreeContext>> list3 = new ArrayList<>();
+		list3.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
+
+		
+		
+		
 		
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)), new WaitTurnMove(), new PathfindingLeaf(), new TurnToTargetLocationLeaf(speed));
+		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray( new Task[list3.size()]));
+		Task<TreeContext> seq = new Selector<TreeContext>(normal);
 		
 		
 		tree.addChild((seq));
@@ -61,7 +69,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	public List<BehaviourResponse> evaluate(BehaviourContext context, TreeBehaviorState state) {
 		List<BehaviourResponse> responseList = new ArrayList<BehaviourResponse>();
 		TreeContext treeContext = tree.getObject();
-		treeContext.setDestination(new Vector2(66, 69));
+		treeContext.setDestination(new Vector2(10, 10));
 		if(!treeContext.isInited()){
 			treeContext.init(context);
 		}

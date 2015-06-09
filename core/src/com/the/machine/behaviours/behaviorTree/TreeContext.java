@@ -73,7 +73,7 @@ public class TreeContext {
 	
 	/** Whether this Agent is currently turning */
 	public boolean isCurrentlyTurning(){
-		return Math.abs(this.behaviorContext.getCurrentTurningSpeed())>1.5;//!(this.getTargetLocation()==null || Math.abs(this.getTargetLocation().angle()-this.getBehaviorContext().getMoveDirection().angle())<1);
+		return Math.abs(this.behaviorContext.getCurrentTurningSpeed())>0;//!(this.getTargetLocation()==null || Math.abs(this.getTargetLocation().angle()-this.getBehaviorContext().getMoveDirection().angle())<1);
 	}
 	
 	/** Updates everything in the tree context that needs updating */

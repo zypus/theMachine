@@ -71,18 +71,21 @@ public class PathfindingLeaf extends LeafTask<TreeContext>{
 				for (TiledNode tn : foundPath) {
 					path.add(tn);
 				}
-				System.out.println(path.get(path.size()-1));
 				state.setPath(path);
 			}
-			TiledNode node = path.get(0);
-			Vector2 delta = new Vector2(node.getX(), node.getY()).sub(offsettedPos);
-			float len2 = delta.len2();
-			if (len2 <= 1) {
-				path.remove(0);
+			if(path==null || path.size()==0){
+				this.success();
 			}
-			context.setTargetLocation(delta);
-			//System.out.println(delta.x+" "+delta.y);
-			this.success();
+			else{
+				TiledNode node = path.get(0);
+				Vector2 delta = new Vector2(node.getX(), node.getY()).sub(offsettedPos);
+				float len2 = delta.len2();
+				if (len2 <= 1) {
+					path.remove(0);
+				}
+				context.setTargetLocation(delta);
+				this.success();
+			}
 		}
 		
 	}

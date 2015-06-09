@@ -171,8 +171,10 @@ public class BehaviourSystem
 		}
 
 		float turn = new Vector2(dir.x, dir.y).angle(agentComponent.getGoalDir());
-		if (turn != 0) {
+		if (Math.abs(turn) > 0.5) {
 			turn = turn / Math.abs(turn);
+		} else {
+			turn = 0;
 		}
 		turn *= agentComponent.getAngularSpeed();
 		angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
