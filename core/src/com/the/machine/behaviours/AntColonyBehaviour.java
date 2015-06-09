@@ -3,7 +3,6 @@ package com.the.machine.behaviours;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
@@ -31,32 +30,29 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     TODO 5 make Marker vanished error not happen
     TODO 6 remember map (especially positions of other agents)
     TODO 7 algorithm is really bad for guards at finding intruders. May have something to do with #6
+    TODO 8 make time between pheromones linear instead of exponential if possible
      */
     public enum AgentType { GUARD, INTRUDER };
-    public final float timeBetweenPheromones = 2.5f;
 
     @Override
     public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
-        float delta = context.getPastTime();
-        state.nextSpeedChange -= delta;
-        state.nextTurnChange -= delta;
-        state.nextMarkerDrop -= delta;
+        updateCountdowns(state, context.getPastTime());     // Update the timers for rotating, dropping markers, etc.
 
         List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
 
-        // Update nextSpeedChange
-        if (state.nextSpeedChange <= 0) {
+        // Update nextSpeedUpdate
+        if (state.nextSpeedUpdate <= 0) {
             responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.MOVE,
                             new ActionSystem.MoveData(5)
                     )
             );
-            state.nextSpeedChange = 2;
+            state.nextSpeedUpdate = 2;
         }
 
-        // Update nextTurnChange
-        if (state.nextTurnChange <= 0) {
-            state.nextTurnChange = 0.5f;
+        // Update nextRotationUpdate
+        if (state.nextRotationUpdate <= 0) {
+            state.nextRotationUpdate = state.rotationResetTime;
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             boolean agentIsAlreadyUpdatingPosition = false;
 
@@ -89,7 +85,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 // Move to the opposite direction
                 // Intruders want to move away from guards, and if they also move away from other intruders they will
                 // cover a bigger area
-                Vector2 nearestTargetArea = getNearest(AreaComponent.AreaType.TARGET, state, context);
+                Vector2 nearestTargetArea = getNearestAreaOfType(AreaComponent.AreaType.TARGET, state, context);
                 if (nearestTargetArea != null) {
                     System.out.println("Moving towards target area");
                     Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
@@ -139,10 +135,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             }
         }
 
-        // Update nextMarkerDrop
-        if (state.nextMarkerDrop <= 0) {
+        // Update nextMarkerdropUpdate
+        if (state.nextMarkerdropUpdate <= 0) {
             addMarker(0, 0.2f, responses);  // Add a marker of type 0
-            state.nextMarkerDrop += timeBetweenPheromones;
+            state.nextMarkerdropUpdate += state.markerDropResetTime;
         }
 
         if (context.isCanSprint()) {
@@ -172,16 +168,34 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
     @AllArgsConstructor
     public static class AntColonyBehaviourState implements BehaviourComponent.BehaviourState {
-        float nextSpeedChange;
-        float nextTurnChange;
         AgentType agentType;
-        float nextMarkerDrop;
         Entity agent;
         Vector2 edgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
+
+        // The time until the next update of speed, rotation, etc.
+        float nextSpeedUpdate;
+        float nextRotationUpdate;
+        float nextMarkerdropUpdate;
+
+        // The amount to which the timers are reset when they have reached 0
+        float markerDropResetTime;
+        float rotationResetTime;
     }
 
+    /**
+     * Used for external methods when initializing an AntColonyBehaviour. Contains a set of tested parameters.
+     * @param agentType
+     * @param agent
+     * @return
+     */
     public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
-        return new AntColonyBehaviour.AntColonyBehaviourState(0, 0, agentType, 2, agent, null);
+        return new AntColonyBehaviour.AntColonyBehaviourState(agentType, agent, null, 0, 0, 0, 2.5f, 0.5f);
+    }
+
+    private void updateCountdowns(AntColonyBehaviourState state, float delta) {
+        state.nextSpeedUpdate -= delta;
+        state.nextRotationUpdate -= delta;
+        state.nextMarkerdropUpdate -= delta;
     }
 
     /**
@@ -294,7 +308,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         return null;
     }
 
-    private Vector2 getNearest(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+    private Vector2 getNearestAreaOfType(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
         List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
         DiscreteMapComponent.MapCell nearestArea = null;
         float distanceToNearestArea = Float.MAX_VALUE;
