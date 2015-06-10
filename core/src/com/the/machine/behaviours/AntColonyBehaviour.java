@@ -26,10 +26,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     TODO 1 refactor code. Looks messy.
     TODO 2 broken windows are also considered to be structures. Use another test to determine whether an area causes a collision
     TODO 3 differentiate between marker types (One for moving towards it, one for moving away)
-    TODO 4 for guards, making moving towards an intruder has a higher priority than moving towards another guard
     TODO 5 make Marker vanished error not happen
-    TODO 6 remember map (especially positions of other agents)
-    TODO 7 algorithm is really bad for guards at finding intruders. May have something to do with #6
     TODO 8 make time between pheromones linear instead of exponential if possible
      */
     public enum AgentType { GUARD, INTRUDER };
@@ -184,46 +181,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     private void updateCountdowns(AntColonyBehaviourState state, float delta) {
         state.nextRotationUpdate -= delta;
         state.nextMarkerdropUpdate -= delta;
-    }
-
-    /**
-     * Returns the TransformComponent of the nearest agent
-     * @param state
-     * @param context
-     * @return
-     */
-    private Vector2 getNearestAgentTransform(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
-        TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
-        List<WeakReference<Entity>> visibleAgents = context.getAgents();
-
-        TransformComponent nearestAgentTransform = null;
-        float distanceWithNearestAgent = Float.MAX_VALUE;   // Everything is nearer than this
-
-        for (WeakReference<Entity> visibleAgentReference : visibleAgents) {
-            Entity visibleAgent = visibleAgentReference.get();
-            float distanceWithThisAgent = visibleAgent.getComponent(TransformComponent.class).get2DPosition().dst2(transformComponent.get2DPosition());
-            // Don't run away from yourself
-            if (distanceWithThisAgent == Math.min(distanceWithNearestAgent, distanceWithThisAgent) && distanceWithThisAgent >= 0.01) {
-                distanceWithNearestAgent = distanceWithThisAgent;
-                nearestAgentTransform = visibleAgent.getComponent(TransformComponent.class);
-            }
-        }
-
-        if (nearestAgentTransform != null) {
-            return nearestAgentTransform.get2DPosition();
-        }
-
-        Vector2 nearestNoisePosition = null;
-        // If no agent can be seen, listen if there is a sound
-        for (Vector2 noiseLocation : context.getSoundDirections()) {
-            float distanceWithThisNoise = noiseLocation.dst2(transformComponent.get2DPosition());
-            if (distanceWithThisNoise == Math.min(distanceWithNearestAgent, distanceWithThisNoise)) {
-                distanceWithNearestAgent = distanceWithThisNoise;
-                nearestNoisePosition = noiseLocation;
-            }
-        }
-
-        return nearestNoisePosition;
     }
 
     /**
