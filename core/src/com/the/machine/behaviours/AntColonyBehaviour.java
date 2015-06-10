@@ -42,7 +42,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             initializeSpeed(state, responses);
         }
 
-        lookAround(state, context);
+        lookAround(state, context); // Update the locations of everything the agent has seen
 
         // Update nextRotationUpdate
         if (state.nextRotationUpdate <= 0) {
@@ -84,7 +84,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
             if (!agentIsAlreadyUpdatingRotation) {
                 // If the agent can see markers, there is a chance that he will go to the avg location
-                Vector2 avgMarkerPosition = getAverageLocationOfVisibleMarkers(context.getMarkers());
+                Vector2 avgMarkerPosition = getAverageLocationOfMarkersSeen(state.markerPositionsSeen);
                 if (avgMarkerPosition == null || Math.random() <= 0.5) {
                     // Search for other entities (by turning a bit) while walking normally
                     Vector2 currentDirection = context.getMoveDirection();
@@ -111,10 +111,14 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         }
 
         if (context.isCanSprint()) {
-            addActionWithProbability(ActionSystem.Action.SPRINT, 0.1, responses);
+            if (MathUtils.random() <= 0.1) {
+                responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.SPRINT, null));
+            }
         }
         if (context.getEnvironment() == AreaComponent.AreaType.TOWER) {
-            addActionWithProbability(ActionSystem.Action.TOWER_LEAVE, 0.1, responses);
+            if (MathUtils.random() <= 0.1) {
+                responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_LEAVE, null));
+            }
         }
 
         // Always try to enter a tower (even if there is no tower nearby)
@@ -139,7 +143,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     public static class AntColonyBehaviourState implements BehaviourComponent.BehaviourState {
         final AgentType agentType;
         final Entity agent;
-        Vector2 edgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
         final float agentSpeed;
 
         // The positions of objects that the entity remembers
@@ -147,6 +150,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         Vector2 nearestIntruderSeen;
         Vector2 nearestTargetAreaSeen;
         List<Vector2> markerPositionsSeen;
+        Vector2 edgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
+
 
         // The time until the next update of speed, rotation, etc.
         float nextRotationUpdate;
@@ -165,10 +170,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      */
     public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
         return new AntColonyBehaviour.AntColonyBehaviourState(
-                agentType, agent, null, 5,  // agentType, agent, edgeOfSomethingPosition, agentSpeed
-                null, null, null, null,     // Positions of objects that the agent remembered
-                0, 0,                       // How much time it takes until the next rotation and marker dropping
-                2f, 0.5f                    // Value to which the timer is reset
+                agentType, agent, 5,            // agentType, agent, agentSpeed
+                null, null, null, null, null,   // Positions of objects that the agent remembered
+                0, 0,                           // How much time it takes until the next rotation and marker dropping
+                2f, 0.5f                        // Value to which the timer is reset
         );
     }
 
@@ -181,20 +186,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     private void updateCountdowns(AntColonyBehaviourState state, float delta) {
         state.nextRotationUpdate -= delta;
         state.nextMarkerdropUpdate -= delta;
-    }
-
-    /**
-     * Add a given action with a given probability. Only if the response requires no additional data
-     * @param action the action to be added to the behaviour
-     * @param probability the probability that the action will be added
-     * @param responses the responses list to which the action will be added
-     */
-    private void addActionWithProbability(ActionSystem.Action action,
-                                          double probability,
-                                          List<BehaviourComponent.BehaviourResponse> responses) {
-        if (MathUtils.random() < probability) {
-            responses.add(new BehaviourComponent.BehaviourResponse(action, null));
-        }
     }
 
     /**
@@ -212,34 +203,17 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         ));
     }
 
-    /**
-     * Calculates the average location (the center point) of the group of markers in the context.
-     *
-     * @param markerList the list (derived from the context) in which the markers are stored
-     * @return
-     */
-    private Vector2 getAverageLocationOfVisibleMarkers(List<WeakReference<Entity>> markerList) {
+    private Vector2 getAverageLocationOfMarkersSeen(List<Vector2> markerPositionsList) {
         Vector2 locationSummed = new Vector2();
         boolean markerFound = false;
 
-        for (WeakReference<Entity> aMarkerList : markerList) {
+        for (Vector2 markerPosition : markerPositionsList) {
             markerFound = true;
-            Entity markerComponent = aMarkerList.get();
-            TransformComponent otherTransform = null;
-            if (markerComponent != null) {
-                otherTransform = markerComponent.getComponent(TransformComponent.class);
-            }
-            else {
-                // If markerComponent == null
-                // Old markers can still be found, but they don't have a markerComponent
-                return null;
-            }
-
-            locationSummed.add(otherTransform.get2DPosition());
+            locationSummed.add(markerPosition);
         }
 
         if (markerFound) {
-            return locationSummed.scl((float) 1.0 / markerList.size());
+            return locationSummed.scl((float) 1.0 / markerPositionsList.size());
         }
         return null;
     }
@@ -260,7 +234,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 }
             }
         }
-
         return nearestArea == null ? null : nearestArea.getPosition();
     }
 
@@ -271,11 +244,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @param context
      */
     private void lookAround(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
-        /*
-        TODO: update the values of:
-          - List<Vector2> markerPositionsSeen;
-         */
-
         // Update the positions of agents
         float nearestGuardDistance = state.nearestGuardSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.nearestGuardSeen);
         float nearestIntruderDistance = state.nearestIntruderSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.nearestIntruderSeen);
@@ -328,10 +296,24 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 }
             }
         }
+
+        // Update the marker positions
+        for (WeakReference<Entity> markerReference : context.getMarkers()) {
+            Entity marker = markerReference.get();
+            TransformComponent transformOfMarker = marker.getComponent(TransformComponent.class);
+
+            // If the marker still exists
+            if (transformOfMarker != null) {
+                Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition();
+                if (!state.markerPositionsSeen.contains(markerPosition)) {
+                    state.markerPositionsSeen.add(markerPosition);
+                }
+            }
+        }
     }
 
     private static float distanceBetweenAgentAndOther(AntColonyBehaviourState state, Vector2 other) {
-        return relativePositionOf(state, other).len();
+        return other == null ? Float.MAX_VALUE : relativePositionOf(state, other).len();
     }
 
     private static Vector2 relativePositionOf(AntColonyBehaviourState state, Vector2 other) {
@@ -351,6 +333,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         state.nearestGuardSeen = null;
         state.nearestIntruderSeen = null;
         state.nearestTargetAreaSeen = null;
-        state.markerPositionsSeen = null;
+        state.markerPositionsSeen = new ArrayList<Vector2>();
     }
 }
