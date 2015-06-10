@@ -50,31 +50,17 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         // Update nextRotationUpdate
         if (state.nextRotationUpdate <= 0) {
             state.nextRotationUpdate = state.rotationResetTime;
+            forgetWhatAgentHasSeen(state);
+
             TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             boolean agentIsAlreadyUpdatingRotation = false;
 
 
-            // Determine where the nearest potential collision will be
-            float nearestStructureDistance = Float.MAX_VALUE;
-            Vector2 relativePositionOfCollision = null;
-            for (DiscreteMapComponent.MapCell cell : context.getVision()) {
-                if (cell.getType().isStructure()) {
-                    Vector2 relativePositionOfCell = new Vector2(cell.getPosition()).sub(transformComponent.get2DPosition());
-                    if (nearestStructureDistance != Math.min(relativePositionOfCell.len(), nearestStructureDistance)) {
-                        nearestStructureDistance = relativePositionOfCell.len();
-                        relativePositionOfCollision = relativePositionOfCell;
-                    }
-                }
-            }
-
-            // Guards should move to the nearest agent // TODO a near intruder has a higher priority
             if (state.agentType == AgentType.GUARD) {
-                Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
-                if (nearestAgentVector != null) {
-                    Vector2 relativePosOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
-                    responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(relativePosOfNearestAgent, 30f)));
+                // The guard only responds to intruders for now TODO
+                if (state.nearestIntruderSeen != null) {
+                    Vector2 relativePosOfNearestAgent = relativePositionOf(state, state.nearestIntruderSeen);
+                    rotateTowards(responses, relativePosOfNearestAgent);
                     agentIsAlreadyUpdatingRotation = true;
                 }
             }
@@ -86,22 +72,15 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 if (nearestTargetArea != null) {
                     System.out.println("Moving towards target area");
                     Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
-                    responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(relativePosOfNearestArea, 30f)
-                    ));
+                    rotateTowards(responses, relativePosOfNearestArea);
                     agentIsAlreadyUpdatingRotation = true;
                 }
                 else { // if there is no target area found
-                    Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
-                    if (nearestAgentVector != null) {
-                        System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
+                    if (state.nearestGuardSeen != null) {
+                        System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + state.nearestGuardSeen);
                         // Turn to the opposite direction
-                        Vector2 negRelativePositionOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
-                        responses.add(new BehaviourComponent.BehaviourResponse(
-                                ActionSystem.Action.TURN,
-                                new ActionSystem.TurnData(negRelativePositionOfNearestAgent, 30f)
-                        ));
+                        Vector2 negRelativePositionOfNearestAgent = relativePositionOf(state, state.nearestGuardSeen).scl(-1);
+                        rotateTowards(responses, negRelativePositionOfNearestAgent);
                         agentIsAlreadyUpdatingRotation = true;
                     }
                 }
@@ -113,15 +92,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 if (avgMarkerPosition == null || Math.random() <= 0.5) {
                     // Search for other entities (by turning a bit) while walking normally
                     Vector2 currentDirection = context.getMoveDirection();
-
+                    Vector2 relativePositionOfCollision = relativePositionOf(state, state.edgeOfSomethingPosition);
                     Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
 
                     // If we have found a place where a collision will happen, move opposite to it
                     Vector2 newDirection = relativePositionOfCollision == null ? randomDirection : new Vector2(relativePositionOfCollision).scl(-1);
-                    responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(newDirection, 30f)
-                    ));
+                    rotateTowards(responses, newDirection);
                 }
                 else {
                     responses.add(new BehaviourComponent.BehaviourResponse(
@@ -381,10 +357,42 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 System.err.println("Agent with name " + otherAgentName + " was not recognized");
             }
         }
+
+        // Update the position of the collisions
+        // Determine where the nearest potential collision will be
+        float nearestCollisionDistance = state.edgeOfSomethingPosition == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.edgeOfSomethingPosition);
+        for (DiscreteMapComponent.MapCell cell : context.getVision()) {
+            float distanceToCell = distanceBetweenAgentAndOther(state, cell.getPosition());
+            if (cell.getType().isStructure()) {
+                if (Math.min(distanceToCell, nearestCollisionDistance) == distanceToCell) {
+                    nearestCollisionDistance = distanceToCell;
+                    state.edgeOfSomethingPosition = cell.getPosition();
+                }
+            }
+        }
     }
 
     private static float distanceBetweenAgentAndOther(AntColonyBehaviourState state, Vector2 other) {
-        TransformComponent transform = state.agent.getComponent(TransformComponent.class);
-        return (new Vector2(transform.get2DPosition()).sub(other)).len();
+        return relativePositionOf(state, other).len();
+    }
+
+    private static Vector2 relativePositionOf(AntColonyBehaviourState state, Vector2 other) {
+        try {
+            TransformComponent transform = state.agent.getComponent(TransformComponent.class);
+            return new Vector2(other).sub(transform.get2DPosition());
+        } catch(Exception e) { return null; }
+    }
+
+    private void rotateTowards(List<BehaviourComponent.BehaviourResponse> responses, Vector2 newRelativePosition) {
+        responses.add(new BehaviourComponent.BehaviourResponse(
+                ActionSystem.Action.TURN,
+                new ActionSystem.TurnData(newRelativePosition, 30f)));
+    }
+
+    private void forgetWhatAgentHasSeen(AntColonyBehaviourState state) {
+        state.nearestGuardSeen = null;
+        state.nearestIntruderSeen = null;
+        state.nearestTargetAreaSeen = null;
+        state.markerPositionsSeen = null;
     }
 }
