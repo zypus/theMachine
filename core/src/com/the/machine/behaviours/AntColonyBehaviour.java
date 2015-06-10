@@ -44,64 +44,67 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
         lookAround(state, context); // Update the locations of everything the agent has seen
 
-        // Update nextRotationUpdate
-        if (state.nextRotationUpdate <= 0) {
-            state.nextRotationUpdate = state.rotationResetTime;
+        if (isTimeForRotationUpdate(state)) {
             forgetWhatAgentHasSeen(state);
 
-            TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
             boolean agentIsAlreadyUpdatingRotation = false;
-
 
             if (state.agentType == AgentType.GUARD) {
                 // The guard only responds to intruders for now TODO
-                if (state.nearestIntruderSeen != null) {
-                    Vector2 relativePosOfNearestAgent = relativePositionOf(state, state.nearestIntruderSeen);
-                    rotateTowards(responses, relativePosOfNearestAgent);
-                    agentIsAlreadyUpdatingRotation = true;
+                if (canMoveTowards(state.nearestIntruderSeen)) {
+                    moveTowards(responses, state, state.nearestIntruderSeen);
+                }
+                else if (canMoveTowards(getAverageLocationOfMarkersSeen(state.markerPositionsSeen))) {
+                    moveTowards(responses, state, getAverageLocationOfMarkersSeen(state.markerPositionsSeen));
+                }
+                else if (canMoveTowards(state.edgeOfSomethingPosition)) {
+                    moveAwayFrom(responses, state, state.edgeOfSomethingPosition);
+                }
+                else {
+                    Vector2 currentDirection = context.getMoveDirection();
+                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
+                    moveTowards(responses, state, randomDirection);
                 }
             }
             else { // if state.agentType == AgentType.Intruder
-                // Move to the opposite direction
-                // Intruders want to move away from guards, and if they also move away from other intruders they will
-                // cover a bigger area
-                if (state.nearestTargetAreaSeen != null) {
-                    System.out.println("Moving towards target area");
-                    Vector2 relativePosOfNearestArea = relativePositionOf(state, state.nearestTargetAreaSeen);
-                    rotateTowards(responses, relativePosOfNearestArea);
-                    agentIsAlreadyUpdatingRotation = true;
+                if (canMoveTowards(state.nearestTargetAreaSeen)) {
+                    moveTowards(responses, state, state.nearestTargetAreaSeen);
                 }
-                else { // if there is no target area found
-                    if (state.nearestGuardSeen != null) {
-                        System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + state.nearestGuardSeen);
-                        // Turn to the opposite direction
-                        Vector2 negRelativePositionOfNearestAgent = relativePositionOf(state, state.nearestGuardSeen).scl(-1);
-                        rotateTowards(responses, negRelativePositionOfNearestAgent);
-                        agentIsAlreadyUpdatingRotation = true;
-                    }
+                else if (canMoveTowards(state.nearestGuardSeen)) {
+                    System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + state.nearestGuardSeen);
+                    // Turn to the opposite direction
+                    moveAwayFrom(responses, state, state.nearestGuardSeen);
                 }
-            }
-
-            if (!agentIsAlreadyUpdatingRotation) {
-                // If the agent can see markers, there is a chance that he will go to the avg location
-                Vector2 avgMarkerPosition = getAverageLocationOfMarkersSeen(state.markerPositionsSeen);
-                if (avgMarkerPosition == null || Math.random() <= 0.5) {
-                    // Search for other entities (by turning a bit) while walking normally
-                    Vector2 currentDirection = context.getMoveDirection();
-                    Vector2 relativePositionOfCollision = relativePositionOf(state, state.edgeOfSomethingPosition);
-                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
-
-                    // If we have found a place where a collision will happen, move opposite to it
-                    Vector2 newDirection = relativePositionOfCollision == null ? randomDirection : new Vector2(relativePositionOfCollision).scl(-1);
-                    rotateTowards(responses, newDirection);
+                else if (canMoveTowards(state.edgeOfSomethingPosition)) {
+                    moveAwayFrom(responses, state, state.edgeOfSomethingPosition);
                 }
                 else {
-                    responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(avgMarkerPosition, 30f)
-                    ));
+                    Vector2 currentDirection = context.getMoveDirection();
+                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
+                    moveTowards(responses, state, randomDirection);
                 }
             }
+
+//            if (!agentIsAlreadyUpdatingRotation) {
+//                // If the agent can see markers, there is a chance that he will go to the avg location
+//                Vector2 avgMarkerPosition = getAverageLocationOfMarkersSeen(state.markerPositionsSeen);
+//                if (avgMarkerPosition == null || Math.random() <= 0.5) {
+//                    // Search for other entities (by turning a bit) while walking normally
+//                    Vector2 currentDirection = context.getMoveDirection();
+//                    Vector2 relativePositionOfCollision = relativePositionOf(state, state.edgeOfSomethingPosition);
+//                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
+//
+//                    // If we have found a place where a collision will happen, move opposite to it
+//                    Vector2 newDirection = relativePositionOfCollision == null ? randomDirection : new Vector2(relativePositionOfCollision).scl(-1);
+//                    rotateTowards(responses, newDirection);
+//                }
+//                else {
+//                    responses.add(new BehaviourComponent.BehaviourResponse(
+//                            ActionSystem.Action.TURN,
+//                            new ActionSystem.TurnData(avgMarkerPosition, 30f)
+//                    ));
+//                }
+//            }
         }
 
         // Update nextMarkerdropUpdate
@@ -173,7 +176,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 agentType, agent, 5,            // agentType, agent, agentSpeed
                 null, null, null, null, null,   // Positions of objects that the agent remembered
                 0, 0,                           // How much time it takes until the next rotation and marker dropping
-                2f, 0.5f                        // Value to which the timer is reset
+                2f, 2f                        // Value to which the timer is reset
         );
     }
 
@@ -300,13 +303,15 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         // Update the marker positions
         for (WeakReference<Entity> markerReference : context.getMarkers()) {
             Entity marker = markerReference.get();
-            TransformComponent transformOfMarker = marker.getComponent(TransformComponent.class);
+            if (marker != null) {
+                TransformComponent transformOfMarker = marker.getComponent(TransformComponent.class);
 
-            // If the marker still exists
-            if (transformOfMarker != null) {
-                Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition();
-                if (!state.markerPositionsSeen.contains(markerPosition)) {
-                    state.markerPositionsSeen.add(markerPosition);
+                // If the marker still exists
+                if (transformOfMarker != null) {
+                    Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition();
+                    if (!state.markerPositionsSeen.contains(markerPosition)) {
+                        state.markerPositionsSeen.add(markerPosition);
+                    }
                 }
             }
         }
@@ -334,5 +339,25 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         state.nearestIntruderSeen = null;
         state.nearestTargetAreaSeen = null;
         state.markerPositionsSeen = new ArrayList<Vector2>();
+    }
+
+    private boolean isTimeForRotationUpdate(AntColonyBehaviourState state) {
+        if (state.nextRotationUpdate <= 0) {
+            state.nextRotationUpdate = state.rotationResetTime;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean canMoveTowards(Vector2 goal) {
+        return goal != null;
+    }
+
+    private void moveTowards(List<BehaviourComponent.BehaviourResponse> responses, AntColonyBehaviourState state, Vector2 goal) {
+        rotateTowards(responses, relativePositionOf(state, goal));
+    }
+
+    private void moveAwayFrom(List<BehaviourComponent.BehaviourResponse> responses, AntColonyBehaviourState state, Vector2 antiGoal) {
+        rotateTowards(responses, relativePositionOf(state, new Vector2(antiGoal).scl(-1)));
     }
 }
