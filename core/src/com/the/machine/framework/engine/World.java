@@ -108,6 +108,8 @@ public class World implements ApplicationListener, InputProcessor {
 
 	private boolean loadingAssets = false;
 
+	@Setter boolean render = true;
+
 	public World() {
 		this(null);
 	}
@@ -406,7 +408,9 @@ public class World implements ApplicationListener, InputProcessor {
 				float dt = delta * timeFlow;
 				t += dt;
 				update(dt);
-				render(dt);
+				if (render) {
+					render(dt);
+				}
 			} else if (worldState.equals(WorldState.PAUSED)) {
 				if (!stableOnly) {
 					for (EntitySystem system : engine.getSystems()) {

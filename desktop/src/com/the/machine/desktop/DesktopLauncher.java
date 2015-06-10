@@ -10,6 +10,8 @@ public class DesktopLauncher {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.width = 1200;
 		config.height = 900;
+		config.foregroundFPS = 0;
+		config.backgroundFPS = 0;
 		TexturePacker.process("images", "atlases", "assets");
 		new LwjglApplication(new TheMachine(), config);
 	}

@@ -198,6 +198,7 @@ public class Physics2dSystem
 		Body body = world.getBox2dWorld()
 						 .createBody(bodyDef);
 		body.setUserData(new WeakReference<>(entity));
+		body.setBullet(true);
 		if (colliders.has(entity)) {
 			ColliderComponent colliderComponent = colliders.get(entity);
 			for (ColliderComponent.Collider collider : colliderComponent.getColliders()) {

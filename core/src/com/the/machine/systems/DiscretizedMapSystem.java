@@ -118,7 +118,7 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 						if ((areaComponent.getType() != AreaComponent.AreaType.WALL && areaComponent.getType() != AreaComponent.AreaType.DOOR_CLOSED) || x == 0 || x == (int)dm.getWidth() || y == 0 || y == (int) dm.getHeight()) {
 							float c = lx + x;
 							float r = ly + y;
-							if (Utils.isInbound(c, r, -mapDimension.getWidth() / 2, -mapDimension.getHeight() / 2, mapDimension.getWidth(), mapDimension.getHeight())) {
+							if (Utils.isInbound(c, r, -mapDimension.getWidth() / 2 - 1, -mapDimension.getHeight() / 2 - 1, mapDimension.getWidth(), mapDimension.getHeight())) {
 								discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(c, r))
 																				  .setType(areaComponent
 																								   .getType()));

@@ -137,8 +137,6 @@ public class MapEditorSceneBuilder
 
 	@Override
 	public void createScene(World world) {
-		world.addSystem(new RemovalSystem());
-		world.addSystem(new DelayedRemovalSystem());
 		world.addSystem(new GrowthSystem());
 		world.addSystem(new DirectionalMovementSystem());
 		world.addSystem(new InputControlledMovementSystem(), KeyDownEvent.class, KeyUpEvent.class);
@@ -177,6 +175,8 @@ public class MapEditorSceneBuilder
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);
 		world.addSystem(new Light2dSystem(), Light2dToggleEvent.class);
+		world.addSystem(new RemovalSystem());
+		world.addSystem(new DelayedRemovalSystem());
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();

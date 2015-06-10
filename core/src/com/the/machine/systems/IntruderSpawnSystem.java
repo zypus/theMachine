@@ -13,7 +13,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.the.machine.behaviours.AntColonyBehaviour;
-import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.components.AreaComponent;
@@ -57,6 +56,7 @@ public class IntruderSpawnSystem
 	private static final int INTRUDER_COUNT = 1;
 
 	transient private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
+	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
 
 	transient private ImmutableArray<Entity> intruders;
 	transient private ImmutableArray<Entity> ground;
@@ -112,7 +112,12 @@ public class IntruderSpawnSystem
 			spawnX = MathUtils.random() * dm.getWidth() - dm.getWidth() / 2;
 		}
 
-		float angle = new Vector2(spawnX, spawnY).scl(-1)
+		TransformComponent transformComponent = transforms.get(first);
+		spawnX += transformComponent
+							.getX();
+		spawnY += transformComponent.getY();
+
+		float angle = new Vector2(spawnX-transformComponent.getX(), spawnY-transformComponent.getY()).scl(-1)
 												 .angle();
 
 		Entity newAgent = new Entity();

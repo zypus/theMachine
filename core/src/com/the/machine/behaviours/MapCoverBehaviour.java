@@ -199,7 +199,7 @@ public class MapCoverBehaviour
 //			current.y = Math.round(current.y);
 			Vector2 dir = next.sub(current)
 							  .nor();
-			if (lastDistance < 0.1 || reachable[((int) current.x)][((int) current.y)] == -1) {
+			if (lastDistance < 0.1 || (Utils.isInbound(current.x, current.y, 0, 0, reachable.length, reachable[0].length) && reachable[((int) current.x)][((int) current.y)] == -1)) {
 				dir.scl(-1);
 			}
 			return dir;
@@ -269,40 +269,40 @@ public class MapCoverBehaviour
 		float[][] walkable = walkable();
 		List<Vector2> next = new ArrayList<>();
 		next.add(currentPos);
-		while (!next.isEmpty()) {
+		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, walkable.length, walkable[0].length)) {
 			floodFill(walkable, next);
 		}
-		for (int x = (int) (currentPos.x-delta); x < currentPos.x+delta; x++) {
-			for (int y = (int) (currentPos.y-delta); y < currentPos.y+delta; y++) {
-				if (Utils.isInbound(x,y,0,0, mapper.getWidth()-1, mapper.getHeight()-1)) {
-					int dist = (int) currentPos.cpy()
-											   .sub(new Vector2(x, y))
-											   .len();
-					if (dist < delta && walkable[x][y] != -1) {
-						Vector2i start = new Vector2i(currentPos.x, currentPos.y);
-
-						Vector2i goal = new Vector2i(x, y);
-						GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
-						if (path != null) {
-							if (path.getCount() > 1 && walkable[path.get(0)
-																	.getX()][path.get(0)
-																				 .getY()] == -1) {
-								valueMap[x][y] = 0;
-							} else {
-								valueMap[x][y] = 1f - (float) path.getCount() / (float) delta;
-							}
-						} else {
-							valueMap[x][y] = 0;
-						}
-					} else {
-						valueMap[x][y] = 0;
-					}
-					//				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
-					//								 ? 0f
-					//								 : 1f - (float)dist / (float)delta;
-				}
-			}
-		}
+//		for (int x = (int) (currentPos.x-delta); x < currentPos.x+delta; x++) {
+//			for (int y = (int) (currentPos.y-delta); y < currentPos.y+delta; y++) {
+//				if (Utils.isInbound(x,y,0,0, mapper.getWidth()-1, mapper.getHeight()-1)) {
+//					int dist = (int) currentPos.cpy()
+//											   .sub(new Vector2(x, y))
+//											   .len();
+//					if (dist < delta && walkable[x][y] != -1) {
+//						Vector2i start = new Vector2i(currentPos.x, currentPos.y);
+//
+//						Vector2i goal = new Vector2i(x, y);
+//						GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
+//						if (path != null) {
+//							if (path.getCount() > 1 && walkable[path.get(0)
+//																	.getX()][path.get(0)
+//																				 .getY()] == -1) {
+//								valueMap[x][y] = 0;
+//							} else {
+//								valueMap[x][y] = 1f - (float) path.getCount() / (float) delta;
+//							}
+//						} else {
+//							valueMap[x][y] = 0;
+//						}
+//					} else {
+//						valueMap[x][y] = 0;
+//					}
+//					//				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
+//					//								 ? 0f
+//					//								 : 1f - (float)dist / (float)delta;
+//				}
+//			}
+//		}
 		return valueMap;
 	}
 

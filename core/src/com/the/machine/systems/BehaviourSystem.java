@@ -70,122 +70,128 @@ public class BehaviourSystem
 
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
-		VelocityComponent velocityComponent = velocities.get(entity);
-		float velocity = physics.get(entity).getBody().getLinearVelocity().len()*10;
-		if (velocity < 0.5) {
-			velocity = 0;
-		}
-		AngularVelocityComponent angularVelocityComponent = angularVelocities.get(entity);
-		float angularVelocity = angularVelocityComponent
-				.getAngularVelocity();
-		VisionComponent visionComponent = visions.get(entity);
-		List<VisionSystem.EnvironmentVisual> visuals = visionComponent.getEnvironmentVisuals();
-		List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
-		List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
-		ListenerComponent listenerComponent = listeners.get(entity);
-		List<Vector2> directions;
-		if (listenerComponent.isDeaf()) {
-			directions = new ArrayList<>();
-		} else {
-			directions = listenerComponent
-					.getSoundDirections();
-		}
-		AgentComponent agentComponent = agents.get(entity);
+		if (maps.size() > 0) {
+			VelocityComponent velocityComponent = velocities.get(entity);
+			float velocity = physics.get(entity)
+									.getBody()
+									.getLinearVelocity()
+									.len() * 10;
+			if (velocity < 0.5) {
+				velocity = 0;
+			}
+			AngularVelocityComponent angularVelocityComponent = angularVelocities.get(entity);
+			float angularVelocity = angularVelocityComponent
+					.getAngularVelocity();
+			VisionComponent visionComponent = visions.get(entity);
+			List<VisionSystem.EnvironmentVisual> visuals = visionComponent.getEnvironmentVisuals();
+			List<WeakReference<Entity>> visibleAgents = visionComponent.getVisibleAgents();
+			List<WeakReference<Entity>> visibleMarkers = visionComponent.getVisibleMarkers();
+			ListenerComponent listenerComponent = listeners.get(entity);
+			List<Vector2> directions;
+			if (listenerComponent.isDeaf()) {
+				directions = new ArrayList<>();
+			} else {
+				directions = listenerComponent
+						.getSoundDirections();
+			}
+			AgentComponent agentComponent = agents.get(entity);
 
-		// sprinting
-		boolean canSprint = false;
-		float sprintTime = 0;
-		float sprintCooldown = 0;
-		if (sprints.has(entity)) {
-			SprintComponent sprintComponent = sprints.get(entity);
-			canSprint = true;
-			sprintTime = sprintComponent.getSprintTime();
-			sprintCooldown = sprintComponent.getSprintCooldown();
-		}
+			// sprinting
+			boolean canSprint = false;
+			float sprintTime = 0;
+			float sprintCooldown = 0;
+			if (sprints.has(entity)) {
+				SprintComponent sprintComponent = sprints.get(entity);
+				canSprint = true;
+				sprintTime = sprintComponent.getSprintTime();
+				sprintCooldown = sprintComponent.getSprintCooldown();
+			}
 
-		// direction
-		TransformComponent tf = transforms.get(entity);
-		Vector3 dir = new Vector3(1, 0, 0);
-		tf.getRotation()
-		  .transform(dir);
+			// direction
+			TransformComponent tf = transforms.get(entity);
+			Vector3 dir = new Vector3(1, 0, 0);
+			tf.getRotation()
+			  .transform(dir);
 
-		Placebo placebo = new Placebo(tf.get2DPosition(), discretes.get(maps.first())
-																   .getSparseMap());
+			Placebo placebo = new Placebo(tf.get2DPosition(), discretes.get(maps.first())
+																	   .getSparseMap());
 
-		// context
-		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), visuals, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), agentComponent.getVisionModifier()*agentComponent.getBaseViewingDistance(), agentComponent.getViewingAngle(), placebo);
+			// context
+			BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), visuals, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(),
+																								  agentComponent.getVisionModifier() * agentComponent.getBaseViewingDistance(), agentComponent.getViewingAngle(), placebo);
 
-		BehaviourComponent behaviourComponent = behaviours.get(entity);
+			BehaviourComponent behaviourComponent = behaviours.get(entity);
 
-		// evaluate the behaviour
-		List<BehaviourComponent.BehaviourResponse> responses = behaviourComponent.getBehaviour()
-																		  .evaluate(context, behaviourComponent.getState());
+			// evaluate the behaviour
+			List<BehaviourComponent.BehaviourResponse> responses = behaviourComponent.getBehaviour()
+																					 .evaluate(context, behaviourComponent.getState());
 
-		// set the new velocities, but keep them in their bound
-		if (agentComponent.isActing()) {
-			velocityComponent.setVelocity(0);
-			velocityComponent.setDirty(true);
-		}
+			// set the new velocities, but keep them in their bound
+			if (agentComponent.isActing()) {
+				velocityComponent.setVelocity(0);
+				velocityComponent.setDirty(true);
+			}
 
-		WeakReference<Entity> weakReference = new WeakReference<>(entity);
-		for (BehaviourComponent.BehaviourResponse o : responses) {
-			ActionSystem.Action action = (ActionSystem.Action) o.getAction();
-			if (!agentComponent.isActing()) {
-				if (action == ActionSystem.Action.MOVE) {
-					ActionSystem.MoveData data = (ActionSystem.MoveData) o.getData();
-					if (!agentComponent.isActing()) {
-						if (sprintTime > 0) {
-							velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), agentComponent.getMaxMovementSpeed(), agentComponent.getMaxMovementSpeed()));
-						} else {
-							velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), 0, agentComponent.getMaxMovementSpeed()));
+			WeakReference<Entity> weakReference = new WeakReference<>(entity);
+			for (BehaviourComponent.BehaviourResponse o : responses) {
+				ActionSystem.Action action = (ActionSystem.Action) o.getAction();
+				if (!agentComponent.isActing()) {
+					if (action == ActionSystem.Action.MOVE) {
+						ActionSystem.MoveData data = (ActionSystem.MoveData) o.getData();
+						if (!agentComponent.isActing()) {
+							if (sprintTime > 0) {
+								velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), agentComponent.getMaxMovementSpeed(), agentComponent.getMaxMovementSpeed()));
+							} else {
+								velocityComponent.setVelocity(MathUtils.clamp(data.getSpeed(), 0, agentComponent.getMaxMovementSpeed()));
+							}
+							velocityComponent.setDirty(true);
 						}
-						velocityComponent.setDirty(true);
+					} else if (action == ActionSystem.Action.TURN) {
+						ActionSystem.TurnData data = (ActionSystem.TurnData) o.getData();
+						if (data.getDir() != null) {
+							agentComponent.setGoalDir(data.getDir());
+						}
+						agentComponent.setAngularSpeed(data.getSpeed());
+					} else if (action == ActionSystem.Action.SPRINT) {
+						world.dispatchEvent(new SprintEvent(weakReference));
+					} else if (action == ActionSystem.Action.TOWER_ENTER) {
+						world.dispatchEvent(new TowerEnterEvent(weakReference));
+					} else if (action == ActionSystem.Action.TOWER_LEAVE) {
+						world.dispatchEvent(new TowerLeaveEvent(weakReference));
+					} else if (action == ActionSystem.Action.DOOR_OPEN) {
+						world.dispatchEvent(new DoorOpenEvent(weakReference, false));
+					} else if (action == ActionSystem.Action.DOOR_OPEN_SILENT) {
+						world.dispatchEvent(new DoorOpenEvent(weakReference, true));
+					} else if (action == ActionSystem.Action.DOOR_CANCEL) {
+						world.dispatchEvent(new DoorCancelEvent(weakReference));
+					} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
+						world.dispatchEvent(new WindowDestroyEvent(weakReference));
+					} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
+						ActionSystem.MarkerData data = (ActionSystem.MarkerData) o.getData();
+						world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), data.getNumber(), data.getDecay()));
+					} else if (action == ActionSystem.Action.STATE) {
+						ActionSystem.StateData data = (ActionSystem.StateData) o.getData();
+						behaviourComponent.setState(data.getState());
+					}
+					// TODO perform the action
+				} else {
+					if (action == ActionSystem.Action.DOOR_CANCEL) {
+						world.dispatchEvent(new DoorCancelEvent(weakReference));
 					}
 				}
-				else if (action == ActionSystem.Action.TURN) {
-					ActionSystem.TurnData data = (ActionSystem.TurnData) o.getData();
-					agentComponent.setGoalDir(data.getDir());
-					agentComponent.setAngularSpeed(data.getSpeed());
-				}
-				else if (action == ActionSystem.Action.SPRINT) {
-					world.dispatchEvent(new SprintEvent(weakReference));
-				} else if (action == ActionSystem.Action.TOWER_ENTER) {
-					world.dispatchEvent(new TowerEnterEvent(weakReference));
-				} else if (action == ActionSystem.Action.TOWER_LEAVE) {
-					world.dispatchEvent(new TowerLeaveEvent(weakReference));
-				} else if (action == ActionSystem.Action.DOOR_OPEN) {
-					world.dispatchEvent(new DoorOpenEvent(weakReference, false));
-				} else if (action == ActionSystem.Action.DOOR_OPEN_SILENT) {
-					world.dispatchEvent(new DoorOpenEvent(weakReference, true));
-				} else if (action == ActionSystem.Action.DOOR_CANCEL) {
-					world.dispatchEvent(new DoorCancelEvent(weakReference));
-				} else if (action == ActionSystem.Action.WINDOW_DESTROY) {
-					world.dispatchEvent(new WindowDestroyEvent(weakReference));
-				} else if (action == ActionSystem.Action.MARKER_PLACE && !agentComponent.isInTower()) {
-					ActionSystem.MarkerData data = (ActionSystem.MarkerData) o.getData();
-					world.dispatchEvent(new MarkerEvent(tf.getPosition(), !sprints.has(entity), data.getNumber(), data.getDecay()));
-				} else if (action == ActionSystem.Action.STATE) {
-					ActionSystem.StateData data = (ActionSystem.StateData) o.getData();
-					behaviourComponent.setState(data.getState());
-				}
-				// TODO perform the action
-			} else {
-				if (action == ActionSystem.Action.DOOR_CANCEL) {
-					world.dispatchEvent(new DoorCancelEvent(weakReference));
-				}
 			}
+
+			float turn = new Vector2(dir.x, dir.y).angle(agentComponent.getGoalDir());
+			if (turn != 0) {
+				turn = turn / Math.abs(turn);
+			}
+			turn *= agentComponent.getAngularSpeed();
+			angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
+
+			listenerComponent.getSoundDirections()
+							 .clear();
+
 		}
-
-		float turn = new Vector2(dir.x, dir.y).angle(agentComponent.getGoalDir());
-		if (turn != 0) {
-			turn = turn / Math.abs(turn);
-		}
-		turn *= agentComponent.getAngularSpeed();
-		angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
-
-		listenerComponent.getSoundDirections()
-						 .clear();
-
 
 	}
 }
