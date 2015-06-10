@@ -25,12 +25,12 @@ public class TargetAgentLeaf extends LeafTask<TreeContext>{
 				System.out.println("Found him");
 				TransformComponent t = e.get().getComponent(TransformComponent.class);
 				Vector2 to = new Vector2(t.get2DPosition().x, t.get2DPosition().y);
-				context.setDestination(to);
+				context.setTargetLocation(to);
 				this.success();
 				return;
 			}
 		}
-		this.success();
+		this.fail();
 	}
 
 	@Override
