@@ -8,14 +8,18 @@ import com.the.machine.systems.ActionSystem;
 
 public class MoveUntilLeaf extends LeafTask<TreeContext>{
 	
+	private float speed;
+	
 	private Vector2 target = null;
 	private int timer = 1;
 	private int time = 0;
 	
+	public MoveUntilLeaf(float speed){
+		this.speed = speed;
+	}
+	
 	@Override
 	public void run(TreeContext context) {
-		System.out.println("serendipity");
-		float speed = 50;
 		if(target==null){
 			this.time = 0;
 			target = context.getTargetLocation();

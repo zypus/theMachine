@@ -29,9 +29,16 @@ public class PathfindingLeaf extends LeafTask<TreeContext>{
 	private TiledPathFinder pathfinder = new TiledPathFinder();
 	private AstarState state;
 	
+	private Vector2 oldDestination;
+	
 	@Override
 	public void run(TreeContext context) {
 		if(context.getDestination()!=null){
+			if(oldDestination==null || !oldDestination.equals(context.getDestination())){
+				System.out.println("Hi");
+				this.oldDestination = context.getDestination();
+				this.state = null;
+			}
 			Placebo placebo = context.getBehaviorContext().getPlacebo();
 			// create the state if this is the first call to evaluate
 			if (state == null) {

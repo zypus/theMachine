@@ -169,7 +169,7 @@ public class BehaviourSystem
 				}
 			}
 		}
-
+		
 		float turn = new Vector2(dir.x, dir.y).angle(agentComponent.getGoalDir());
 		if (Math.abs(turn) > 0.5) {
 			turn = turn / Math.abs(turn);

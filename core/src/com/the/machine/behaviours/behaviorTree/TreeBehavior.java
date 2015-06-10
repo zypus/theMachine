@@ -20,9 +20,11 @@ import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.MoveUntilLea
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.PathfindingLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.RandomMovement;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.ResLeaf;
+import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TargetAgentLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TurnToTargetLocationLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.HearingLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.WaitTurnMove;
+import com.the.machine.behaviours.behaviorTree.leafTasks.subTrees.SubTrees;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
@@ -39,17 +41,14 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		List<Task<TreeContext>> list = new ArrayList<>();
 		
 		list.add(new PathfindingLeaf());
-		list.add(new WaitTurnMove());
-		list.add(new MoveUntilLeaf());
+		list.add(new WaitTurnMove(20));
+		list.add(new MoveUntilLeaf(50));
 		
 		List<Task<TreeContext>> list2 = new ArrayList<>();
 		
-		list2.add(new Invert(new WaitTurnMove()));
-		list2.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(0)));
+		list2.add(new Invert(new WaitTurnMove(20)));
 		
 		List<Task<TreeContext>> list3 = new ArrayList<>();
-		list3.add(new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed)));
-
 		
 		
 		
@@ -57,7 +56,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
 		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray( new Task[list3.size()]));
-		Task<TreeContext> seq = new Selector<TreeContext>(normal);
+		Task<TreeContext> seq = new Sequence<TreeContext>(new TargetAgentLeaf(), SubTrees.PATHFINDING.getSubtree());
 		
 		
 		tree.addChild((seq));
