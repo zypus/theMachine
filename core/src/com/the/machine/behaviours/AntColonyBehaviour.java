@@ -45,6 +45,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             initializeSpeed(state, responses);
         }
 
+        lookAround(state, context);
+
         // Update nextRotationUpdate
         if (state.nextRotationUpdate <= 0) {
             state.nextRotationUpdate = state.rotationResetTime;
@@ -168,6 +170,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         Vector2 edgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
         final float agentSpeed;
 
+        // The positions of objects that the entity remembers
+        Vector2 nearestGuardSeen;
+        Vector2 nearestIntruderSeen;
+        Vector2 nearestTargetAreaSeen;
+        List<Vector2> markerPositionsSeen;
+
         // The time until the next update of speed, rotation, etc.
         float nextRotationUpdate;
         float nextMarkerdropUpdate;
@@ -184,7 +192,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @return
      */
     public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
-        return new AntColonyBehaviour.AntColonyBehaviourState(agentType, agent, null, 5, 0, 0, 2f, 0.5f);
+        return new AntColonyBehaviour.AntColonyBehaviourState(
+                agentType, agent, null, 5,  // agentType, agent, edgeOfSomethingPosition, agentSpeed
+                null, null, null, null,     // Positions of objects that the agent remembered
+                0, 0,                       // How much time it takes until the next rotation and marker dropping
+                2f, 0.5f                    // Value to which the timer is reset
+        );
     }
 
     private void initializeSpeed(AntColonyBehaviourState state, List<BehaviourComponent.BehaviourResponse> responses) {
@@ -326,5 +339,52 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         }
 
         return nearestArea == null ? null : nearestArea.getPosition();
+    }
+
+
+    /**
+     * Looks around. Stores all objects seen since the last update in a list
+     * @param state
+     * @param context
+     */
+    private void lookAround(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+        /*
+        TODO: update the values of:
+          - Vector2 nearestTargetAreaSeen;
+          - List<Vector2> markerPositionsSeen;
+         */
+
+        // Update the positions of agents
+        float nearestGuardDistance = state.nearestGuardSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.nearestGuardSeen);
+        float nearestIntruderDistance = state.nearestIntruderSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.nearestIntruderSeen);
+        for (WeakReference<Entity> agentReference : context.getAgents()) {
+            Entity otherAgent = agentReference.get();
+
+            String otherAgentName = otherAgent.getComponent(NameComponent.class).getName();
+            TransformComponent otherAgentTransform = otherAgent.getComponent(TransformComponent.class);
+            Vector2 otherAgentPosition = otherAgentTransform.get2DPosition();
+            float newDistance = distanceBetweenAgentAndOther(state, otherAgentPosition);
+
+            if (otherAgentName.equals("Intruder")) {
+                if (Math.min(newDistance, nearestIntruderDistance) == newDistance) {
+                    nearestIntruderDistance = newDistance;
+                    state.nearestIntruderSeen = otherAgentPosition;
+                }
+            }
+            else if (otherAgentName.equals("Agent")) {  // For some reason Guards are just called 'Agent'
+                if (Math.min(newDistance, nearestGuardDistance) == newDistance) {
+                    nearestGuardDistance = newDistance;
+                    state.nearestGuardSeen = otherAgentPosition;
+                }
+            }
+            else {
+                System.err.println("Agent with name " + otherAgentName + " was not recognized");
+            }
+        }
+    }
+
+    private static float distanceBetweenAgentAndOther(AntColonyBehaviourState state, Vector2 other) {
+        TransformComponent transform = state.agent.getComponent(TransformComponent.class);
+        return (new Vector2(transform.get2DPosition()).sub(other)).len();
     }
 }
