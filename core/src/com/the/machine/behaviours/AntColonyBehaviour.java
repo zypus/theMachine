@@ -68,10 +68,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 // Move to the opposite direction
                 // Intruders want to move away from guards, and if they also move away from other intruders they will
                 // cover a bigger area
-                Vector2 nearestTargetArea = getNearestAreaOfType(AreaComponent.AreaType.TARGET, state, context);
-                if (nearestTargetArea != null) {
+                if (state.nearestTargetAreaSeen != null) {
                     System.out.println("Moving towards target area");
-                    Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
+                    Vector2 relativePosOfNearestArea = relativePositionOf(state, state.nearestTargetAreaSeen);
                     rotateTowards(responses, relativePosOfNearestArea);
                     agentIsAlreadyUpdatingRotation = true;
                 }
@@ -122,18 +121,18 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         }
 
         // Always try to enter a tower (even if there is no tower nearby)
-        addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null), responses);
+        responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null));
 
         // Also, always try to destroy a window (even if there are none nearby)
-        addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null), responses);
+        responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null));
 
         // A 50% chance of opening a door normally. If the door isn't opened normally,
         // it will be opened silently.
         if (Math.random() <= 0.5) {
-            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN, null), responses);
+            responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN, null));
         }
         else {
-            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN_SILENT, null), responses);
+            responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN_SILENT, null));
         }
 
         return responses;
@@ -237,17 +236,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                                           double probability,
                                           List<BehaviourComponent.BehaviourResponse> responses) {
         if (MathUtils.random() < probability) {
-            addResponse(new BehaviourComponent.BehaviourResponse(action, null), responses);
+            responses.add(new BehaviourComponent.BehaviourResponse(action, null));
         }
-    }
-
-    /**
-     * Add a given action to the response
-     * @param response response to be added
-     * @param responses the response to which the action should be added
-     */
-    private void addResponse(BehaviourComponent.BehaviourResponse response, List<BehaviourComponent.BehaviourResponse> responses) {
-        responses.add(response);
     }
 
     /**
@@ -259,10 +249,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @param responses
      */
     private void addMarker(int marketNumber, float decayRate, List<BehaviourComponent.BehaviourResponse> responses) {
-        addResponse(new BehaviourComponent.BehaviourResponse(
+        responses.add(new BehaviourComponent.BehaviourResponse(
                 ActionSystem.Action.MARKER_PLACE,
                 new ActionSystem.MarkerData(marketNumber, decayRate)
-        ), responses);
+        ));
     }
 
     /**
@@ -326,7 +316,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     private void lookAround(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
         /*
         TODO: update the values of:
-          - Vector2 nearestTargetAreaSeen;
           - List<Vector2> markerPositionsSeen;
          */
 
@@ -358,15 +347,27 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             }
         }
 
-        // Update the position of the collisions
+        // Update the position of the areas
         // Determine where the nearest potential collision will be
         float nearestCollisionDistance = state.edgeOfSomethingPosition == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.edgeOfSomethingPosition);
+        float nearestTargetAreaDistance = state.nearestTargetAreaSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.nearestTargetAreaSeen);
+
         for (DiscreteMapComponent.MapCell cell : context.getVision()) {
             float distanceToCell = distanceBetweenAgentAndOther(state, cell.getPosition());
+
+            // Collidables // TODO create own check whether a structure is collidable
             if (cell.getType().isStructure()) {
                 if (Math.min(distanceToCell, nearestCollisionDistance) == distanceToCell) {
                     nearestCollisionDistance = distanceToCell;
                     state.edgeOfSomethingPosition = cell.getPosition();
+                }
+            }
+
+            // Target area
+            if (cell.getType() == AreaComponent.AreaType.TARGET) {
+                if (Math.min(distanceToCell, nearestTargetAreaDistance) == distanceToCell) {
+                    nearestTargetAreaDistance = distanceToCell;
+                    state.nearestTargetAreaSeen = cell.getPosition();
                 }
             }
         }
