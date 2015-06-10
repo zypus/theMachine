@@ -23,7 +23,7 @@ public class TreeContext {
 	private BehaviourContext behaviorContext;
 	
 	/** Target Location Can Be Declared To Then later be used */
-	private Vector2 targetLocation;
+	private Vector2 targetRelativeDirection;
 	
 	/** Target Location Used for the Pathfinding to declare its goal */
 	private Vector2 destination;

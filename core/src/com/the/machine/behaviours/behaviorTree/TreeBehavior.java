@@ -56,10 +56,10 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
 		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray( new Task[list3.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new TargetAgentLeaf(), new TurnToTargetLocationLeaf(200), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(50)));
+		Task<TreeContext> seq = new Sequence<TreeContext>(new Selector<TreeContext>(new TargetAgentLeaf(), new HearingLeaf()), new TurnToTargetLocationLeaf(200), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(50)));
 		
 		
-		tree.addChild((seq));
+		tree.addChild(seq);
 		TreeContext treeContext = new TreeContext();
 		tree.setObject(treeContext);
 	}

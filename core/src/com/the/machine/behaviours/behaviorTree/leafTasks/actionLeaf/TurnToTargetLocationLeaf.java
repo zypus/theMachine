@@ -15,11 +15,9 @@ public class TurnToTargetLocationLeaf extends LeafTask<TreeContext>{
 	
 	@Override
 	public void run(TreeContext context) {
-		if(context.getTargetLocation()!=null){
-			Vector2 dir = ActionSystem.TurnData.convertGlobalTurn(context.getTargetLocation(), context.getBehaviorContext().getMoveDirection());//context.getBehaviorContext().getMoveDirection().cpy().rotate(context.getBehaviorContext().getMoveDirection().angle(context.getTargetLocation()) + context.getBehaviorContext().getMoveDirection().angle());
-			dir = context.getTargetLocation();
+		if(context.getTargetRelativeDirection()!=null){
+			Vector2 dir = ActionSystem.TurnData.convertGlobalTurn(context.getTargetRelativeDirection(), context.getBehaviorContext().getMoveDirection());
 			context.addResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(dir, speed));
-			context.setTargetLocation(null);
 			super.success();
 		}
 		else{

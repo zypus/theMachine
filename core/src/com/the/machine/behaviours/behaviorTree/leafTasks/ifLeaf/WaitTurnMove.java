@@ -16,11 +16,11 @@ public class WaitTurnMove extends LeafTask<TreeContext>{
 
 	@Override
 	public void run(TreeContext context) {
-		if(context.getTargetLocation()==null){
+		if(context.getTargetRelativeDirection()==null){
 			this.fail();
 			return;
 		}
-		context.addResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(context.getTargetLocation(), turnSpeed));
+		context.addResponse(ActionSystem.Action.TURN, new ActionSystem.TurnData(context.getTargetRelativeDirection(), turnSpeed));
 		System.out.println(context.getBehaviorContext().getCurrentTurningSpeed());
 		if(context.isCurrentlyTurning()){
 			this.running();

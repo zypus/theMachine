@@ -17,15 +17,16 @@ public class TargetAgentLeaf extends LeafTask<TreeContext>{
 
 	@Override
 	public void run(TreeContext context) {
-		System.out.println("Hello");
 		Iterator<WeakReference<Entity>> i = context.getBehaviorContext().getAgents().iterator();
 		while(i.hasNext()){
 			WeakReference<Entity> e = i.next();
 			if(!(e.get().getComponent(BehaviourComponent.class).getBehaviour() instanceof TreeBehavior)){
-				System.out.println("Found him");
 				TransformComponent t = e.get().getComponent(TransformComponent.class);
-				Vector2 to = new Vector2(t.get2DPosition().x, t.get2DPosition().y);
-				context.setTargetLocation(to);
+				Vector2 to = new Vector2(t.getX(), t.getY());
+				Vector2 difference = to.cpy().sub(context.getBehaviorContext().getPlacebo().getPos());
+				Vector2 finalDir = difference.rotate(-context.getBehaviorContext().getMoveDirection().angle());
+				System.out.println(finalDir);
+				context.setTargetRelativeDirection(finalDir);
 				this.success();
 				return;
 			}

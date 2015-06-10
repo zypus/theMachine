@@ -22,7 +22,7 @@ public class MoveUntilLeaf extends LeafTask<TreeContext>{
 	public void run(TreeContext context) {
 		if(target==null){
 			this.time = 0;
-			target = context.getTargetLocation();
+			target = context.getTargetRelativeDirection();
 			context.addResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(speed));
 			this.running();
 		}

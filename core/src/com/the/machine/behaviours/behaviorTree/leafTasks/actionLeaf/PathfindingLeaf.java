@@ -90,7 +90,7 @@ public class PathfindingLeaf extends LeafTask<TreeContext>{
 				if (len2 <= 1) {
 					path.remove(0);
 				}
-				context.setTargetLocation(delta);
+				context.setTargetRelativeDirection(delta);
 				this.success();
 			}
 		}
