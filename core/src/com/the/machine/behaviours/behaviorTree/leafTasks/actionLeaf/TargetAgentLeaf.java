@@ -17,7 +17,7 @@ public class TargetAgentLeaf extends LeafTask<TreeContext>{
 
 	@Override
 	public void run(TreeContext context) {
-		Iterator<WeakReference<Entity>> i = context.getBehaviorContext().getAgents().iterator();
+		Iterator<WeakReference<Entity>> i = context.getBlackboard().getSeenAgentsList().iterator();//context.getBehaviorContext().getAgents().iterator();
 		while(i.hasNext()){
 			WeakReference<Entity> e = i.next();
 			if(!(e.get().getComponent(BehaviourComponent.class).getBehaviour() instanceof TreeBehavior)){

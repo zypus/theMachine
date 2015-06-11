@@ -19,11 +19,8 @@ public class Blackboard {
 		this.seenAgentsList = new ArrayList<WeakReference<Entity>>();
 	}
 	
-	public void addSeenAgent(WeakReference<Entity> e){
-		this.seenAgentsList.add(e);
-	}
 	
-	public void resetSeenAgentList(){
+	public void update(){
 		this.seenAgentsList.clear();
 	}
 	

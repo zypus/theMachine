@@ -22,6 +22,7 @@ import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.RandomMoveme
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.ResLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TargetAgentLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.TurnToTargetLocationLeaf;
+import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.UpdateBlackboardLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.HearingLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.ifLeaf.WaitTurnMove;
 import com.the.machine.behaviours.behaviorTree.leafTasks.subTrees.SubTrees;
@@ -33,6 +34,9 @@ import com.the.machine.systems.ActionSystem;
 public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.TreeBehaviorState> {
 	
 	private BehaviorTree<TreeContext> tree;
+	
+	//TODO: Do this properly!!!
+	private static Blackboard blackboard = new Blackboard();
 	
 	public TreeBehavior(){
 		int time = 5;
@@ -53,14 +57,15 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		
 		
 		
-		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray( new Task[list.size()]));
-		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray( new Task[list2.size()]));
-		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray( new Task[list3.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree());
+		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray(new Task[list.size()]));
+		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray(new Task[list2.size()]));
+		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray(new Task[list3.size()]));
+		Task<TreeContext> seq = new Sequence<TreeContext>(new UpdateBlackboardLeaf(), SubTrees.DIRECT_VISIBLE_CHASE.getSubtree());
 		
 		
 		tree.addChild(seq);
 		TreeContext treeContext = new TreeContext();
+		treeContext.setBlackboard(blackboard);
 		tree.setObject(treeContext);
 	}
 
@@ -72,10 +77,11 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		if(!treeContext.isInited()){
 			treeContext.init(context);
 		}
+		treeContext.getBlackboard().update();
 		treeContext.clearResponseList();
 		treeContext.setBehaviorContext(context);
 		tree.step();
-		treeContext.update();
+		//treeContext.update();
 		responseList = tree.getObject().getResponseList();
 		return responseList;
 	}

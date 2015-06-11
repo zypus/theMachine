@@ -22,6 +22,9 @@ public class TreeContext {
 	/** The Actual Behavior Context */
 	private BehaviourContext behaviorContext;
 	
+	/** Reference to the Balckboard */
+	private Blackboard blackboard;
+	
 	/** Target Location Can Be Declared To Then later be used */
 	private Vector2 targetRelativeDirection;
 	
