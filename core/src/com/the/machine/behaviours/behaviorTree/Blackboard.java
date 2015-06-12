@@ -7,6 +7,9 @@ import java.util.List;
 import lombok.Getter;
 
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.math.Vector2;
+import com.the.machine.components.AreaComponent.AreaType;
+import com.the.machine.components.DiscreteMapComponent.MapCell;
 
 /** Object used by all agents to communicate with other agents of their type */
 public class Blackboard {
@@ -15,12 +18,14 @@ public class Blackboard {
 	private List<TreeContext> contextReferences;
 	
 	/** List containing all the Agents CURRENTLY seen */
-	//@Getter
-	private List<List<WeakReference<Entity>>> seenAgentsLists;
+	@Getter private List<List<WeakReference<Entity>>> seenAgentsLists;
+	/** List containing all the Agents relative Hearing */
+	@Getter private List<List<Vector2>> hearedAgentsList;
 	
 	public Blackboard(){
 		this.contextReferences = new ArrayList<TreeContext>();
 		this.seenAgentsLists = new ArrayList<List<WeakReference<Entity>>>();
+		this.hearedAgentsList = new ArrayList<List<Vector2>>();
 	}
 	
 	/** Returns List With All The Weak References Of Agents Stored Within It, Non Redundantly */
@@ -48,16 +53,17 @@ public class Blackboard {
 		for(int c=0; c<contextReferences.size(); c++){
 			if(context.getId() == contextReferences.get(c).getId()){
 				this.seenAgentsLists.set(c, list);
+				this.hearedAgentsList.set(c, context.getBehaviorContext().getSoundDirections());
 				return;
 			}
 		}
 		this.contextReferences.add(context);
+		this.hearedAgentsList.add(context.getBehaviorContext().getSoundDirections());
 		this.seenAgentsLists.add(list);
-		
 	}
 	
 	public void update(){
-		this.seenAgentsLists.clear();
+		
 	}
 	
 }
