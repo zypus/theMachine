@@ -15,10 +15,11 @@ public class Blackboard {
 	private List<TreeContext> contextReferences;
 	
 	/** List containing all the Agents CURRENTLY seen */
-	@Getter
+	//@Getter
 	private List<List<WeakReference<Entity>>> seenAgentsLists;
 	
 	public Blackboard(){
+		this.contextReferences = new ArrayList<TreeContext>();
 		this.seenAgentsLists = new ArrayList<List<WeakReference<Entity>>>();
 	}
 	
@@ -40,6 +41,19 @@ public class Blackboard {
 			}
 		}
 		return list;
+	}
+	
+	/** Adds And Replaces The Given List To The Complete List, Depending on the identitiy of the agent that has given its context here */
+	public void addAndReplaceAgentList(List<WeakReference<Entity>> list, TreeContext context){
+		for(int c=0; c<contextReferences.size(); c++){
+			if(context.getId() == contextReferences.get(c).getId()){
+				this.seenAgentsLists.set(c, list);
+				return;
+			}
+		}
+		this.contextReferences.add(context);
+		this.seenAgentsLists.add(list);
+		
 	}
 	
 	public void update(){
