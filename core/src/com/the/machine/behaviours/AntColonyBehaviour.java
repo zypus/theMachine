@@ -63,7 +63,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 else {
                     Vector2 currentDirection = context.getMoveDirection();
                     Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
-                    moveTowards(responses, state, randomDirection);
+                    responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.TURN,
+                            new ActionSystem.TurnData(randomDirection, 30f)));
                 }
             }
             else { // if state.agentType == AgentType.Intruder
@@ -81,30 +83,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 else {
                     Vector2 currentDirection = context.getMoveDirection();
                     Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
-                    moveTowards(responses, state, randomDirection);
+                    responses.add(new BehaviourComponent.BehaviourResponse(
+                            ActionSystem.Action.TURN,
+                            new ActionSystem.TurnData(randomDirection, 30f)));
                 }
             }
-
-//            if (!agentIsAlreadyUpdatingRotation) {
-//                // If the agent can see markers, there is a chance that he will go to the avg location
-//                Vector2 avgMarkerPosition = getAverageLocationOfMarkersSeen(state.markerPositionsSeen);
-//                if (avgMarkerPosition == null || Math.random() <= 0.5) {
-//                    // Search for other entities (by turning a bit) while walking normally
-//                    Vector2 currentDirection = context.getMoveDirection();
-//                    Vector2 relativePositionOfCollision = relativePositionOf(state, state.edgeOfSomethingPosition);
-//                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
-//
-//                    // If we have found a place where a collision will happen, move opposite to it
-//                    Vector2 newDirection = relativePositionOfCollision == null ? randomDirection : new Vector2(relativePositionOfCollision).scl(-1);
-//                    rotateTowards(responses, newDirection);
-//                }
-//                else {
-//                    responses.add(new BehaviourComponent.BehaviourResponse(
-//                            ActionSystem.Action.TURN,
-//                            new ActionSystem.TurnData(avgMarkerPosition, 30f)
-//                    ));
-//                }
-//            }
         }
 
         // Update nextMarkerdropUpdate
