@@ -8,17 +8,23 @@ import com.the.machine.components.DiscreteMapComponent.MapCell;
 import com.the.machine.systems.ActionSystem;
 
 public class OpenDoorLeaf extends LeafTask<TreeContext>{
+	
+	private boolean running = false;
 
 	@Override
 	public void run(TreeContext context) {
 		if(context.getBehaviorContext().getEnvironment().equals(AreaType.DOOR_CLOSED)){
 			context.addResponse(ActionSystem.Action.DOOR_OPEN, "Dummy");
+			this.running = true;
 			this.running();
 		}
 		else{
 			this.success();
+			if(running){
+				running = false;
+				context.addResponse(ActionSystem.Action.MOVE, new ActionSystem.MoveData(50));
+			}
 		}
-		System.out.println(context.getId()+" "+context.getTargetRelativeDirection());
 	}
 
 	@Override
