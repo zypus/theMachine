@@ -90,5 +90,5 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	public static class TreeBehaviorState implements BehaviourComponent.BehaviourState{
 		
 	}
-
+	
 }
