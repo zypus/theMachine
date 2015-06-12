@@ -54,9 +54,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     // If other guards have seen an intruder, they drop a marker of type 1
                     moveTowards(responses, state, getAverageLocationOfMarkerType(1, state.markerPositionsSeen));
                 }
-//                else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.markerPositionsSeen))) {
-//                    moveTowards(responses, state, getAverageLocationOfMarkerType(0, state.markerPositionsSeen));
-//                }
+                else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.markerPositionsSeen))) {
+                    moveTowards(responses, state, getAverageLocationOfMarkerType(0, state.markerPositionsSeen));
+                }
                 else if (canMoveTowards(state.edgeOfSomethingPosition)) {
                     moveAwayFrom(responses, state, state.edgeOfSomethingPosition);
                 }
@@ -83,6 +83,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 else if (canMoveTowards(getAverageLocationOfMarkerType(1, state.markerPositionsSeen))) {
                     moveAwayFrom(responses, state, getAverageLocationOfMarkerType(1, state.markerPositionsSeen));   // Move away from positions where other intruders have noticed guards
                 }
+                else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.markerPositionsSeen))) {
+                    moveAwayFrom(responses, state, getAverageLocationOfMarkerType(0, state.markerPositionsSeen));
+                }
                 else {
                     Vector2 currentDirection = context.getMoveDirection();
                     Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
@@ -100,14 +103,14 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             if (state.agentType == AgentType.INTRUDER) {
                 if (state.nearestGuardSeen != null)
                     addMarker(1, 0.2f, responses);  // Add a marker of type 1
-//                else
-//                    addMarker(0, 0.2f, responses);
+                else
+                    addMarker(0, 0.2f, responses);
             }
             else if (state.agentType == AgentType.GUARD) {
                 if (state.nearestIntruderSeen != null)
                     addMarker(1, 0.2f, responses);
-//                else
-//                    addMarker(0, 0.2f, responses);
+                else
+                    addMarker(0, 0.2f, responses);
             }
         }
 
@@ -174,7 +177,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 agentType, agent, 5,            // agentType, agent, agentSpeed
                 null, null, null, null, null,   // Positions of objects that the agent remembered
                 0, 0,                           // How much time it takes until the next rotation and marker dropping
-                2f, 2f                        // Value to which the timer is reset
+                2f, 0.5f                        // Value to which the timer is reset
         );
     }
 
