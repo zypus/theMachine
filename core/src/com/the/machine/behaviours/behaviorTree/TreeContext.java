@@ -16,6 +16,11 @@ import com.the.machine.systems.ActionSystem;
 /** This Class Contains All The Context Which Is Used For Operations Concerning Behavior Trees */
 public class TreeContext {
 	
+	private static int ID_COUNTER = 0;
+	
+	/** Id Of The Tree Context And Therefore The Agent */
+	private int id;
+	
 	/** Whether this has been inited */
 	private boolean inited;
 	
@@ -42,6 +47,8 @@ public class TreeContext {
 	public TreeContext(){
 		this.responseList = new ArrayList<BehaviourResponse>();
 		this.inited = false;
+		this.id = ID_COUNTER;
+		ID_COUNTER++;
 	}
 	
 	

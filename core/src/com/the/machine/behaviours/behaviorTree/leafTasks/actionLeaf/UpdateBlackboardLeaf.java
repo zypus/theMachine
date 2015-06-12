@@ -24,7 +24,7 @@ public class UpdateBlackboardLeaf extends LeafTask<TreeContext>{
 	/** Adds All Agents That Are Seen To The Blackboard */
 	private void addCommonVision(TreeContext context){
 		Blackboard b = context.getBlackboard();
-		List<WeakReference<Entity>> list = b.getSeenAgentsList();
+		List<WeakReference<Entity>> list = b.getSeenAgentList();
 		Iterator<WeakReference<Entity>> i = context.getBehaviorContext().getAgents().iterator();
 		while(i.hasNext()){
 			boolean alreadyIn = false;

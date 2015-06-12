@@ -8,6 +8,8 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.the.machine.behaviours.behaviorTree.TreeBehavior;
+import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.components.BehaviourComponent;
@@ -112,7 +114,7 @@ public class BehaviourSystem
 		BehaviourComponent.BehaviourContext context = new BehaviourComponent.BehaviourContext(deltaTime, velocity, angularVelocity, new Vector2(dir.x, dir.y), agentComponent.getEnvironmentType(), cells, visibleAgents, visibleMarkers, directions, canSprint, sprintTime, sprintCooldown, agentComponent.isHidden(), agentComponent.isInTower(), placebo);
 
 		BehaviourComponent behaviourComponent = behaviours.get(entity);
-
+		
 		// evaluate the behaviour
 		List<BehaviourComponent.BehaviourResponse> responses = behaviourComponent.getBehaviour()
 																		  .evaluate(context, behaviourComponent.getState());
