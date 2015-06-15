@@ -10,6 +10,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent.AreaType;
 import com.the.machine.components.DiscreteMapComponent.MapCell;
+import com.the.machine.systems.ActionSystem;
 
 /** Object used by all agents to communicate with other agents of their type */
 public class Blackboard {
@@ -44,6 +45,16 @@ public class Blackboard {
 					list.add(entity);
 				}
 			}
+		}
+		return list;
+	}
+	
+	/** Returns a list of 'local' hearing directions for the given Agent, containing all the hearing */
+	public List<Vector2> getHearing(TreeContext context){
+		List<Vector2> list = new ArrayList<Vector2>();
+		//ActionSystem.TurnData.convertGlobalTurn(context.getBehaviorContext().getMoveDirection(), currentDir)
+		for(List<Vector2> vec : this.hearedAgentsList){
+			
 		}
 		return list;
 	}
