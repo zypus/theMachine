@@ -27,6 +27,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     /*
     TODO 2 broken windows are also considered to be structures. Use another test to determine whether an area causes a collision
     TODO 8 make time between pheromones linear instead of exponential if possible
+    TODO 9 check how much the time that markers stay alive impacts the algorithm
      */
     public enum AgentType { GUARD, INTRUDER };
 
