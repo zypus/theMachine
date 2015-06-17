@@ -178,7 +178,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 agentType, agent, 5,            // agentType, agent, agentSpeed
                 null, null, null, null, null,   // Positions of objects that the agent remembered
                 0, 0,                           // How much time it takes until the next rotation and marker dropping
-                2f, 0.5f                        // Value to which the timer is reset
+                2f, 2.5f                        // Value to which the timer is reset
         );
     }
 
@@ -319,6 +319,12 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 if (transformOfMarker != null) {
                     Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition();
                     Integer markerType = marker.flags;
+                    if (markerType == null) {
+                        System.err.println("markerType is null");
+                    }
+                    if (state.markerPositionsSeen  == null) {
+                        System.err.println("state.markerPositionsSeen is null");
+                    }
                     if (!state.markerPositionsSeen.containsKey(markerType)) {
                         state.markerPositionsSeen.put(markerType, new ArrayList<>());
                     }
@@ -372,6 +378,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     private void moveAwayFrom(List<BehaviourComponent.BehaviourResponse> responses, AntColonyBehaviourState state, Vector2 antiGoal) {
-        rotateTowards(responses, relativePositionOf(state, new Vector2(antiGoal).scl(-1)));
+        rotateTowards(responses, new Vector2(relativePositionOf(state, antiGoal)).scl(-1));
     }
 }
