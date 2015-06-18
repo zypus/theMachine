@@ -2,6 +2,7 @@ package com.the.machine.components;
 
 import com.badlogic.ashley.core.Entity;
 import com.the.machine.framework.components.AbstractComponent;
+import com.the.machine.systems.VisionSystem;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,16 +21,18 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Accessors(chain = true)
-public class VisionComponent extends AbstractComponent {
+public class VisionComponent
+		extends AbstractComponent {
 	private float minDistance = 0;
 	private float maxDistance = 6;
 	private float angle = 45;
 
 	boolean blind = false;
 
-	@Setter private List<DiscreteMapComponent.MapCell> visibleCells = new ArrayList<>();
-	@Setter private List<WeakReference<Entity>> visibleAgents = new ArrayList<>();
-	@Setter private List<WeakReference<Entity>> visibleMarkers = new ArrayList<>();
+	@Setter private List<DiscreteMapComponent.MapCell>   visibleCells       = new ArrayList<>();
+	@Setter private List<WeakReference<Entity>>          visibleAgents      = new ArrayList<>();
+	@Setter private List<WeakReference<Entity>>          visibleMarkers     = new ArrayList<>();
+	@Setter private List<VisionSystem.EnvironmentVisual> environmentVisuals = new ArrayList<>();
 
 	public VisionComponent setMinDistance(float minDistance) {
 		if (this.minDistance != minDistance) {

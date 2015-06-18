@@ -1,12 +1,11 @@
 package com.the.machine.components;
 
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
-
+import com.the.machine.systems.VisionSystem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +20,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @Accessors(chain = true)
-public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> extends AbstractComponent {
+public class BehaviourComponent<T extends BehaviourComponent.BehaviourState>
+		extends AbstractComponent {
 
 	Behaviour<T> behaviour;
 	T state;
@@ -30,33 +30,38 @@ public class BehaviourComponent<T extends BehaviourComponent.BehaviourState> ext
 		List<BehaviourResponse> evaluate(BehaviourContext context, T state);
 	}
 
-	public static interface BehaviourState{};
+	public static interface BehaviourState {
+	}
+
+	;
 
 	@Data
 	@AllArgsConstructor
 	public static class BehaviourContext {
-		float pastTime;
-		float currentMovementSpeed;
-		float currentTurningSpeed;
-		Vector2 moveDirection;
-		AreaComponent.AreaType environment;
-		List<DiscreteMapComponent.MapCell> vision;
-		List<WeakReference<Entity>> agents;
-		List<WeakReference<Entity>> markers;
-		List<Vector2>               soundDirections;
-		boolean                     canSprint;
-		float                       sprintTime;
-		float                       sprintCooldown;
-		boolean                     hidden;
-		boolean                     inTower;
-		Placebo	placebo;
+		float                                pastTime;
+		float                                currentMovementSpeed;
+		float                                currentTurningSpeed;
+		Vector2                              moveDirection;
+		AreaComponent.AreaType               environment;
+		List<VisionSystem.EnvironmentVisual> vision;
+		List<WeakReference<Entity>>          agents;
+		List<WeakReference<Entity>>          markers;
+		List<Vector2>                        soundDirections;
+		boolean                              canSprint;
+		float                                sprintTime;
+		float                                sprintCooldown;
+		boolean                              hidden;
+		boolean                              inTower;
+		float                                visionRange;
+		float                                visionAngle;
+		Placebo                              placebo;
 	}
 
 	@Data
 	@AllArgsConstructor
 	public static class BehaviourResponse<T extends BehaviourState> {
-		ActionSystem.Action       action;
-		Object data;
+		ActionSystem.Action action;
+		Object              data;
 	}
 
 }

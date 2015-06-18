@@ -3,6 +3,7 @@ package com.the.machine.behaviours;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;

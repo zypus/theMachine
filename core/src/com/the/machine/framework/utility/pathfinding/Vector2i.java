@@ -1,5 +1,7 @@
 package com.the.machine.framework.utility.pathfinding;
 
+import com.badlogic.gdx.math.Vector2;
+
 public class Vector2i {
 
 private int x, y;
@@ -19,6 +21,11 @@ private int x, y;
 
 	public Vector2i( Vector2i vector){
 		set( vector.x, vector.y);
+	}
+	
+	public Vector2i(Vector2 vector){
+		//TODO: Double Check Whether the conversion is actually correct
+		set((int)vector.x, (int)vector.y);
 	}
 
 	public void set( int x, int y){

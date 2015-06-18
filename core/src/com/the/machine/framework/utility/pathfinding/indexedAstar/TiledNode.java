@@ -36,13 +36,13 @@ public class TiledNode
 				int yDirections = (d / 3) - 1;
 				int nx = x + xDirections;
 				int ny = y + yDirections;
-				if (Utils.isInbound(nx, ny, 0, 0, map.length, map[0].length)) {
+				if (Utils.isInbound(nx, ny, 0, 0, map.length-1, map[0].length-1)) {
 					float cost = map[nx][ny];
 					TiledNode tiledNode = graph.get(new Pair(nx, ny));
 					if (tiledNode != null) {
 						TiledConnection connection = new TiledConnection(this, tiledNode, cost);
 						conns.add(connection);
-					} else if (cost >= 0) {
+					} else if (cost >= 0 && ((nx != x || ny != nx) || (map[x][ny] >= 0 && map[nx][y] >= 0) )) {
 						TiledNode node = new TiledNode(nx, ny, map, graph);
 						graph.add(node);
 						TiledConnection connection = new TiledConnection(this, node, cost);
