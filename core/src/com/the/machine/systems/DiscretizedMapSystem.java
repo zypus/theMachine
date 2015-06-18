@@ -128,7 +128,7 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 				}
 			}
 			// set the outer wall
-			for (int x = 1; x < mapDimension.getWidth()+1; x++) {
+			for (int x = -1; x < mapDimension.getWidth()+1; x++) {
 				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(x-mx, -my-1))
 																  .setType(AreaComponent.AreaType.OUTER_WALL));
 				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(x-mx, my+1))

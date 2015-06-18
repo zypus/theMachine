@@ -68,12 +68,14 @@ public class Mapper {
 		lastPosition = context.getPlacebo().getPos().cpy();
 		currentDirection = direction.cpy()
 									.nor();
-		List<Vector2> sight = inSight(visionRange, visionAngle);
-		for (Vector2 p : sight) {
-			p.add(currentPosition);
-			MapTile tile = get(p.x, p.y);
-			if (tile == null || tile.getAreaType() == AreaComponent.AreaType.UNSEEN) {
-				set(p.x, p.y, AreaComponent.AreaType.GROUND);
+		if (visuals.isEmpty()) {
+			List<Vector2> sight = inSight(visionRange, visionAngle);
+			for (Vector2 p : sight) {
+				p.add(currentPosition);
+				MapTile tile = get(p.x, p.y);
+				if (tile == null || tile.getAreaType() == AreaComponent.AreaType.UNSEEN) {
+					set(p.x, p.y, AreaComponent.AreaType.GROUND);
+				}
 			}
 		}
 		for (VisionSystem.EnvironmentVisual visual : visuals) {

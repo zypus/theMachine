@@ -15,6 +15,7 @@ import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledPathFinde
 import com.the.machine.map.Mapper;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
+import javafx.util.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,8 +37,8 @@ public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
 	static final float ALPHA = 0.7f;
-	static final float BETA = 0.4f;
-	static final float GAMMA = 0.5f;
+	static final float BETA = 0.04f;
+	static final float GAMMA = 0.15f;
 
 	static final float DELTA_TIME = 20;
 
@@ -51,6 +52,8 @@ public class MapCoverBehaviour
 
 	Vector2 lastPos;
 	float lastDistance = 0;
+
+	Vector2 startPos;
 
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -68,6 +71,8 @@ public class MapCoverBehaviour
 			//			sharedState = state; // comment this line to disable shared state
 //			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
+
+			startPos = context.getPlacebo().getPos().cpy();
 			mapper.init(context.getPlacebo().getPos(), context.getMoveDirection());
 //			MapperDebugWindow.debug(mapper, 1f);
 		}
@@ -97,6 +102,7 @@ public class MapCoverBehaviour
 	}
 
 	private void updateCoverage2(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
+		boolean IGNORE_SIGHT = true;
 		int range = (int) context.getVisionRange();
 		// makes sure that range is even, if not decrease the range a bit
 		if (range % 2 != 0) {
@@ -107,19 +113,19 @@ public class MapCoverBehaviour
 		Vector2 direction = context.getMoveDirection()
 								   .nor();
 		// check the square created by the vision range around the player
-		for (int i = 0; i < range; i++) {
-			for (int j = 0; j < range; j++) {
+		for (int i = -1; i <= range; i++) {
+			for (int j = -1; j <= range; j++) {
 				int dx = i - range / 2;
 				int dy = j - range / 2;
 				// check if field is in vision range
 				int dist = dx * dx + dy * dy;
+				Mapper.MapTile tile = mapper.getFromCurrent(dx, dy);
 				if (dist < range2 && dist > 1) {
 					Vector2 lookDir = new Vector2(dx, dy).nor();
 					float angle = Math.abs(lookDir.angle(direction));
 					// check if the vision angle covers that direction
-					Mapper.MapTile tile = mapper.getFromCurrent(dx, dy);
 					if (tile != null) {
-						if (angle < context.getVisionAngle() / 2) {
+						if (IGNORE_SIGHT || angle < context.getVisionAngle() / 2) {
 							if (!tile.isInsight()) {
 								tile.setInsight(true);
 								tile.setValue(Math.max(tile.getValue() - 0.2f, 0));
@@ -131,6 +137,10 @@ public class MapCoverBehaviour
 						} else {
 							tile.setInsight(false);
 						}
+					}
+				} else {
+					if (tile != null) {
+						tile.setInsight(false);
 					}
 				}
 			}
@@ -145,6 +155,9 @@ public class MapCoverBehaviour
 		float[][] direction = direction(context.getMoveDirection());
 		float[][] reachable = reachable();
 		float[][] walkable = walkable();
+		float[][] thickWalkable = walkableThickWalls();
+
+		Vector2i start = new Vector2i(current.x, current.y);
 
 		// final map
 		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
@@ -152,13 +165,15 @@ public class MapCoverBehaviour
 		Vector2 maxPos = new Vector2();
 		for (int x = 0; x < mapper.getWidth(); x++) {
 			for (int y = 0; y < mapper.getHeight(); y++) {
-				valueMap[x][y] = currentSituation[x][y] + ALPHA * futureSituation[x][y] + BETA * direction[x][y] + GAMMA * reachable[x][y];
-				if (walkable[x][y] == -1) {
-					valueMap[x][y] = 0;
-				}
-				if (valueMap[x][y] > max) {
-					max = valueMap[x][y];
-					maxPos.set(x, y);
+				if (thickWalkable[x][y] == -1 || walkable[x][y] == -1) {
+					valueMap[x][y] = -1;
+				} else {
+					valueMap[x][y] = walkable[x][y] * (currentSituation[x][y] + ALPHA * futureSituation[x][y] + BETA * direction[x][y] + GAMMA * reachable[x][y]);
+					Vector2i goal = new Vector2i(x, y);
+					if (valueMap[x][y] > max) {
+						max = valueMap[x][y];
+						maxPos.set(x, y);
+					}
 				}
 			}
 		}
@@ -175,10 +190,10 @@ public class MapCoverBehaviour
 //		}
 
 		// path find
-		Vector2i start = new Vector2i(current.x, current.y);
 
 		Vector2i goal = new Vector2i(maxPos.x, maxPos.y);
-		GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
+
+		GraphPath<TiledNode> path = pathfinder.findPath(thickWalkable, start, goal);
 
 		List<Vector2> points = new ArrayList<>();
 		if (path != null) {
@@ -263,46 +278,55 @@ public class MapCoverBehaviour
 	}
 
 	private float[][] reachable() {
+		boolean USE_PATH = false;
 		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
 		Vector2 currentPos = mapper.absolutePos(mapper.getCurrentPosition());
 		int delta= (int) (DELTA_TIME * Constants.AGENT_SPEED);
 		float[][] walkable = walkable();
-		List<Vector2> next = new ArrayList<>();
-		next.add(currentPos);
-		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, walkable.length, walkable[0].length)) {
-			floodFill(walkable, next);
+		List<Pair<Vector2, Float>> next = new ArrayList<>();
+		next.add(new Pair<>(currentPos, -1f));
+		float[][] output = new float[mapper.getWidth()][mapper.getHeight()];
+		for (float[] floats : output) {
+			for (int i = 0; i < floats.length; i++) {
+				floats[i] = Float.MAX_VALUE;
+			}
 		}
-//		for (int x = (int) (currentPos.x-delta); x < currentPos.x+delta; x++) {
-//			for (int y = (int) (currentPos.y-delta); y < currentPos.y+delta; y++) {
-//				if (Utils.isInbound(x,y,0,0, mapper.getWidth()-1, mapper.getHeight()-1)) {
-//					int dist = (int) currentPos.cpy()
-//											   .sub(new Vector2(x, y))
-//											   .len();
-//					if (dist < delta && walkable[x][y] != -1) {
-//						Vector2i start = new Vector2i(currentPos.x, currentPos.y);
-//
-//						Vector2i goal = new Vector2i(x, y);
-//						GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
-//						if (path != null) {
-//							if (path.getCount() > 1 && walkable[path.get(0)
-//																	.getX()][path.get(0)
-//																				 .getY()] == -1) {
-//								valueMap[x][y] = 0;
-//							} else {
-//								valueMap[x][y] = 1f - (float) path.getCount() / (float) delta;
-//							}
-//						} else {
-//							valueMap[x][y] = 0;
-//						}
-//					} else {
-//						valueMap[x][y] = 0;
-//					}
-//					//				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
-//					//								 ? 0f
-//					//								 : 1f - (float)dist / (float)delta;
-//				}
-//			}
-//		}
+		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, walkable.length, walkable[0].length)) {
+			floodFillGradient(walkable, output, next);
+		}
+		for (int x = (int) (currentPos.x-delta); x < currentPos.x+delta; x++) {
+			for (int y = (int) (currentPos.y-delta); y < currentPos.y+delta; y++) {
+				if (Utils.isInbound(x,y,0,0, mapper.getWidth()-1, mapper.getHeight()-1)) {
+					int dist = (int) output[x][y];
+					if (dist < delta && walkable[x][y] != -1) {
+						if (USE_PATH) {
+							Vector2i start = new Vector2i(currentPos.x, currentPos.y);
+
+							Vector2i goal = new Vector2i(x, y);
+							GraphPath<TiledNode> path = pathfinder.findPath(walkable, start, goal);
+							if (path != null) {
+								if (path.getCount() > 1 && walkable[path.get(0)
+																		.getX()][path.get(0)
+																					 .getY()] == -1) {
+									valueMap[x][y] = 0;
+								} else {
+									valueMap[x][y] = 1f - (float) path.getCount() / (float) delta;
+								}
+							} else {
+								valueMap[x][y] = 0;
+							}
+						} else {
+							valueMap[x][y] = 1f - (float) dist / (float) delta;
+						}
+					} else {
+						valueMap[x][y] = 0;
+					}
+					//				valueMap[x][y] = (dist > delta || walkable[x][y] != 0)
+					//								 ? 0f
+					//								 : 1f - (float)dist / (float)delta;
+				}
+			}
+		}
 		return valueMap;
 	}
 
@@ -321,7 +345,7 @@ public class MapCoverBehaviour
 				Mapper.MapTile upleft = mapper.getAbsolute(x-1, y+1);
 				Mapper.MapTile downright = mapper.getAbsolute(x+1, y-1);
 				Mapper.MapTile downleft = mapper.getAbsolute(x-1, y-1);
-				if (tile.getAreaType() == WALL || tile.getAreaType() == OUTER_WALL ||
+				if (tile.getAreaType() == WALL /*|| tile.getAreaType() == OUTER_WALL ||
 												  (right != null && (right.getAreaType().isWall())) ||
 												  (up != null && (up.getAreaType()
 																		  .isWall())) ||
@@ -336,13 +360,87 @@ public class MapCoverBehaviour
 					(downleft != null && (downleft.getAreaType()
 																		  .isWall())) ||
 												  (down != null && (down.getAreaType()
-																		  .isWall()))) {
+																		  .isWall()))*/) {
 					valueMap[x][y] = -1;
 				} else {
 					valueMap[x][y] = 1;
 				}
 			}
 		}
+		Vector2 currentPos = mapper.absolutePos(startPos);
+		List<Vector2> next = new ArrayList<>();
+		next.add(currentPos);
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+			floodFill(valueMap, next, true);
+		}
+		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+			floodFill(valueMap, next);
+		}
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
+				if (valueMap[x][y] == 0.9f) {
+					valueMap[x][y] = 1f;
+				} else {
+					valueMap[x][y] = -1f;
+				}
+			}
+		}
+		return valueMap;
+	}
+
+	private float[][] walkableThickWalls() {
+		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
+		for (int x = 0; x < mapper.getWidth(); x++) {
+			for (int y = 0; y < mapper.getHeight(); y++) {
+				Mapper.MapTile tile = mapper.getMap()
+											.get(x)
+											.get(y);
+				Mapper.MapTile right = mapper.getAbsolute(x + 1, y);
+				Mapper.MapTile up = mapper.getAbsolute(x, y + 1);
+				Mapper.MapTile left = mapper.getAbsolute(x - 1, y);
+				Mapper.MapTile down = mapper.getAbsolute(x, y - 1);
+				Mapper.MapTile upright = mapper.getAbsolute(x + 1, y + 1);
+				Mapper.MapTile upleft = mapper.getAbsolute(x - 1, y + 1);
+				Mapper.MapTile downright = mapper.getAbsolute(x + 1, y - 1);
+				Mapper.MapTile downleft = mapper.getAbsolute(x - 1, y - 1);
+				if (tile.getAreaType() == WALL || tile.getAreaType() == OUTER_WALL ||
+					(right != null && (right.getAreaType()
+											.isWall())) ||
+					(up != null && (up.getAreaType()
+									  .isWall())) ||
+					(left != null && (left.getAreaType()
+										  .isWall())) ||
+					(upright != null && (upright.getAreaType()
+												.isWall())) ||
+					(upleft != null && (upleft.getAreaType()
+											  .isWall())) ||
+					(downright != null && (downright.getAreaType()
+													.isWall())) ||
+					(downleft != null && (downleft.getAreaType()
+												  .isWall())) ||
+					(down != null && (down.getAreaType()
+										  .isWall()))) {
+					valueMap[x][y] = -1;
+				} else {
+					valueMap[x][y] = 1;
+				}
+			}
+		}
+				Vector2 currentPos = mapper.absolutePos(startPos);
+				List<Vector2> next = new ArrayList<>();
+				next.add(currentPos);
+				while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+					floodFill(valueMap, next);
+				}
+				for (int x = 0; x < mapper.getWidth(); x++) {
+					for (int y = 0; y < mapper.getHeight(); y++) {
+						if (valueMap[x][y] == 0.9f) {
+							valueMap[x][y] = 1f;
+						} else {
+							valueMap[x][y] = -1f;
+						}
+					}
+				}
 		return valueMap;
 	}
 
@@ -564,6 +662,48 @@ public class MapCoverBehaviour
 					int ny = (int) (y + dir.y);
 					if (Utils.isInbound(nx, ny, 0, 0, area.length - 1, area[0].length - 1)) {
 						next.add(new Vector2(nx, ny));
+					}
+				}
+			}
+		}
+	}
+
+	private void floodFill(float[][] area, List<Vector2> next, boolean first) {
+		int x, y;
+		if (!next.isEmpty()) {
+			Vector2 vector2 = next.remove(0);
+			x = (int) vector2.x;
+			y = (int) vector2.y;
+			// if this spot is a target area, mark it as visited
+			if (area[x][y] == 1 || first) {
+				area[x][y] = 0.9f;
+				// flood continues on the adjacent fields
+				for (Vector2 dir : dirs) {
+					int nx = (int) (x + dir.x);
+					int ny = (int) (y + dir.y);
+					if (Utils.isInbound(nx, ny, 0, 0, area.length - 1, area[0].length - 1)) {
+						next.add(new Vector2(nx, ny));
+					}
+				}
+			}
+		}
+	}
+
+	private void floodFillGradient(float[][] area, float[][] output, List<Pair<Vector2, Float>> next) {
+		int x, y;
+		if (!next.isEmpty()) {
+			Pair<Vector2, Float> pair = next.remove(0);
+			x = (int) pair.getKey().x;
+			y = (int) pair.getKey().y;
+			// if this spot is a target area, mark it as visited
+			if (area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
+				output[x][y] = pair.getValue()+1;
+				// flood continues on the adjacent fields
+				for (Vector2 dir : dirs) {
+					int nx = (int) (x + dir.x);
+					int ny = (int) (y + dir.y);
+					if (Utils.isInbound(nx, ny, 0, 0, area.length - 1, area[0].length - 1)) {
+						next.add(new Pair<>(new Vector2(nx, ny), output[x][y]));
 					}
 				}
 			}

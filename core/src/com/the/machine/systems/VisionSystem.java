@@ -112,7 +112,7 @@ public class VisionSystem
 										.sub(tf.get2DPosition());
 					Vector2 dir = delta.cpy().nor();
 					boolean contains = light2dComponent.getLight()
-													   .contains(cellPos.x - dir.x*0.1f, cellPos.y - dir.y*0.1f) || delta.len2() < 2;
+													   .contains(cellPos.x - dir.x*0.1f, cellPos.y - dir.y*0.1f) || delta.len2() < 4;
 					boolean outerWall = false;
 					if (cell.getType() == AreaComponent.AreaType.OUTER_WALL) {
 						float angle = visionComponent.getAngle();
