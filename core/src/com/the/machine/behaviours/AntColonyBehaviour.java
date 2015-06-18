@@ -3,13 +3,12 @@ package com.the.machine.behaviours;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
-import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
+import com.the.machine.systems.VisionSystem;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -274,14 +273,14 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
     private Vector2 getNearestTargetArea(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
 
-        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
-        DiscreteMapComponent.MapCell nearestArea = null;
+        List<VisionSystem.EnvironmentVisual> visibleAreas = context.getVision();
+        VisionSystem.EnvironmentVisual nearestArea = null;
         float distanceToNearestArea = Float.MAX_VALUE;
         TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
 
-        for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
+        for (VisionSystem.EnvironmentVisual visibleArea : visibleAreas ) {
             if (visibleArea.getType() == AreaComponent.AreaType.TARGET) {
-                float distanceToArea = visibleArea.getPosition().dst2(transformComponent.get2DPosition());
+                float distanceToArea = visibleArea.getDelta().len();
                 if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
                     distanceToNearestArea = distanceToArea;
                     nearestArea = visibleArea;
@@ -290,6 +289,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             }
         }
 
-        return nearestArea == null ? null : nearestArea.getPosition();
+        return nearestArea == null ? null : transformComponent.get2DPosition().cpy().add(nearestArea.getDelta());
     }
 }

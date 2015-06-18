@@ -17,20 +17,21 @@ import lombok.experimental.Accessors;
 @Getter
 @NoArgsConstructor
 @Accessors(chain = true)
-public class AreaComponent extends AbstractComponent{
+public class AreaComponent
+		extends AbstractComponent {
 
 	// CATEGORIES
-	public static final short STRUCTURE_CATEGORY = 0x0001;
-	public static final short WALKABLE_CATEGORY = 0x0002;
-	public static final short AGENT_CATEGORY = 0x0004;
+	public static final short STRUCTURE_CATEGORY   = 0x0001;
+	public static final short WALKABLE_CATEGORY    = 0x0002;
+	public static final short AGENT_CATEGORY       = 0x0004;
 	public static final short TRANSPARENT_CATEGORY = 0x0008;
-	public static final short SENSOR_CATEGORY = 0x0010;
+	public static final short SENSOR_CATEGORY      = 0x0010;
 
 	// MASKS
-	public static final short WALKABLE_AREA_MASK = STRUCTURE_CATEGORY | TRANSPARENT_CATEGORY | WALKABLE_CATEGORY;
+	public static final short WALKABLE_AREA_MASK  = STRUCTURE_CATEGORY | TRANSPARENT_CATEGORY | WALKABLE_CATEGORY;
 	public static final short STRUCTURE_AREA_MASK = STRUCTURE_CATEGORY | TRANSPARENT_CATEGORY | WALKABLE_CATEGORY | AGENT_CATEGORY;
-	public static final short AGENT_MASK = STRUCTURE_CATEGORY | TRANSPARENT_CATEGORY | SENSOR_CATEGORY;
-	public static final short LIGHT_MASK = STRUCTURE_CATEGORY;
+	public static final short AGENT_MASK          = STRUCTURE_CATEGORY | TRANSPARENT_CATEGORY | SENSOR_CATEGORY;
+	public static final short LIGHT_MASK          = STRUCTURE_CATEGORY;
 
 	private AreaType type;
 
@@ -52,8 +53,9 @@ public class AreaComponent extends AbstractComponent{
 		DOOR_CLOSED(Asset.fetch("door_closed", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
 		TARGET(Asset.fetch("target", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
 		TOWER(Asset.fetch("tower", TextureRegion.class), TRANSPARENT_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
-//		TOWER_USED(Asset.fetch("tower_used", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
-		COVER(Asset.fetch("cover", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0);
+		//		TOWER_USED(Asset.fetch("tower_used", TextureRegion.class), STRUCTURE_CATEGORY, STRUCTURE_AREA_MASK, (short) 0),
+		COVER(Asset.fetch("cover", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0),
+		UNSEEN(Asset.fetch("unseen", TextureRegion.class), WALKABLE_CATEGORY, WALKABLE_AREA_MASK, (short) 0);
 
 		private Asset<TextureRegion> textureRegionAsset;
 
@@ -81,6 +83,10 @@ public class AreaComponent extends AbstractComponent{
 
 		public boolean isTower() {
 			return this == AreaType.TOWER; /*|| this == AreaType.TOWER_USED;*/
+		}
+
+		public boolean isWall() {
+			return this == WALL || this == OUTER_WALL;
 		}
 
 	}
