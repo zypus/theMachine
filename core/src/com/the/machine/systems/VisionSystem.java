@@ -102,23 +102,22 @@ public class VisionSystem
 					Vector2 cellPos = cell.getPosition()
 										  .cpy()
 										  .scl(0.1f);
+					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
+					Vector2 delta = cell.getPosition()
+										.cpy()
+										.sub(tf.get2DPosition());
+					Vector2 dir = delta.cpy().nor();
 					boolean contains = light2dComponent.getLight()
-													   .contains(cellPos.x, cellPos.y);
+													   .contains(cellPos.x - dir.x*0.1f, cellPos.y - dir.y*0.1f) || delta.len2() < 4;
 					boolean outerWall = false;
 					if (cell.getType() == AreaComponent.AreaType.OUTER_WALL) {
 						float angle = visionComponent.getAngle();
-						TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
 						float rotation = normAngle(tf
 														   .getZRotation());
-						Vector2 delta = cell.getPosition().cpy().sub(tf.get2DPosition());
 						float deltaAngle = normAngle(delta.angle());
 						outerWall = Math.abs(rotation - deltaAngle) < (angle / 2);
 					}
 					if (contains || outerWall) {
-						TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
-						Vector2 delta = cell.getPosition()
-											.cpy()
-											.sub(tf.get2DPosition());
 						float dst2 = delta.len2();
 						if (dst2 <= max && dst2 >= min) {
 							if (cell.getType() != AreaComponent.AreaType.COVER || dst2 <= max/4) {

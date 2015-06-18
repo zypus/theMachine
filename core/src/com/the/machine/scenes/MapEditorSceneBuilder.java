@@ -99,6 +99,7 @@ import com.the.machine.systems.DizzinessSystem;
 import com.the.machine.systems.DoorSystem;
 import com.the.machine.systems.DraggingSystem;
 import com.the.machine.systems.EnvironmentSystem;
+import com.the.machine.systems.GameInfoSystem;
 import com.the.machine.systems.GrowthSystem;
 import com.the.machine.systems.InputControlledMovementSystem;
 import com.the.machine.systems.IntruderSpawnSystem;
@@ -114,9 +115,9 @@ import com.the.machine.systems.SprintSystem;
 import com.the.machine.systems.StepSoundSystem;
 import com.the.machine.systems.TowerSystem;
 import com.the.machine.systems.VictorySystem;
+import com.the.machine.systems.VisionDebugSystem;
 import com.the.machine.systems.VisionRangeDebugSystem;
 import com.the.machine.systems.VisionSystem;
-import com.the.machine.systems.VisionDebugSystem;
 import com.the.machine.systems.WindowSystem;
 import com.the.machine.systems.ZoomIndependenceSystem;
 
@@ -136,8 +137,6 @@ public class MapEditorSceneBuilder
 
 	@Override
 	public void createScene(World world) {
-		world.addSystem(new RemovalSystem());
-		world.addSystem(new DelayedRemovalSystem());
 		world.addSystem(new GrowthSystem());
 		world.addSystem(new DirectionalMovementSystem());
 		world.addSystem(new InputControlledMovementSystem(), KeyDownEvent.class, KeyUpEvent.class);
@@ -176,8 +175,8 @@ public class MapEditorSceneBuilder
 		world.addSystem(new Physics2dSystem());
 		world.addSystem(new MapSystem(), MapEditorSaveEvent.class, MapEditorLoadEvent.class, MapEditorHotbarEvent.class, TouchUpEvent.class, KeyDownEvent.class, MapEditorSavePrefabEvent.class, MapEditorLoadPrefabEvent.class);
 		world.addSystem(new Light2dSystem(), Light2dToggleEvent.class);
-
-		toggleSimulationSystems(world, false);
+		world.addSystem(new RemovalSystem());
+		world.addSystem(new DelayedRemovalSystem());
 
 		Entity mapCamera = new Entity();
 		CameraComponent mapCameraComponent = new CameraComponent();
@@ -577,6 +576,60 @@ public class MapEditorSceneBuilder
 			EntityUtilities.relate(loadButton, loadButtonLabel);
 			world.addEntity(loadButtonLabel);
 		}
+
+		// game info
+		{
+			Entity timeLabel = EntityUtilities.makeLabel("Time: ")
+											   .add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT).setRowEnd(true)
+																			.setColspan(10));
+			Entity guardLabel = EntityUtilities.makeLabel("Guards: ")
+										.add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																	 .setRowEnd(true)
+																	 .setColspan(10));
+			Entity guardMoveLabel = EntityUtilities.makeLabel("-> Movement: ")
+											   .add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																			.setRowEnd(true)
+																			.setColspan(10));
+			Entity guardMarkerLabel = EntityUtilities.makeLabel("-> Markers: ")
+													 .add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																				  .setRowEnd(true)
+																				  .setColspan(10));
+			Entity intruderLabel = EntityUtilities.makeLabel("Intruder: ")
+											   .add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																			.setRowEnd(true).setColspan(10));
+			Entity intruderMoveLabel = EntityUtilities.makeLabel("-> Movement: ")
+												   .add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																				.setRowEnd(true)
+																				.setColspan(10));
+			Entity intruderMarkerLabel = EntityUtilities.makeLabel("-> Markers: ")
+													  .add(new TableCellComponent().setHorizontalAlignment(Enums.HorizontalAlignment.LEFT)
+																				   .setRowEnd(true)
+																				   .setColspan(10));
+			EntityUtilities.relate(GUITable, timeLabel);
+			EntityUtilities.relate(GUITable, guardLabel);
+			EntityUtilities.relate(GUITable, guardMoveLabel);
+			EntityUtilities.relate(GUITable, guardMarkerLabel);
+			EntityUtilities.relate(GUITable, intruderLabel);
+			EntityUtilities.relate(GUITable, intruderMoveLabel);
+			EntityUtilities.relate(GUITable, intruderMarkerLabel);
+			world.addEntity(timeLabel);
+			world.addEntity(guardLabel);
+			world.addEntity(guardMoveLabel);
+			world.addEntity(guardMarkerLabel);
+			world.addEntity(intruderLabel);
+			world.addEntity(intruderMoveLabel);
+			world.addEntity(intruderMarkerLabel);
+
+			world.addSystem(new GameInfoSystem(timeLabel.getComponent(LabelComponent.class),
+											   guardLabel.getComponent(LabelComponent.class),
+											   guardMoveLabel.getComponent(LabelComponent.class),
+											   guardMarkerLabel.getComponent(LabelComponent.class),
+											   intruderLabel.getComponent(LabelComponent.class),
+											   intruderMoveLabel.getComponent(LabelComponent.class),
+											   intruderMarkerLabel.getComponent(LabelComponent.class)
+											   ), MarkerEvent.class, ResetEvent.class);
+		}
+
 		// some special options
 		Entity lightSwitch = new Entity();
 		CanvasElementComponent lcec = new CanvasElementComponent().setStyleValue("toggle");
@@ -659,6 +712,8 @@ public class MapEditorSceneBuilder
 			world.register(hotbarListener, MapEditorHotbarEvent.class);
 		}
 
+		toggleSimulationSystems(world, false);
+
 	}
 
 	public static void toggleSimulationSystems(World world, boolean enabled) {
@@ -682,6 +737,7 @@ public class MapEditorSceneBuilder
 		world.setSystemStatus(TowerSystem.class, enabled);
 		world.setSystemStatus(MarkerSystem.class, enabled);
 		world.setSystemStatus(VictorySystem.class, enabled);
+		world.setSystemStatus(GameInfoSystem.class, enabled);
 //		world.setSystemStatus(WorldMappingSystem.class, enabled);
 //		world.setSystemStatus(AgentSightSystem.class, enabled);
 	}

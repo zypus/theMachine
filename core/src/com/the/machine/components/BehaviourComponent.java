@@ -1,11 +1,12 @@
 package com.the.machine.components;
 
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.framework.components.AbstractComponent;
 import com.the.machine.misc.Placebo;
 import com.the.machine.systems.ActionSystem;
+
+import com.the.machine.systems.VisionSystem;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

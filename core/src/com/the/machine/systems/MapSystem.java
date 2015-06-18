@@ -16,11 +16,11 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
-
 import com.the.machine.behaviours.AstarTestBehaviour;
 import com.the.machine.behaviours.AntColonyBehaviour;
 import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior;
+import com.the.machine.behaviours.MapCoverBehaviour;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AngularVelocityComponent;
@@ -478,12 +478,7 @@ public class MapSystem
 				newAgent.add(sightComponent);
 				newAgent.add(new ListenerComponent());
 				newAgent.add(new NameComponent().setName("Agent"));
-				
-				
 				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior()));
-				//TODO: Add Working Behaviour
-				
-				
 				newAgent.add(new VelocityComponent());
 				newAgent.add(new AngularVelocityComponent());
 				newAgent.add(new AgentComponent());

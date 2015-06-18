@@ -102,11 +102,13 @@ public class World implements ApplicationListener, InputProcessor {
 	@Getter @Setter private com.badlogic.gdx.physics.box2d.World box2dWorld = null;
 
 	@Getter private float t        = 0;
-	private         float timeFlow = 1f;
+	@Setter @Getter private         float timeFlow = 1f;
 
 	private boolean stableOnly = false;
 
 	private boolean loadingAssets = false;
+
+	@Setter boolean render = true;
 
 	public World() {
 		this(null);
@@ -406,7 +408,9 @@ public class World implements ApplicationListener, InputProcessor {
 				float dt = delta * timeFlow;
 				t += dt;
 				update(dt);
-				render(dt);
+				if (render) {
+					render(dt);
+				}
 			} else if (worldState.equals(WorldState.PAUSED)) {
 				if (!stableOnly) {
 					for (EntitySystem system : engine.getSystems()) {
