@@ -18,7 +18,6 @@ public class ResLeaf extends LeafTask<TreeContext>{
 	@Override
 	/** A Returned Success Here Does Not Actually Imply Successful Action Completion */
 	public void run(TreeContext context) {
-		System.out.println(context.getId()+" "+context.getTargetRelativeDirection());
 		context.addResponse(action, actionData);
 		super.success();
 	}
