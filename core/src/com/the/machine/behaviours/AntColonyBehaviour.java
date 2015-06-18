@@ -256,9 +256,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         for (int i = 0; i < markerList.size(); i++) {
             markerFound = true;
             Entity markerComponent = markerList.get(i).get();
-            TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
+            if(markerComponent!=null){
+            	TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
 
-            locationSummed.add(otherTransform.get2DPosition());
+                locationSummed.add(otherTransform.get2DPosition());
+            }
         }
 
         if (markerFound) {
