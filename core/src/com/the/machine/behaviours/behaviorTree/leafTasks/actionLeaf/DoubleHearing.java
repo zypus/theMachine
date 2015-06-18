@@ -26,10 +26,9 @@ public class DoubleHearing extends LeafTask<TreeContext>{
 	
 	@Override
 	public void run(TreeContext context) {
-		timeStep++;
 		addNewSound(context);
+		timeStep++;
 		deleteSounds();
-		checkDouble(context);
 	}
 	
 	private void addNewSound(TreeContext context){
@@ -42,19 +41,13 @@ public class DoubleHearing extends LeafTask<TreeContext>{
 					alreadyIn = true;
 				}
 			}
-			
 			if(!alreadyIn){
 				add(newSound);
 			}
 		}
 	}
 	
-	private void checkDouble(TreeContext context){
-		List<Vector2> potSecSounds = context.getBehaviorContext().getSoundDirections();
-		for(Vector2 secSound : potSecSounds){
-			
-		}
-	}
+	
 	
 	private void deleteSounds(){
 		for(int c=0; c<recentSounds.size(); c++){
