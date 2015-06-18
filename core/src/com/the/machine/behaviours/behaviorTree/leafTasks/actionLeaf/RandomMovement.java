@@ -25,6 +25,7 @@ public class RandomMovement extends LeafTask<TreeContext>{
 
 	@Override
 	public void run(TreeContext context) {
+		System.out.println("Hello");
 		if(time == 0){
 			context.setTargetRelativeDirection(randomMove);
 			super.success();
