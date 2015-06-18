@@ -10,6 +10,7 @@ import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
+import com.the.machine.systems.VisionSystem;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -232,22 +233,23 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     private Vector2 getNearestAreaOfType(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
-        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
-        DiscreteMapComponent.MapCell nearestArea = null;
+//        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
+        List<VisionSystem.EnvironmentVisual> environmentVisuals = context.getVision();
+        VisionSystem.EnvironmentVisual nearestVisual = null;
         float distanceToNearestArea = Float.MAX_VALUE;
         TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
 
-        for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
-            if (visibleArea.getType() == areaType) {
-                float distanceToArea = visibleArea.getPosition().dst2(transformComponent.get2DPosition());
+        for (VisionSystem.EnvironmentVisual environmentVisual : environmentVisuals) {
+            if (environmentVisual.getType() == areaType) {
+                float distanceToArea = environmentVisual.getDelta().len();
                 if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
                     distanceToNearestArea = distanceToArea;
-                    nearestArea = visibleArea;
+                    nearestVisual = environmentVisual;
                     System.out.println("Found area of type " + areaType);
                 }
             }
         }
-        return nearestArea == null ? null : nearestArea.getPosition();
+        return nearestVisual == null ? null : nearestVisual.getDelta();
     }
 
 
@@ -290,22 +292,23 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float nearestCollisionDistance = state.edgeOfSomethingPosition == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.edgeOfSomethingPosition);
         float nearestTargetAreaDistance = state.nearestTargetAreaSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOther(state, state.nearestTargetAreaSeen);
 
-        for (DiscreteMapComponent.MapCell cell : context.getVision()) {
-            float distanceToCell = distanceBetweenAgentAndOther(state, cell.getPosition());
+        for (VisionSystem.EnvironmentVisual environmentVisual : context.getVision()) {
+            AreaComponent.AreaType areaType = environmentVisual.getType();
+            float distanceToCell = environmentVisual.getDelta().len();
 
             // Collidables // TODO create own check whether a structure is collidable
-            if (cell.getType().isStructure()) {
+            if (areaType.isStructure()) {
                 if (Math.min(distanceToCell, nearestCollisionDistance) == distanceToCell) {
                     nearestCollisionDistance = distanceToCell;
-                    state.edgeOfSomethingPosition = cell.getPosition();
+                    state.edgeOfSomethingPosition = environmentVisual.getDelta();
                 }
             }
 
             // Target area
-            if (cell.getType() == AreaComponent.AreaType.TARGET) {
+            if (areaType == AreaComponent.AreaType.TARGET) {
                 if (Math.min(distanceToCell, nearestTargetAreaDistance) == distanceToCell) {
                     nearestTargetAreaDistance = distanceToCell;
-                    state.nearestTargetAreaSeen = cell.getPosition();
+                    state.nearestTargetAreaSeen = environmentVisual.getDelta();
                 }
             }
         }
