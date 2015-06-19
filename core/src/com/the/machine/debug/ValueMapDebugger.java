@@ -24,24 +24,28 @@ public class ValueMapDebugger
 
 	private static final float SCALE = 3;
 	private static Thread active;
-	private static ValueMapDebugger window;
-	private static DebugPanel debugPanel;
+	private static ValueMapDebugger[] windows= new ValueMapDebugger[10];
+	private static DebugPanel[] debugPanels = new DebugPanel[10];
 
-	private ValueMapDebugger(float[][] valuemap) {
+	private ValueMapDebugger(float[][] valuemap, int index) {
 		Insets insets = getInsets();
 		this.setBounds(0, 0, (int) (valuemap.length * SCALE) + insets.left + insets.right, (int) (valuemap[0].length * SCALE) + insets.top + insets.bottom);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setTitle("Mapper Debugger");
-		debugPanel = new DebugPanel(valuemap, SCALE);
+		DebugPanel debugPanel = new DebugPanel(valuemap, SCALE);
 		this.setContentPane(debugPanel);
+		debugPanels[index] = debugPanel;
 		this.setVisible(true);
 	}
 
-	public static void debug(float[][] valuemap, List<Vector2> points) {
+	public static void debug(float[][] valuemap, List<Vector2> points, int index) {
+		ValueMapDebugger window = windows[index];
 		if (window == null) {
-			window = new ValueMapDebugger(valuemap);
+			window = new ValueMapDebugger(valuemap, index);
+			windows[index] = window;
 		}
 		Insets insets = window.getInsets();
+		DebugPanel debugPanel = debugPanels[index];
 		debugPanel.valuemap = valuemap;
 		debugPanel.points = points;
 		window.setBounds(window.getX(), window.getY(), insets.left + insets.right + (int) (valuemap.length * SCALE), insets.top + insets.bottom + (int) (valuemap[0].length * SCALE));
@@ -90,10 +94,12 @@ public class ValueMapDebugger
 					g2.fill(pixel);
 				}
 			}
-			for (Vector2 point : points) {
-				g2.setColor(Color.white);
-				pixel.setRect(point.x * scale, (height - 1 - point.y) * scale, 1 * scale, 1 * scale);
-				g2.fill(pixel);
+			if (points != null) {
+				for (Vector2 point : points) {
+					g2.setColor(Color.white);
+					pixel.setRect(point.x * scale, (height - 1 - point.y) * scale, 1 * scale, 1 * scale);
+					g2.fill(pixel);
+				}
 			}
 		}
 

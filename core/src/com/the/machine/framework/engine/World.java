@@ -83,7 +83,7 @@ public class World implements ApplicationListener, InputProcessor {
 
 	private Rectangle worldBounds;
 
-	private WorldState worldState;
+	@Getter private WorldState worldState;
 
 	private byte[] loadedData;
 	private Scene activeScene;

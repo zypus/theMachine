@@ -202,7 +202,11 @@ public class MapCoverBehaviour
 			}
 		}
 
-		ValueMapDebugger.debug(valueMap, points);
+		ValueMapDebugger.debug(valueMap, points, 0);
+		ValueMapDebugger.debug(currentSituation, null, 1);
+		ValueMapDebugger.debug(direction, null, 2);
+		ValueMapDebugger.debug(reachable, null, 3);
+		ValueMapDebugger.debug(thickWalkable, null, 4);
 
 		if (path == null || path.getCount() <= 1) {
 			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
