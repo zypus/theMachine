@@ -53,7 +53,7 @@ import java.lang.ref.WeakReference;
 public class IntruderSpawnSystem
 		extends IntervalSystem {
 
-	private static final int INTRUDER_COUNT = 2;
+	private static final int INTRUDER_COUNT = 1;
 
 	transient private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
 	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);

@@ -478,9 +478,9 @@ public class MapSystem
 				newAgent.add(sightComponent);
 				newAgent.add(new ListenerComponent());
 				newAgent.add(new NameComponent().setName("Agent"));
-				
-				
-				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior()));
+
+
+				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.GUARD, newAgent)));
 				//TODO: Add Working Behaviour
 				
 				
