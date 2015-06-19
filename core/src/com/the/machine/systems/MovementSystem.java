@@ -11,7 +11,6 @@ import com.the.machine.components.VelocityComponent;
 import com.the.machine.framework.IteratingSystem;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.framework.components.physics.Physics2dComponent;
-import com.the.machine.framework.engine.WorldState;
 import lombok.EqualsAndHashCode;
 
 /**
@@ -55,7 +54,7 @@ public class MovementSystem
                                                                 .getLinearVelocity()
                                                                 .len() * 10);
             }
-            if (world.getWorldState() == WorldState.PAUSED) {
+            if (!world.getSystem(BehaviourSystem.class).checkProcessing()) {
                 physics2dComponent.getBody()
                                   .setLinearVelocity(new Vector2(0,0));
             }
