@@ -22,7 +22,7 @@ public enum SubTrees {
 	//Pathfinds towards destination
 	PATHFINDING(new Sequence<TreeContext>(new PathfindingLeaf(), new WaitTurnMove(20), new MoveUntilLeaf(50))),
 	//Chases an intruder provided that it either hears or preferably sees him
-	DIRECT_VISIBLE_CHASE(new Sequence<TreeContext>(new Selector<TreeContext>(new TargetAgentLeaf()/*, new HearingLeaf()*/), new TurnToTargetLocationLeaf(200), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(50))));
+	DIRECT_VISIBLE_CHASE(new Sequence<TreeContext>(new Selector<TreeContext>(new TargetAgentLeaf(), new HearingLeaf()), new TurnToTargetLocationLeaf(200), new ResLeaf(ActionSystem.Action.MOVE, new ActionSystem.MoveData(50))));
 	
 	private Task<TreeContext> subtree;
 

@@ -16,6 +16,7 @@ import com.the.machine.behaviours.RandomBehaviour;
 import com.the.machine.behaviours.RandomBehaviour.RandomBehaviourState;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior.TreeBehaviorState;
 import com.the.machine.behaviours.behaviorTree.leafTasks.TestLeafTimer;
+import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.MapCoverLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.MoveUntilLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.OpenDoorLeaf;
 import com.the.machine.behaviours.behaviorTree.leafTasks.actionLeaf.PathfindingLeaf;
@@ -61,7 +62,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray(new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray(new Task[list2.size()]));
 		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray(new Task[list3.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), SubTrees.DIRECT_VISIBLE_CHASE.getSubtree());
+		Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf());
 		
 		
 		tree.addChild(seq);
