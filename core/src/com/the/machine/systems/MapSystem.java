@@ -16,7 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
-import com.the.machine.behaviours.MapCoverBehaviour;
+import com.the.machine.behaviours.behaviorTree.TreeBehavior;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AngularVelocityComponent;
@@ -475,8 +475,8 @@ public class MapSystem
 				newAgent.add(new NameComponent().setName("Agent"));
 
 
-//				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior()));
-				newAgent.add(new BehaviourComponent<MapCoverBehaviour.MapCoverBehaviourState>().setBehaviour(new MapCoverBehaviour()));
+				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior()));
+//				newAgent.add(new BehaviourComponent<MapCoverBehaviour.MapCoverBehaviourState>().setBehaviour(new MapCoverBehaviour()));
 				//TODO: Add Working Behaviour
 
 
