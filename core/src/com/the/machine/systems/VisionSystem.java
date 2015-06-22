@@ -152,18 +152,20 @@ public class VisionSystem
 				max *= max;
 				float angle = visionComponent.getAngle();
 				for (Entity aEntity : agentEntities) {
-					TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
-					TransformComponent atf = EntityUtilities.computeAbsoluteTransform(aEntity);
-					AgentComponent aComponent = agents.get(aEntity);
-					float rotation = normAngle(tf.getZRotation());
-					Vector2 delta = atf.get2DPosition()
-									   .cpy()
-									   .sub(tf.get2DPosition());
-					float dst2 = delta.len2();
-					float deltaAngle = normAngle(delta.angle());
-					if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
-						if (aComponent.getEnvironmentType() != COVER || dst2 <= max / 4) {
-							visibleAgents.add(new WeakReference<>(aEntity));
+					if (aEntity.getId() != agent.getId()) {
+						TransformComponent tf = EntityUtilities.computeAbsoluteTransform(agent);
+						TransformComponent atf = EntityUtilities.computeAbsoluteTransform(aEntity);
+						AgentComponent aComponent = agents.get(aEntity);
+						float rotation = normAngle(tf.getZRotation());
+						Vector2 delta = atf.get2DPosition()
+										   .cpy()
+										   .sub(tf.get2DPosition());
+						float dst2 = delta.len2();
+						float deltaAngle = normAngle(delta.angle());
+						if (dst2 <= max && dst2 >= min && Math.abs(rotation - deltaAngle) < (angle / 2)) {
+							if (aComponent.getEnvironmentType() != COVER || dst2 <= max / 4) {
+								visibleAgents.add(new WeakReference<>(aEntity));
+							}
 						}
 					}
 				}

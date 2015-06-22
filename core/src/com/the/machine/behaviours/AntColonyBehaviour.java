@@ -5,7 +5,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
-import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
@@ -77,7 +76,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                     moveAwayFrom(responses, state, state.absoluteNearestGuardSeen);
                 }
                 else if (canMoveTowards(state.relativeEdgeOfSomethingPosition)) {
-                    rotateTowards(responses, new Vector2(state.relativeEdgeOfSomethingPosition).scl(-1));
+                    rotateTowards(responses, new Vector2(state.relativeEdgeOfSomethingPosition).cpy().scl(-1));
                 }
                 else if (canMoveTowards(getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen))) {
                     moveAwayFrom(responses, state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen));   // Move away from positions where other intruders have noticed guards
@@ -87,7 +86,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                 }
                 else {
                     Vector2 currentDirection = context.getMoveDirection();
-                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
+                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).cpy().scl(100);
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
                             new ActionSystem.TurnData(randomDirection, 30f)));
@@ -265,7 +264,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
             String otherAgentName = otherAgent.getComponent(NameComponent.class).getName();
             TransformComponent otherAgentTransform = otherAgent.getComponent(TransformComponent.class);
-            Vector2 absoluteOtherAgentPosition = otherAgentTransform.get2DPosition();
+            Vector2 absoluteOtherAgentPosition = otherAgentTransform.get2DPosition().cpy();
             float newDistance = distanceBetweenAgentAndOtherAbsolute(state, absoluteOtherAgentPosition);
 
             if (otherAgentName.equals("Intruder")) {
@@ -319,7 +318,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
                 // If the marker still exists
                 if (transformOfMarker != null) {
-                    Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition();
+                    Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition().cpy();
                     Integer markerType = marker.flags;
                     if (markerType == null) {
                         System.err.println("markerType is null");
@@ -351,7 +350,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     private static Vector2 relativePositionOf(AntColonyBehaviourState state, Vector2 otherAbsolute) {
         try {
             TransformComponent transform = state.agent.getComponent(TransformComponent.class);
-            return new Vector2(otherAbsolute).sub(transform.get2DPosition());
+            return new Vector2(otherAbsolute.cpy()).sub(transform.get2DPosition().cpy());
         } catch(Exception e) { return null; }
     }
 
@@ -386,6 +385,6 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     private void moveAwayFrom(List<BehaviourComponent.BehaviourResponse> responses, AntColonyBehaviourState state, Vector2 antiGoal) {
-        rotateTowards(responses, new Vector2(relativePositionOf(state, antiGoal)).scl(-1));
+        rotateTowards(responses, new Vector2(relativePositionOf(state, antiGoal)).cpy().scl(-1));
     }
 }
