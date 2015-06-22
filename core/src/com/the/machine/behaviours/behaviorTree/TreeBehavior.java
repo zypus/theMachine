@@ -28,35 +28,55 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	//TODO: Do this properly!!!
 	private static Blackboard blackboard = new Blackboard();
 
-	public TreeBehavior(){
-		int time = 5;
-		float speed = 50;
-		this.tree = new BehaviorTree<TreeContext>();
-		List<Task<TreeContext>> list = new ArrayList<>();
+	public TreeBehavior(boolean isGuard){
+		if(isGuard){
+			int time = 5;
+			float speed = 50;
+			this.tree = new BehaviorTree<TreeContext>();
+			List<Task<TreeContext>> list = new ArrayList<>();
 
-		list.add(new PathfindingLeaf());
-		list.add(new WaitTurnMove(20));
-		list.add(new MoveUntilLeaf(50));
+			list.add(new PathfindingLeaf());
+			list.add(new WaitTurnMove(20));
+			list.add(new MoveUntilLeaf(50));
 
-		List<Task<TreeContext>> list2 = new ArrayList<>();
+			List<Task<TreeContext>> list2 = new ArrayList<>();
 
-		list2.add(new Invert(new WaitTurnMove(20)));
+			list2.add(new Invert(new WaitTurnMove(20)));
 
-		List<Task<TreeContext>> list3 = new ArrayList<>();
+			List<Task<TreeContext>> list3 = new ArrayList<>();
 
+			
+			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf()));
 
+			tree.addChild(seq);
+			TreeContext treeContext = new TreeContext();
+			treeContext.setBlackboard(blackboard);
+			tree.setObject(treeContext);
+		}
+		else{
+			int time = 5;
+			float speed = 50;
+			this.tree = new BehaviorTree<TreeContext>();
+			List<Task<TreeContext>> list = new ArrayList<>();
 
+			list.add(new PathfindingLeaf());
+			list.add(new WaitTurnMove(20));
+			list.add(new MoveUntilLeaf(50));
 
-		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray(new Task[list.size()]));
-		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray(new Task[list2.size()]));
-		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray(new Task[list3.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf()));
+			List<Task<TreeContext>> list2 = new ArrayList<>();
 
+			list2.add(new Invert(new WaitTurnMove(20)));
 
-		tree.addChild(seq);
-		TreeContext treeContext = new TreeContext();
-		treeContext.setBlackboard(blackboard);
-		tree.setObject(treeContext);
+			List<Task<TreeContext>> list3 = new ArrayList<>();
+			
+			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_FLEE.getSubtree(), SubTrees.GO_TO_TARGET.getSubtree(), new MapCoverLeaf()));
+			
+			tree.addChild(seq);
+			TreeContext treeContext = new TreeContext();
+			treeContext.setBlackboard(blackboard);
+			tree.setObject(treeContext);
+		}
+		
 	}
 
 	@Override

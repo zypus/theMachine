@@ -475,7 +475,7 @@ public class MapSystem
 				newAgent.add(new NameComponent().setName("Agent"));
 
 
-				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior()));
+				newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior(true)));
 //				newAgent.add(new BehaviourComponent<MapCoverBehaviour.MapCoverBehaviourState>().setBehaviour(new MapCoverBehaviour()));
 				//TODO: Add Working Behaviour
 
