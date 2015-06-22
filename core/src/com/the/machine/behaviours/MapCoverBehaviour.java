@@ -7,7 +7,6 @@ import com.the.machine.Constants;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
-import com.the.machine.debug.ValueMapDebugger;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.framework.utility.pathfinding.Vector2i;
 import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledNode;
@@ -36,9 +35,10 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
 public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
-	static final float ALPHA = 0.7f;
-	static final float BETA = 0.04f;
-	static final float GAMMA = 0.15f;
+	static final float ALPHA = 1f;
+	static final float BETA = 0.7f;
+	static final float GAMMA = 0.04f;
+	static final float DELTA = 0.15f;
 
 	static final float DELTA_TIME = 20;
 
@@ -168,7 +168,7 @@ public class MapCoverBehaviour
 				if (thickWalkable[x][y] == -1 || walkable[x][y] == -1) {
 					valueMap[x][y] = -1;
 				} else {
-					valueMap[x][y] = walkable[x][y] * (currentSituation[x][y] + ALPHA * futureSituation[x][y] + BETA * direction[x][y] + GAMMA * reachable[x][y]);
+					valueMap[x][y] = walkable[x][y] * (ALPHA * currentSituation[x][y] + BETA * futureSituation[x][y] + GAMMA * direction[x][y] + DELTA * reachable[x][y]);
 					Vector2i goal = new Vector2i(x, y);
 					if (valueMap[x][y] > max) {
 						max = valueMap[x][y];
@@ -202,7 +202,7 @@ public class MapCoverBehaviour
 			}
 		}
 
-		ValueMapDebugger.debug(valueMap, points, 0);
+//		ValueMapDebugger.debug(valueMap, points, 0);
 //		ValueMapDebugger.debug(currentSituation, null, 1);
 //		ValueMapDebugger.debug(direction, null, 2);
 //		ValueMapDebugger.debug(reachable, null, 3);
@@ -587,7 +587,7 @@ public class MapCoverBehaviour
 		}
 		int width = maxX - minX;
 		int height = maxY - minY;
-		Vector2 offset = new Vector2(width / 2, height / 2);
+		Vector2 offset = new Vector2(-minX, -minY);
 		AreaComponent.AreaType[][] area = new AreaComponent.AreaType[width][height];
 		// clear the whole area, with the target type for now
 		for (int i = 0; i < width; i++) {

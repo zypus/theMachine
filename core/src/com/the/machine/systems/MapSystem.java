@@ -16,7 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
-import com.the.machine.behaviours.AntColonyBehaviour;
+import com.the.machine.behaviours.MapCoverBehaviour;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AgentSightComponent;
 import com.the.machine.components.AngularVelocityComponent;
@@ -96,6 +96,7 @@ public class MapSystem
 	transient private ComponentMapper<SprintComponent>       sprints          = ComponentMapper.getFor(SprintComponent.class);
 	transient private ComponentMapper<AgentComponent>        agents           = ComponentMapper.getFor(AgentComponent.class);
 	transient private ComponentMapper<Light2dComponent>      lights           = ComponentMapper.getFor(Light2dComponent.class);
+	transient private ComponentMapper<ShapeRenderComponent>      shapes           = ComponentMapper.getFor(ShapeRenderComponent.class);
 
 	transient private final double DOUBLE_TAP_TIME = 0.3f;
 	transient private       double lastTap         = -2 * DOUBLE_TAP_TIME;
@@ -328,9 +329,12 @@ public class MapSystem
 						agents.get(entity)
 							  .setBaseViewingDistance(6f);
 						lights.get(entity)
-							  .setColor(Color.WHITE);
+							  .setColor(Color.GREEN);
 						spriteRenderComponent
-								.setTint(Color.WHITE);
+								.setTint(Color.GREEN);
+						VisionRangeDebugSystem.VisionRangeDebug debug = ((VisionRangeDebugSystem.VisionRangeDebug) shapes.get(entity).getShapes()
+																					.get(0));
+						debug.setColor(Color.GREEN);
 
 					} else {
 						entity.add(new SprintComponent());
@@ -339,6 +343,10 @@ public class MapSystem
 						lights.get(entity)
 							  .setColor(Color.RED);
 						spriteRenderComponent.setTint(Color.RED);
+						VisionRangeDebugSystem.VisionRangeDebug debug = ((VisionRangeDebugSystem.VisionRangeDebug) shapes.get(entity)
+																														 .getShapes()
+																														 .get(0));
+						debug.setColor(Color.RED);
 					}
 					// TODO agent / intruder
 				}
@@ -443,7 +451,7 @@ public class MapSystem
 														  .s(1)
 														  .get()));
 				newAgent.add(new SpriteRenderComponent().setTextureRegion(Asset.fetch("agent", TextureRegion.class))
-														.setSortingLayer("Default").setSortingOrder(2));
+														.setSortingLayer("Default").setSortingOrder(2).setTint(Color.GREEN));
 				newAgent.add(new Physics2dComponent().setType(BodyDef.BodyType.DynamicBody));
 
 				Filter filter = new Filter();
@@ -463,9 +471,10 @@ public class MapSystem
 				newAgent.add(new Light2dComponent().setType(Light2dComponent.LightType.CONE)
 												   .setAngle(45)
 												   .setFilter(lightFilter)
-												   .setDistance(6.5f));
+												   .setDistance(6.5f)
+				.setColor(Color.GREEN));
 				newAgent.add(new VisionComponent());
-				newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(0, 6.5f, 45, 10, 18)));
+				newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(Color.GREEN, 0, 6.5f, 45, 10, 18)));
 				AgentSightComponent sightComponent = new AgentSightComponent();
 				sightComponent.setDegreesOfSight(45);
 				sightComponent.setMaximumSightDistance(6.5f);
@@ -474,8 +483,8 @@ public class MapSystem
 				newAgent.add(new ListenerComponent());
 				newAgent.add(new NameComponent().setName("Agent"));
 
-
-				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.GUARD, newAgent)));
+				newAgent.add(new BehaviourComponent<MapCoverBehaviour.MapCoverBehaviourState>().setBehaviour(new MapCoverBehaviour()));
+//				newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.GUARD, newAgent)));
 				//TODO: Add Working Behaviour
 
 
