@@ -72,7 +72,7 @@ public class MapCoverBehaviour
 //			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
 
-			startPos = context.getPlacebo().getPos().cpy();
+			startPos = new Vector2(0,0);
 			mapper.init(context.getPlacebo().getPos(), context.getMoveDirection());
 //			MapperDebugWindow.debug(mapper, 1f);
 		}
@@ -202,11 +202,11 @@ public class MapCoverBehaviour
 			}
 		}
 
-//		ValueMapDebugger.debug(valueMap, points, 0);
+		ValueMapDebugger.debug(valueMap, points, 0);
 //		ValueMapDebugger.debug(currentSituation, null, 1);
 //		ValueMapDebugger.debug(direction, null, 2);
 //		ValueMapDebugger.debug(reachable, null, 3);
-		ValueMapDebugger.debug(thickWalkable, null, 4);
+//		ValueMapDebugger.debug(thickWalkable, null, 4);
 
 		if (path == null || path.getCount() <= 1) {
 			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
