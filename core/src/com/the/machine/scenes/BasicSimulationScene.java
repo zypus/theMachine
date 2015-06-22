@@ -44,10 +44,6 @@ public class BasicSimulationScene implements SceneBuilder {
         createCamera(world);
         createGround(world);
 
-        // Create the guards
-        //createGuard(world, "guard1");
-        //createGuard(world, "guard2");
-
         for (int i = 0; i < 2; i++)
             createGuard(world, "guard3");
 
