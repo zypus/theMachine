@@ -719,7 +719,7 @@ public class MapEditorSceneBuilder
 	public static void toggleSimulationSystems(World world, boolean enabled) {
 		world.setSystemStatus(DelayedRemovalSystem.class, enabled);
 		world.setSystemStatus(GrowthSystem.class, enabled);
-		world.setSystemStatus(MovementSystem.class, enabled);
+//		world.setSystemStatus(MovementSystem.class, enabled);
 		world.setSystemStatus(RandomNoiseSystem.class, enabled);
 		world.setSystemStatus(RotationSystem.class, enabled);
 		world.setSystemStatus(BehaviourSystem.class, enabled);

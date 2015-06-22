@@ -202,7 +202,11 @@ public class MapCoverBehaviour
 			}
 		}
 
-		ValueMapDebugger.debug(valueMap, points);
+//		ValueMapDebugger.debug(valueMap, points, 0);
+//		ValueMapDebugger.debug(currentSituation, null, 1);
+//		ValueMapDebugger.debug(direction, null, 2);
+//		ValueMapDebugger.debug(reachable, null, 3);
+//		ValueMapDebugger.debug(thickWalkable, null, 4);
 
 		if (path == null || path.getCount() <= 1) {
 			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
@@ -675,7 +679,7 @@ public class MapCoverBehaviour
 			x = (int) vector2.x;
 			y = (int) vector2.y;
 			// if this spot is a target area, mark it as visited
-			if (area[x][y] == 1 || first) {
+			if (Utils.isInbound(x, y, 0, 0, area.length - 1, area[0].length) && area[x][y] == 1 || first) {
 				area[x][y] = 0.9f;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {
@@ -696,7 +700,7 @@ public class MapCoverBehaviour
 			x = (int) pair.getKey().x;
 			y = (int) pair.getKey().y;
 			// if this spot is a target area, mark it as visited
-			if (area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
+			if (Utils.isInbound(x,y,0,0,area.length-1, area[0].length) && area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
 				output[x][y] = pair.getValue()+1;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {
