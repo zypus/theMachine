@@ -103,14 +103,14 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             if (state.agentType == AgentType.INTRUDER) {
                 if (state.absoluteNearestGuardSeen != null)
                     addMarker(1, 0.2f, responses);  // Add a marker of type 1
-                else
-                    addMarker(0, 0.2f, responses);
+//                if (state.absoluteNearestGuardSeen == null)
+//                    addMarker(0, 0.2f, responses);
             }
             else if (state.agentType == AgentType.GUARD) {
                 if (state.absoluteNearestIntruderSeen != null)
                     addMarker(1, 0.2f, responses);
-                else
-                    addMarker(0, 0.2f, responses);
+//                if (state.absoluteNearestIntruderSeen == null)
+//                    addMarker(0, 0.2f, responses);
             }
         }
 
