@@ -12,7 +12,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
-import com.the.machine.behaviours.AntColonyBehaviour;
+import com.the.machine.behaviours.behaviorTree.TreeBehavior;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AngularVelocityComponent;
 import com.the.machine.components.AreaComponent;
@@ -53,7 +53,7 @@ import java.lang.ref.WeakReference;
 public class IntruderSpawnSystem
 		extends IntervalSystem {
 
-	private static final int INTRUDER_COUNT = 3;
+	private static final int INTRUDER_COUNT = 0;
 
 	transient private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
 	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
@@ -153,7 +153,8 @@ public class IntruderSpawnSystem
 		newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(0, 7.5f, 45, 10, 18)));
 		newAgent.add(new ListenerComponent());
 		newAgent.add(new NameComponent().setName("Intruder"));
-		newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.INTRUDER, newAgent)));
+//		newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.INTRUDER, newAgent)));
+		newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior(true)));
 		newAgent.add(new VelocityComponent());
 		newAgent.add(new AngularVelocityComponent());
 		newAgent.add(new AgentComponent().setBaseViewingDistance(7.5f));

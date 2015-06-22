@@ -206,7 +206,7 @@ public class MapCoverBehaviour
 //		ValueMapDebugger.debug(currentSituation, null, 1);
 //		ValueMapDebugger.debug(direction, null, 2);
 //		ValueMapDebugger.debug(reachable, null, 3);
-//		ValueMapDebugger.debug(thickWalkable, null, 4);
+		ValueMapDebugger.debug(thickWalkable, null, 4);
 
 		if (path == null || path.getCount() <= 1) {
 			return new Vector2(MathUtils.random(-1,1),MathUtils.random(-1,1));
@@ -372,12 +372,15 @@ public class MapCoverBehaviour
 			}
 		}
 		Vector2 currentPos = mapper.absolutePos(startPos);
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1) && valueMap[((int) currentPos.x)][((int) currentPos.y)] == -1) {
+			currentPos = mapper.absolutePos(mapper.getCurrentPosition());
+		}
 		List<Vector2> next = new ArrayList<>();
 		next.add(currentPos);
-		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1)) {
 			floodFill(valueMap, next, true);
 		}
-		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1)) {
 			floodFill(valueMap, next);
 		}
 		for (int x = 0; x < mapper.getWidth(); x++) {
@@ -431,9 +434,12 @@ public class MapCoverBehaviour
 			}
 		}
 				Vector2 currentPos = mapper.absolutePos(startPos);
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1) && valueMap[((int) currentPos.x)][((int) currentPos.y)] == -1) {
+			currentPos = mapper.absolutePos(mapper.getCurrentPosition());
+		}
 				List<Vector2> next = new ArrayList<>();
 				next.add(currentPos);
-				while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+				while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1)) {
 					floodFill(valueMap, next);
 				}
 				for (int x = 0; x < mapper.getWidth(); x++) {
@@ -679,7 +685,7 @@ public class MapCoverBehaviour
 			x = (int) vector2.x;
 			y = (int) vector2.y;
 			// if this spot is a target area, mark it as visited
-			if (Utils.isInbound(x, y, 0, 0, area.length - 1, area[0].length) && area[x][y] == 1 || first) {
+			if (Utils.isInbound(x, y, 0, 0, area.length - 1, area[0].length-1) && (area[x][y] == 1 || first)) {
 				area[x][y] = 0.9f;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {
@@ -700,7 +706,7 @@ public class MapCoverBehaviour
 			x = (int) pair.getKey().x;
 			y = (int) pair.getKey().y;
 			// if this spot is a target area, mark it as visited
-			if (Utils.isInbound(x,y,0,0,area.length-1, area[0].length) && area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
+			if (Utils.isInbound(x,y,0,0,area.length-1, area[0].length-1) && area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
 				output[x][y] = pair.getValue()+1;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {

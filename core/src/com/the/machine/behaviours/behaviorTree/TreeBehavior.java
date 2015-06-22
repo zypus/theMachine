@@ -28,7 +28,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 	//TODO: Do this properly!!!
 	private static Blackboard blackboard = new Blackboard();
 
-	public TreeBehavior(){
+	public TreeBehavior(boolean intruder){
 		int time = 5;
 		float speed = 50;
 		this.tree = new BehaviorTree<TreeContext>();
@@ -50,8 +50,12 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		Task<TreeContext> normal = new Sequence<TreeContext>(list.toArray(new Task[list.size()]));
 		Task<TreeContext> sound = new Sequence<TreeContext>(list2.toArray(new Task[list2.size()]));
 		Task<TreeContext> felix = new Sequence<TreeContext>(list2.toArray(new Task[list3.size()]));
-		Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf()));
-
+		Task<TreeContext> seq;
+		if (intruder) {
+			seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new MapCoverLeaf());
+		} else {
+			seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf()));
+		}
 
 		tree.addChild(seq);
 		TreeContext treeContext = new TreeContext();

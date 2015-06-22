@@ -194,6 +194,9 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         Vector2 nearestNoisePosition = null;
         // If no agent can be seen, listen if there is a sound
         for (Vector2 noiseLocation : context.getSoundDirections()) {
+            noiseLocation = noiseLocation.cpy();
+            noiseLocation.rotate(-transformComponent.getZRotation());
+            noiseLocation.add(transformComponent.get2DPosition());
             float distanceWithThisNoise = noiseLocation.dst2(transformComponent.get2DPosition());
             if (distanceWithThisNoise == Math.min(distanceWithNearestAgent, distanceWithThisNoise)) {
                 distanceWithNearestAgent = distanceWithThisNoise;

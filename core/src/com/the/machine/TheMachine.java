@@ -74,6 +74,7 @@ public class TheMachine extends ApplicationAdapter {
 	@Override
 	public void render () {
 		if (testMode) {
+			world.setFixedDelta(0.1f);
 			while (true) {
 				world.render();
 				if (!loaded) {
