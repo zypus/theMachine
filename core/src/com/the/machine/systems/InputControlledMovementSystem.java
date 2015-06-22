@@ -35,6 +35,7 @@ public class InputControlledMovementSystem extends IteratingSystem implements Ev
 		if (event instanceof KeyDownEvent || event instanceof KeyUpEvent) {
 			int keycode = (event instanceof  KeyDownEvent) ? ((KeyDownEvent) event).getKeycode() : ((KeyUpEvent) event).getKeycode();
 			int dir = (event instanceof KeyDownEvent) ? 100: -100;
+			dir /= world.getTimeFlow();
 			ImmutableArray<Entity> entities = getEntities();
 			for (Entity entity : entities) {
 				ControlComponent controlComponent = controls.get(entity);

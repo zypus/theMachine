@@ -16,14 +16,25 @@ import com.the.machine.systems.ActionSystem;
 /** This Class Contains All The Context Which Is Used For Operations Concerning Behavior Trees */
 public class TreeContext {
 	
+	private static int ID_COUNTER = 0;
+	
+	/** Id Of The Tree Context And Therefore The Agent */
+	private int id;
+	
 	/** Whether this has been inited */
 	private boolean inited;
 	
 	/** The Actual Behavior Context */
 	private BehaviourContext behaviorContext;
 	
+	/** Reference to the Balckboard */
+	private Blackboard blackboard;
+	
 	/** Target Location Can Be Declared To Then later be used */
-	private Vector2 targetLocation;
+	private Vector2 targetRelativeDirection;
+	
+	/** Target Location Used for the Pathfinding to declare its goal */
+	private Vector2 destination;
 	
 	/** List Storing All Responses To Be Taken This Iteration */
 	private List<BehaviourResponse> responseList;
@@ -36,6 +47,8 @@ public class TreeContext {
 	public TreeContext(){
 		this.responseList = new ArrayList<BehaviourResponse>();
 		this.inited = false;
+		this.id = ID_COUNTER;
+		ID_COUNTER++;
 	}
 	
 	
@@ -68,7 +81,12 @@ public class TreeContext {
 		this.responseList.clear();
 	}
 	
-	/** Updates everything in the tree context that needs updateing */
+	/** Whether this Agent is currently turning */
+	public boolean isCurrentlyTurning(){
+		return Math.abs(this.behaviorContext.getCurrentTurningSpeed())>0;//!(this.getTargetLocation()==null || Math.abs(this.getTargetLocation().angle()-this.getBehaviorContext().getMoveDirection().angle())<1);
+	}
+	
+	/** Updates everything in the tree context that needs updating */
 	public void update(){
 		
 	}

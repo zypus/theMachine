@@ -289,13 +289,13 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float nearestTargetAreaDistance = state.relativeNearestTargetAreaSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherRelative(state.relativeNearestTargetAreaSeen);
 
         for (DiscreteMapComponent.MapCell cell : context.getVision()) {
-            float distanceToCell = distanceBetweenAgentAndOtherRelative(cell.getPosition());
+            float distanceToCell = distanceBetweenAgentAndOther(state, cell.getPosition());
 
             // Collidables // TODO create own check whether a structure is collidable
             if (cell.getType().isStructure()) {
                 if (Math.min(distanceToCell, nearestCollisionDistance) == distanceToCell) {
                     nearestCollisionDistance = distanceToCell;
-                    state.relativeEdgeOfSomethingPosition = cell.getPosition();
+                    state.edgeOfSomethingPosition = cell.getPosition();
                 }
             }
 
@@ -303,7 +303,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             if (cell.getType() == AreaComponent.AreaType.TARGET) {
                 if (Math.min(distanceToCell, nearestTargetAreaDistance) == distanceToCell) {
                     nearestTargetAreaDistance = distanceToCell;
-                    state.relativeNearestTargetAreaSeen = cell.getPosition();
+                    state.nearestTargetAreaSeen = cell.getPosition();
                 }
             }
         }
@@ -359,10 +359,10 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     private void forgetWhatAgentHasSeen(AntColonyBehaviourState state) {
-        state.absoluteNearestGuardSeen = null;
-        state.absoluteNearestIntruderSeen = null;
-        state.relativeNearestTargetAreaSeen = null;
-        state.absoluteMarkerPositionsSeen = new HashMap<>();;
+        state.nearestGuardSeen = null;
+        state.nearestIntruderSeen = null;
+        state.nearestTargetAreaSeen = null;
+        state.markerPositionsSeen = new HashMap<>();;
     }
 
     private boolean isTimeForRotationUpdate(AntColonyBehaviourState state) {

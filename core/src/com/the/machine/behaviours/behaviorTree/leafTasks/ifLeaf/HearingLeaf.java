@@ -15,7 +15,7 @@ public class HearingLeaf extends LeafTask<TreeContext>{
 	public void run(TreeContext context) {
 		List<Vector2> list = context.getBehaviorContext().getSoundDirections();
 		if(!list.isEmpty()){
-			context.setTargetLocation(list.get(0));
+			context.setTargetRelativeDirection(list.get(0));
 			super.success();
 		}
 		else{
