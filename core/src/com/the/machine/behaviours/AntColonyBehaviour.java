@@ -9,6 +9,7 @@ import com.the.machine.components.DiscreteMapComponent;
 import com.the.machine.framework.components.NameComponent;
 import com.the.machine.framework.components.TransformComponent;
 import com.the.machine.systems.ActionSystem;
+import com.the.machine.systems.VisionSystem;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -45,21 +46,19 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         lookAround(state, context); // Update the locations of everything the agent has seen
 
         if (isTimeForRotationUpdate(state)) {
-            forgetWhatAgentHasSeen(state);
-
             if (state.agentType == AgentType.GUARD) {
-                if (canMoveTowards(state.absoluteNearestGuardSeen)) {
-                    moveTowards(responses, state, relativePositionOf(state, state.absoluteNearestIntruderSeen));
+                if (canMoveTowards(state.absoluteNearestIntruderSeen)) {
+                    moveTowards(responses, state, state.absoluteNearestIntruderSeen);
                 }
                 else if (canMoveTowards(getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen))) {
                     // If other guards have seen an intruder, they drop a marker of type 1
-                    moveTowards(responses, state, relativePositionOf(state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen)));
+                    moveTowards(responses, state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen));
                 }
                 else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen))) {
-                    moveTowards(responses, state, relativePositionOf(state, getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen)));
+                    moveTowards(responses, state, getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen));
                 }
                 else if (canMoveTowards(state.relativeEdgeOfSomethingPosition)) {
-                    moveAwayFrom(responses, state, state.relativeEdgeOfSomethingPosition);
+                    rotateTowards(responses, new Vector2(state.relativeEdgeOfSomethingPosition).scl(-1));
                 }
                 else {
                     Vector2 currentDirection = context.getMoveDirection();
@@ -71,20 +70,20 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
             }
             else { // if state.agentType == AgentType.Intruder
                 if (canMoveTowards(state.relativeNearestTargetAreaSeen)) {
-                    moveTowards(responses, state, state.relativeNearestTargetAreaSeen);
+                    rotateTowards(responses, state.relativeNearestTargetAreaSeen);
                 }
                 else if (canMoveTowards(state.absoluteNearestGuardSeen)) {
                     // Turn to the opposite direction
-                    moveAwayFrom(responses, state, relativePositionOf(state, state.absoluteNearestGuardSeen));
+                    moveAwayFrom(responses, state, state.absoluteNearestGuardSeen);
                 }
                 else if (canMoveTowards(state.relativeEdgeOfSomethingPosition)) {
-                    moveAwayFrom(responses, state, state.relativeEdgeOfSomethingPosition);
+                    rotateTowards(responses, new Vector2(state.relativeEdgeOfSomethingPosition).scl(-1));
                 }
                 else if (canMoveTowards(getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen))) {
-                    moveAwayFrom(responses, state, relativePositionOf(state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen)));   // Move away from positions where other intruders have noticed guards
+                    moveAwayFrom(responses, state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen));   // Move away from positions where other intruders have noticed guards
                 }
                 else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen))) {
-                    moveAwayFrom(responses, state, relativePositionOf(state, getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen)));
+                    moveAwayFrom(responses, state, getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen));
                 }
                 else {
                     Vector2 currentDirection = context.getMoveDirection();
@@ -94,6 +93,8 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
                             new ActionSystem.TurnData(randomDirection, 30f)));
                 }
             }
+
+            forgetWhatAgentHasSeen(state);
         }
 
         // Update nextMarkerdropUpdate
@@ -175,7 +176,7 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
         return new AntColonyBehaviour.AntColonyBehaviourState(
                 agentType, agent, 5,            // agentType, agent, agentSpeed
-                null, null, null, null, null,   // Positions of objects that the agent remembered
+                null, null, null, new HashMap<>(), null,   // Positions of objects that the agent remembered
                 0, 0,                           // How much time it takes until the next rotation and marker dropping
                 2f, 2.5f                        // Value to which the timer is reset
         );
@@ -229,23 +230,24 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         return null;
     }
 
-    private Vector2 getNearestAreaOfType(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
-        List<DiscreteMapComponent.MapCell> visibleAreas = context.getVision();
-        DiscreteMapComponent.MapCell nearestArea = null;
+    private Vector2 getRelativePositionNearestAreaOfType(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+        List<VisionSystem.EnvironmentVisual> visibleVisibles = context.getVision();     // I like that name
+        VisionSystem.EnvironmentVisual nearestVisual = null;
         float distanceToNearestArea = Float.MAX_VALUE;
-        TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
 
-        for (DiscreteMapComponent.MapCell visibleArea : visibleAreas ) {
-            if (visibleArea.getType() == areaType) {
-                float distanceToArea = visibleArea.getPosition().dst2(transformComponent.get2DPosition());
+        for (VisionSystem.EnvironmentVisual visibleVisible : visibleVisibles) {
+//            DiscreteMapComponent.MapCell visibleArea = visibleVisibles.get(1).
+            AreaComponent.AreaType visualAreaType = visibleVisible.getType();
+            if (visualAreaType == areaType) {
+                float distanceToArea = visibleVisible.getDelta().len();
                 if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
                     distanceToNearestArea = distanceToArea;
-                    nearestArea = visibleArea;
+                    nearestVisual = visibleVisible;
                     System.out.println("Found area of type " + areaType);
                 }
             }
         }
-        return nearestArea == null ? null : nearestArea.getPosition();
+        return nearestVisual == null ? null : nearestVisual.getDelta();
     }
 
 
@@ -288,22 +290,23 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
         float nearestCollisionDistance = state.relativeEdgeOfSomethingPosition == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherRelative(state.relativeEdgeOfSomethingPosition);
         float nearestTargetAreaDistance = state.relativeNearestTargetAreaSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherRelative(state.relativeNearestTargetAreaSeen);
 
-        for (DiscreteMapComponent.MapCell cell : context.getVision()) {
-            float distanceToCell = distanceBetweenAgentAndOther(state, cell.getPosition());
+        for (VisionSystem.EnvironmentVisual visual : context.getVision()) {
+            float distanceToCell = visual.getDelta().len();
 
             // Collidables // TODO create own check whether a structure is collidable
-            if (cell.getType().isStructure()) {
+            AreaComponent.AreaType areaTypeVisual = visual.getType();
+            if (areaTypeVisual.isStructure() || areaTypeVisual.isWall()) {
                 if (Math.min(distanceToCell, nearestCollisionDistance) == distanceToCell) {
                     nearestCollisionDistance = distanceToCell;
-                    state.edgeOfSomethingPosition = cell.getPosition();
+                    state.relativeEdgeOfSomethingPosition = visual.getDelta();
                 }
             }
 
             // Target area
-            if (cell.getType() == AreaComponent.AreaType.TARGET) {
+            if (areaTypeVisual == AreaComponent.AreaType.TARGET) {
                 if (Math.min(distanceToCell, nearestTargetAreaDistance) == distanceToCell) {
                     nearestTargetAreaDistance = distanceToCell;
-                    state.nearestTargetAreaSeen = cell.getPosition();
+                    state.relativeNearestTargetAreaSeen = visual.getDelta();
                 }
             }
         }
@@ -359,10 +362,11 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
     }
 
     private void forgetWhatAgentHasSeen(AntColonyBehaviourState state) {
-        state.nearestGuardSeen = null;
-        state.nearestIntruderSeen = null;
-        state.nearestTargetAreaSeen = null;
-        state.markerPositionsSeen = new HashMap<>();;
+        state.absoluteNearestGuardSeen = null;
+        state.absoluteNearestIntruderSeen = null;
+        state.relativeNearestTargetAreaSeen = null;
+        state.absoluteMarkerPositionsSeen = new HashMap<>();
+        state.relativeEdgeOfSomethingPosition = null;
     }
 
     private boolean isTimeForRotationUpdate(AntColonyBehaviourState state) {
