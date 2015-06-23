@@ -5,9 +5,11 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.the.machine.components.AgentComponent;
+import com.the.machine.components.SprintComponent;
 import com.the.machine.components.VisionComponent;
 import com.the.machine.framework.AbstractSystem;
 import com.the.machine.framework.components.AbstractComponent;
@@ -28,6 +30,7 @@ public class VisionRangeDebugSystem extends AbstractSystem implements Observer, 
 	transient private ComponentMapper<VisionComponent> visions = ComponentMapper.getFor(VisionComponent.class);
 	transient private ComponentMapper<ShapeRenderComponent> shapes = ComponentMapper.getFor(ShapeRenderComponent.class);
 	transient private ComponentMapper<AgentComponent> agents = ComponentMapper.getFor(AgentComponent.class);
+	transient private ComponentMapper<SprintComponent> sprints = ComponentMapper.getFor(SprintComponent.class);
 
 	@Override
 	public void addedToEngine(Engine engine) {
@@ -46,7 +49,8 @@ public class VisionRangeDebugSystem extends AbstractSystem implements Observer, 
 	public void entityAdded(Entity entity) {
 		visions.get(entity)
 			   .addObserver(this);
-		agents.get(entity).addObserver(this);
+		agents.get(entity)
+			  .addObserver(this);
 	}
 
 	@Override
@@ -54,13 +58,13 @@ public class VisionRangeDebugSystem extends AbstractSystem implements Observer, 
 		visions.get(entity)
 			   .deleteObserver(this);
 		agents.get(entity)
-			 .deleteObserver(this);
+			  .deleteObserver(this);
 	}
 
 	@Override
 	public void update(Observable o, Object arg) {
 		Entity entity = ((AbstractComponent) o).getOwner()
-											 .get();
+											   .get();
 		if (entity != null) {
 			VisionComponent visionComponent = visions.get(entity);
 			ShapeRenderComponent renderComponent = shapes.get(entity);
@@ -83,6 +87,7 @@ public class VisionRangeDebugSystem extends AbstractSystem implements Observer, 
 	public static class VisionRangeDebug
 			implements ShapeRenderComponent.Shape {
 
+		private Color color;
 		private float min;
 		private float max;
 		private float angle;
@@ -91,6 +96,7 @@ public class VisionRangeDebugSystem extends AbstractSystem implements Observer, 
 
 		@Override
 		public void render(ShapeRenderer r) {
+			r.setColor(color);
 			r.circle(0, 0, min);
 			r.circle(0, 0, max);
 			r.circle(0, 0, structures);

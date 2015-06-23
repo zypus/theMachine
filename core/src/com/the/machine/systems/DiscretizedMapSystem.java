@@ -98,6 +98,7 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 		if (groundEntities.size() > 0 && recomputeMap) {
 			Entity map = groundEntities.first();
 			DimensionComponent mapDimension = dimensions.get(map);
+			TransformComponent mt = transforms.get(map);
 			List<DiscreteMapComponent.MapCell> discreteMap;
 			if (!discreteMaps.has(map)) {
 				DiscreteMapComponent mapComponent = new DiscreteMapComponent();
@@ -120,7 +121,7 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 						if ((areaComponent.getType() != WALL && areaComponent.getType() != DOOR_CLOSED) || x == 0 || x == (int)dm.getWidth() || y == 0 || y == (int) dm.getHeight()) {
 							float c = lx + x;
 							float r = ly + y;
-							if (Utils.isInbound(c, r, -mapDimension.getWidth() / 2 - 1, -mapDimension.getHeight() / 2 - 1, mapDimension.getWidth(), mapDimension.getHeight())) {
+							if (Utils.isInbound(c, r, -mapDimension.getWidth() / 2 - 1 + mt.getX(), -mapDimension.getHeight() / 2 - 1 + mt.getY(), mapDimension.getWidth(), mapDimension.getHeight())) {
 								discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(c, r))
 																				  .setType(areaComponent
 																								   .getType()));
@@ -131,15 +132,15 @@ public class DiscretizedMapSystem extends AbstractSystem implements EntityListen
 			}
 			// set the outer wall
 			for (int x = -1; x < mapDimension.getWidth()+1; x++) {
-				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(x-mx, -my-1))
+				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(x-mx+mt.getX(), -my-1+ mt.getY()))
 																  .setType(AreaComponent.AreaType.OUTER_WALL));
-				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(x-mx, my+1))
+				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(x-mx+mt.getX(), my+1 + mt.getY()))
 																  .setType(AreaComponent.AreaType.OUTER_WALL));
 			}
 			for (int y = 0; y < mapDimension.getHeight(); y++) {
-				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(-mx-1, y-my))
+				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(-mx-1+mt.getX(), y-my + mt.getY()))
 																  .setType(AreaComponent.AreaType.OUTER_WALL));
-				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(mx + 1, y-my))
+				discreteMap.add(new DiscreteMapComponent.MapCell().setPosition(new Vector2(mx + 1+ mt.getX(), y-my + mt.getY()))
 																  .setType(AreaComponent.AreaType.OUTER_WALL));
 			}
 

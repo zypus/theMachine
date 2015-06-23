@@ -14,7 +14,9 @@ import lombok.NoArgsConstructor;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Frans on 25-4-2015.
@@ -22,130 +24,120 @@ import java.util.List;
 
 @NoArgsConstructor
 public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColonyBehaviour.AntColonyBehaviourState> {
+    /*
+    TODO 2 broken windows are also considered to be structures. Use another test to determine whether an area causes a collision
+    TODO 8 make time between pheromones linear instead of exponential if possible
+    TODO 9 check how much the time that markers stay alive impacts the algorithm
+     */
     public enum AgentType { GUARD, INTRUDER };
-    public final float timeBetweenPheromones = 2.5f;
 
     @Override
     public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, AntColonyBehaviourState state) {
-        float delta = context.getPastTime();
-        state.nextSpeedChange -= delta;
-        state.nextTurnChange -= delta;
-        state.nextMarkerDrop -= delta;
+        updateCountdowns(state, context.getPastTime());     // Update the timers for rotating, dropping markers, etc.
 
         List<BehaviourComponent.BehaviourResponse> responses = new ArrayList<>();
 
-        // Update nextSpeedChange
-        if (state.nextSpeedChange <= 0) {
-            responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.MOVE,
-                            new ActionSystem.MoveData(5)//agentComponent.getBaseMovementSpeed())
-                    )
-            );
-            state.nextSpeedChange = 2;
+        // Initialize speed
+        if (context.getCurrentMovementSpeed() == 0) {
+            initializeSpeed(state, responses);
         }
 
-        // Update nextTurnChange
-        if (state.nextTurnChange <= 0) {
-            state.nextTurnChange = 0.5f;
-            TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
-            Vector2 averageLocationOfVisibleMarkers = getAverageLocationOfVisibleMarkers(context.getMarkers());
-            boolean agentIsAlreadyUpdatingPosition = false;
+        lookAround(state, context); // Update the locations of everything the agent has seen
 
-            // Guards should move to the nearest agent // TODO a near intruder has a higher priority
+        if (isTimeForRotationUpdate(state)) {
             if (state.agentType == AgentType.GUARD) {
-                Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
-                if (nearestAgentVector != null) {
-                    Vector2 relativePosOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
-//                    float currentAngle = transformComponent.getZRotation();
+                if (canMoveTowards(state.absoluteNearestIntruderSeen)) {
+                    moveTowards(responses, state, state.absoluteNearestIntruderSeen);
+                }
+                else if (canMoveTowards(getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen))) {
+                    // If other guards have seen an intruder, they drop a marker of type 1
+                    moveTowards(responses, state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen));
+                }
+                else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen))) {
+                    moveTowards(responses, state, getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen));
+                }
+                else if (canMoveTowards(state.relativeEdgeOfSomethingPosition)) {
+                    rotateTowards(responses, new Vector2(state.relativeEdgeOfSomethingPosition).scl(-1));
+                }
+                else {
+                    Vector2 currentDirection = context.getMoveDirection();
+                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).scl(100);
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(relativePosOfNearestAgent, 30f)));
-                    agentIsAlreadyUpdatingPosition = true;
+                            new ActionSystem.TurnData(randomDirection, 30f)));
                 }
             }
             else { // if state.agentType == AgentType.Intruder
-                // Move to the opposite direction
-                // Intruders want to move away from guards, and if they also move away from other intruders they will
-                // cover a bigger area
-                Vector2 nearestTargetArea = getNearestTargetArea(state, context);
-                if (nearestTargetArea != null) {
-                    System.out.println("Moving towards targat area");
-                    Vector2 relativePosOfNearestArea = new Vector2(nearestTargetArea).sub(transformComponent.get2DPosition());
-//                    float currentAngle = transformComponent.getZRotation();
-                    responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(relativePosOfNearestArea, 30f)
-                    ));
-                    agentIsAlreadyUpdatingPosition = true;
+                if (canMoveTowards(state.relativeNearestTargetAreaSeen)) {
+                    rotateTowards(responses, state.relativeNearestTargetAreaSeen);
+                }
+                else if (canMoveTowards(state.absoluteNearestGuardSeen)) {
+                    // Turn to the opposite direction
+                    moveAwayFrom(responses, state, state.absoluteNearestGuardSeen);
+                }
+                else if (canMoveTowards(state.relativeEdgeOfSomethingPosition)) {
+                    rotateTowards(responses, new Vector2(state.relativeEdgeOfSomethingPosition).cpy().scl(-1));
+                }
+                else if (canMoveTowards(getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen))) {
+                    moveAwayFrom(responses, state, getAverageLocationOfMarkerType(1, state.absoluteMarkerPositionsSeen));   // Move away from positions where other intruders have noticed guards
+                }
+                else if (canMoveTowards(getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen))) {
+                    moveAwayFrom(responses, state, getAverageLocationOfMarkerType(0, state.absoluteMarkerPositionsSeen));
                 }
                 else {
-                    Vector2 nearestAgentVector = getNearestAgentTransform(state, context);
-                    if (nearestAgentVector != null) {
-                        System.out.println(state.agent.getComponent(NameComponent.class).getName() + " is moving away from other agent at " + nearestAgentVector);
-                        // Turn to the opposite direction
-                        Vector2 negRelativePositionOfNearestAgent = new Vector2(nearestAgentVector).sub(transformComponent.get2DPosition());
-//                        float currentAngle = transformComponent.getZRotation();
-                        responses.add(new BehaviourComponent.BehaviourResponse(
-                                ActionSystem.Action.TURN,
-                                new ActionSystem.TurnData(negRelativePositionOfNearestAgent, 30f)
-                        ));
-                        agentIsAlreadyUpdatingPosition = true;
-                    }
-                }
-            }
-
-            if (!agentIsAlreadyUpdatingPosition) {
-                // If the agent can see markers, there is a chance that he will go to the avg location
-                Vector2 avgMarkerPosition = getAverageLocationOfVisibleMarkers(context.getMarkers());
-                if (avgMarkerPosition == null || Math.random() <= 0.5) {
-                    // Search for other entities (by turning a bit) while walking normally
-
-                    // Set the turnspeed to a low value to have a broader view
-//                    response.setTurningSpeed((float) (50 * Math.random() - 25));
                     Vector2 currentDirection = context.getMoveDirection();
-                    Vector2 newDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25));
+                    Vector2 randomDirection = new Vector2(currentDirection).rotate((float) (50 * Math.random() - 25)).cpy().scl(100);
                     responses.add(new BehaviourComponent.BehaviourResponse(
                             ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(newDirection, 30f)
-                    ));
-                }
-                else {
-                    responses.add(new BehaviourComponent.BehaviourResponse(
-                            ActionSystem.Action.TURN,
-                            new ActionSystem.TurnData(avgMarkerPosition, 30f)
-                    ));
+                            new ActionSystem.TurnData(randomDirection, 30f)));
                 }
             }
+
+            forgetWhatAgentHasSeen(state);
         }
 
-        // Update nextMarkerDrop
-        if (state.nextMarkerDrop <= 0) {
-            addMarker(0, 0.2f, responses);  // Add a marker of type 0 // TODO differentiate between marker types
-            state.nextMarkerDrop += timeBetweenPheromones;
+        // Update nextMarkerdropUpdate
+        if (state.nextMarkerdropUpdate <= 0) {
+            state.nextMarkerdropUpdate += state.markerDropResetTime;
+
+            if (state.agentType == AgentType.INTRUDER) {
+                if (state.absoluteNearestGuardSeen != null)
+                    addMarker(1, 0.2f, responses);  // Add a marker of type 1
+//                if (state.absoluteNearestGuardSeen == null)
+//                    addMarker(0, 0.2f, responses);
+            }
+            else if (state.agentType == AgentType.GUARD) {
+                if (state.absoluteNearestIntruderSeen != null)
+                    addMarker(1, 0.2f, responses);
+//                if (state.absoluteNearestIntruderSeen == null)
+//                    addMarker(0, 0.2f, responses);
+            }
         }
 
         if (context.isCanSprint()) {
-            addActionWithProbability(ActionSystem.Action.SPRINT, 0.1, responses);
+            if (MathUtils.random() <= 0.1) {
+                responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.SPRINT, null));
+            }
         }
         if (context.getEnvironment() == AreaComponent.AreaType.TOWER) {
-            addActionWithProbability(ActionSystem.Action.TOWER_LEAVE, 0.1, responses);
+            if (MathUtils.random() <= 0.1) {
+                responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_LEAVE, null));
+            }
         }
 
         // Always try to enter a tower (even if there is no tower nearby)
-//        if (!responses.getActions().contains(ActionSystem.Action.TOWER_LEAVE)) {
-            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null), responses);
-//        }
+        responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null));
 
         // Also, always try to destroy a window (even if there are none nearby)
-        addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null), responses);
+        responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.WINDOW_DESTROY, null));
 
         // A 50% chance of opening a door normally. If the door isn't opened normally,
         // it will be opened silently.
         if (Math.random() <= 0.5) {
-            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN, null), responses);
+            responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN, null));
         }
         else {
-            addResponse(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN_SILENT, null), responses);
+            responses.add(new BehaviourComponent.BehaviourResponse(ActionSystem.Action.DOOR_OPEN_SILENT, null));
         }
 
         return responses;
@@ -153,78 +145,51 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
 
     @AllArgsConstructor
     public static class AntColonyBehaviourState implements BehaviourComponent.BehaviourState {
-        float nextSpeedChange;
-        float nextTurnChange;
-        AgentType agentType;
-        float nextMarkerDrop;
-        Entity agent;
-    }
+        final AgentType agentType;
+        final Entity agent;
+        final float agentSpeed;
 
-    public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
-        return new AntColonyBehaviour.AntColonyBehaviourState(0, 0, agentType, 2, agent);
+        // The positions of objects that the entity remembers
+        Vector2 absoluteNearestGuardSeen;
+        Vector2 absoluteNearestIntruderSeen;
+        Vector2 relativeNearestTargetAreaSeen;
+        Map<Integer, List<Vector2>> absoluteMarkerPositionsSeen;
+        Vector2 relativeEdgeOfSomethingPosition;    // The edge of the world that the entity has collided with. Tries to move away from it
+
+
+        // The time until the next update of speed, rotation, etc.
+        float nextRotationUpdate;
+        float nextMarkerdropUpdate;
+
+        // The amount to which the timers are reset when they have reached 0
+        final float markerDropResetTime;
+        final float rotationResetTime;
     }
 
     /**
-     * Returns the TransformComponent of the nearest agent
-     * @param state
-     * @param context
+     * Used for external methods when initializing an AntColonyBehaviour. Contains a set of tested parameters.
+     * @param agentType
+     * @param agent
      * @return
      */
-    private Vector2 getNearestAgentTransform(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
-        TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
-        List<WeakReference<Entity>> visibleAgents = context.getAgents();
-
-        TransformComponent nearestAgentTransform = null;
-        float distanceWithNearestAgent = Float.MAX_VALUE;   // Everything is nearer than this
-
-        for (WeakReference<Entity> visibleAgentReference : visibleAgents) {
-            Entity visibleAgent = visibleAgentReference.get();
-            float distanceWithThisAgent = visibleAgent.getComponent(TransformComponent.class).get2DPosition().dst2(transformComponent.get2DPosition());
-            // Don't run away from yourself
-            if (distanceWithThisAgent == Math.min(distanceWithNearestAgent, distanceWithThisAgent) && distanceWithThisAgent >= 0.01) {
-                distanceWithNearestAgent = distanceWithThisAgent;
-                nearestAgentTransform = visibleAgent.getComponent(TransformComponent.class);
-            }
-        }
-
-        if (nearestAgentTransform != null) {
-            return nearestAgentTransform.get2DPosition();
-        }
-
-        Vector2 nearestNoisePosition = null;
-        // If no agent can be seen, listen if there is a sound
-        for (Vector2 noiseLocation : context.getSoundDirections()) {
-            float distanceWithThisNoise = noiseLocation.dst2(transformComponent.get2DPosition());
-            if (distanceWithThisNoise == Math.min(distanceWithNearestAgent, distanceWithThisNoise)) {
-                distanceWithNearestAgent = distanceWithThisNoise;
-                nearestNoisePosition = noiseLocation;
-            }
-        }
-
-        return nearestNoisePosition;
+    public static AntColonyBehaviourState getInitialState(AgentType agentType, Entity agent) {
+        return new AntColonyBehaviour.AntColonyBehaviourState(
+                agentType, agent, 5,            // agentType, agent, agentSpeed
+                null, null, null, new HashMap<>(), null,   // Positions of objects that the agent remembered
+                0, 0,                           // How much time it takes until the next rotation and marker dropping
+                2f, 2.5f                        // Value to which the timer is reset
+        );
     }
 
-    /**
-     * Add a given action with a given probability. Only if the response requires no additional data
-     * @param action the action to be added to the behaviour
-     * @param probability the probability that the action will be added
-     * @param responses the responses list to which the action will be added
-     */
-    private void addActionWithProbability(ActionSystem.Action action,
-                                          double probability,
-                                          List<BehaviourComponent.BehaviourResponse> responses) {
-        if (MathUtils.random() < probability) {
-            addResponse(new BehaviourComponent.BehaviourResponse(action, null), responses);
-        }
+    private void initializeSpeed(AntColonyBehaviourState state, List<BehaviourComponent.BehaviourResponse> responses) {
+        responses.add(new BehaviourComponent.BehaviourResponse(
+                ActionSystem.Action.MOVE,
+                new ActionSystem.MoveData(state.agentSpeed)
+        ));
     }
-
-    /**
-     * Add a given action to the response
-     * @param response response to be added
-     * @param responses the response to which the action should be added
-     */
-    private void addResponse(BehaviourComponent.BehaviourResponse response, List<BehaviourComponent.BehaviourResponse> responses) {
-        responses.add(response);
+    private void updateCountdowns(AntColonyBehaviourState state, float delta) {
+        state.nextRotationUpdate -= delta;
+        state.nextMarkerdropUpdate -= delta;
     }
 
     /**
@@ -236,59 +201,190 @@ public class AntColonyBehaviour implements BehaviourComponent.Behaviour<AntColon
      * @param responses
      */
     private void addMarker(int marketNumber, float decayRate, List<BehaviourComponent.BehaviourResponse> responses) {
-        addResponse(new BehaviourComponent.BehaviourResponse(
+        responses.add(new BehaviourComponent.BehaviourResponse(
                 ActionSystem.Action.MARKER_PLACE,
                 new ActionSystem.MarkerData(marketNumber, decayRate)
-        ), responses);
+        ));
     }
 
-    /**
-     * Calculates the average location (the center point) of the group of markers in the context.
-     *
-     * @param markerList the list (derived from the context) in which the markers are stored
-     * @return
-     */
-    private Vector2 getAverageLocationOfVisibleMarkers(List<WeakReference<Entity>> markerList) {
+    private Vector2 getAverageLocationOfMarkerType(int type, Map<Integer, List<Vector2>> markerMap) {
+        if (markerMap.containsKey(type))
+            return getAverageLocationOfMarkersSeen(markerMap.get(type));
+        else
+            return null;
+    }
+
+    private Vector2 getAverageLocationOfMarkersSeen(List<Vector2> markerPositionsList) {
         Vector2 locationSummed = new Vector2();
         boolean markerFound = false;
 
-        for (int i = 0; i < markerList.size(); i++) {
+        for (Vector2 markerPosition : markerPositionsList) {
             markerFound = true;
-            Entity markerComponent = markerList.get(i).get();
-            if(markerComponent!=null){
-            	TransformComponent otherTransform = markerComponent.getComponent(TransformComponent.class);
-
-                locationSummed.add(otherTransform.get2DPosition());
-            }
+            locationSummed.add(markerPosition);
         }
 
         if (markerFound) {
-            return locationSummed.scl((float) 1.0 / markerList.size());
+            return locationSummed.scl((float) 1.0 / markerPositionsList.size());
         }
-        else {
-            return null;
+        return null;
+    }
+
+    private Vector2 getRelativePositionNearestAreaOfType(AreaComponent.AreaType areaType, AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+        List<VisionSystem.EnvironmentVisual> visibleVisibles = context.getVision();     // I like that name
+        VisionSystem.EnvironmentVisual nearestVisual = null;
+        float distanceToNearestArea = Float.MAX_VALUE;
+
+        for (VisionSystem.EnvironmentVisual visibleVisible : visibleVisibles) {
+//            DiscreteMapComponent.MapCell visibleArea = visibleVisibles.get(1).
+            AreaComponent.AreaType visualAreaType = visibleVisible.getType();
+            if (visualAreaType == areaType) {
+                float distanceToArea = visibleVisible.getDelta().len();
+                if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
+                    distanceToNearestArea = distanceToArea;
+                    nearestVisual = visibleVisible;
+                    System.out.println("Found area of type " + areaType);
+                }
+            }
         }
+        return nearestVisual == null ? null : nearestVisual.getDelta();
     }
 
 
-    private Vector2 getNearestTargetArea(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+    /**
+     * Looks around. Stores all objects seen since the last update in a list
+     * @param state
+     * @param context
+     */
+    private void lookAround(AntColonyBehaviourState state, BehaviourComponent.BehaviourContext context) {
+        // Update the positions of agents
+        float nearestGuardDistance = state.absoluteNearestGuardSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherAbsolute(state, state.absoluteNearestGuardSeen);
+        float nearestIntruderDistance = state.absoluteNearestIntruderSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherAbsolute(state, state.absoluteNearestIntruderSeen);
+        for (WeakReference<Entity> agentReference : context.getAgents()) {
+            Entity otherAgent = agentReference.get();
 
-        List<VisionSystem.EnvironmentVisual> visibleAreas = context.getVision();
-        VisionSystem.EnvironmentVisual nearestArea = null;
-        float distanceToNearestArea = Float.MAX_VALUE;
-        TransformComponent transformComponent = state.agent.getComponent(TransformComponent.class);
+            String otherAgentName = otherAgent.getComponent(NameComponent.class).getName();
+            TransformComponent otherAgentTransform = otherAgent.getComponent(TransformComponent.class);
+            Vector2 absoluteOtherAgentPosition = otherAgentTransform.get2DPosition().cpy();
+            float newDistance = distanceBetweenAgentAndOtherAbsolute(state, absoluteOtherAgentPosition);
 
-        for (VisionSystem.EnvironmentVisual visibleArea : visibleAreas ) {
-            if (visibleArea.getType() == AreaComponent.AreaType.TARGET) {
-                float distanceToArea = visibleArea.getDelta().len();
-                if (distanceToArea == Math.min(distanceToNearestArea, distanceToArea)) {
-                    distanceToNearestArea = distanceToArea;
-                    nearestArea = visibleArea;
-                    System.out.println("Found target area");
+            if (otherAgentName.equals("Intruder")) {
+                if (Math.min(newDistance, nearestIntruderDistance) == newDistance) {
+                    nearestIntruderDistance = newDistance;
+                    state.absoluteNearestIntruderSeen = absoluteOtherAgentPosition;
+                }
+            }
+            else if (otherAgentName.equals("Agent")) {  // For some reason Guards are just called 'Agent'
+                if (Math.min(newDistance, nearestGuardDistance) == newDistance) {
+                    nearestGuardDistance = newDistance;
+                    state.absoluteNearestGuardSeen = absoluteOtherAgentPosition;
+                }
+            }
+            else {
+                System.err.println("Agent with name " + otherAgentName + " was not recognized");
+            }
+        }
+
+        // Update the position of the areas
+        // Determine where the nearest potential collision will be
+        float nearestCollisionDistance = state.relativeEdgeOfSomethingPosition == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherRelative(state.relativeEdgeOfSomethingPosition);
+        float nearestTargetAreaDistance = state.relativeNearestTargetAreaSeen == null ? Float.MAX_VALUE : distanceBetweenAgentAndOtherRelative(state.relativeNearestTargetAreaSeen);
+
+        for (VisionSystem.EnvironmentVisual visual : context.getVision()) {
+            float distanceToCell = visual.getDelta().len();
+
+            // Collidables // TODO create own check whether a structure is collidable
+            AreaComponent.AreaType areaTypeVisual = visual.getType();
+            if (areaTypeVisual.isStructure() || areaTypeVisual.isWall()) {
+                if (Math.min(distanceToCell, nearestCollisionDistance) == distanceToCell) {
+                    nearestCollisionDistance = distanceToCell;
+                    state.relativeEdgeOfSomethingPosition = visual.getDelta();
+                }
+            }
+
+            // Target area
+            if (areaTypeVisual == AreaComponent.AreaType.TARGET) {
+                if (Math.min(distanceToCell, nearestTargetAreaDistance) == distanceToCell) {
+                    nearestTargetAreaDistance = distanceToCell;
+                    state.relativeNearestTargetAreaSeen = visual.getDelta();
                 }
             }
         }
 
-        return nearestArea == null ? null : transformComponent.get2DPosition().cpy().add(nearestArea.getDelta());
+        // Update the marker positions
+        for (WeakReference<Entity> markerReference : context.getMarkers()) {
+            Entity marker = markerReference.get();
+            if (marker != null) {
+                TransformComponent transformOfMarker = marker.getComponent(TransformComponent.class);
+
+                // If the marker still exists
+                if (transformOfMarker != null) {
+                    Vector2 markerPosition = marker.getComponent(TransformComponent.class).get2DPosition().cpy();
+                    Integer markerType = marker.flags;
+                    if (markerType == null) {
+                        System.err.println("markerType is null");
+                    }
+                    if (state.absoluteMarkerPositionsSeen  == null) {
+                        System.err.println("state.markerPositionsSeen is null");
+                    }
+                    if (!state.absoluteMarkerPositionsSeen.containsKey(markerType)) {
+                        state.absoluteMarkerPositionsSeen.put(markerType, new ArrayList<>());
+                    }
+
+                    if (!state.absoluteMarkerPositionsSeen.get(markerType).contains(markerPosition)) {
+                        state.absoluteMarkerPositionsSeen.get(markerType).add(markerPosition);
+                    }
+                }
+            }
+        }
+    }
+
+    private static float distanceBetweenAgentAndOtherRelative(Vector2 otherRelative) {
+        return otherRelative == null ? Float.MAX_VALUE : otherRelative.len();
+    }
+
+    private static float distanceBetweenAgentAndOtherAbsolute(AntColonyBehaviourState state, Vector2 otherAbsolute) {
+        return otherAbsolute == null ? Float.MAX_VALUE : relativePositionOf(state, otherAbsolute).len();
+    }
+
+
+    private static Vector2 relativePositionOf(AntColonyBehaviourState state, Vector2 otherAbsolute) {
+        try {
+            TransformComponent transform = state.agent.getComponent(TransformComponent.class);
+            return new Vector2(otherAbsolute.cpy()).sub(transform.get2DPosition().cpy());
+        } catch(Exception e) { return null; }
+    }
+
+    private void rotateTowards(List<BehaviourComponent.BehaviourResponse> responses, Vector2 newRelativePosition) {
+        responses.add(new BehaviourComponent.BehaviourResponse(
+                ActionSystem.Action.TURN,
+                new ActionSystem.TurnData(newRelativePosition, 30f)));
+    }
+
+    private void forgetWhatAgentHasSeen(AntColonyBehaviourState state) {
+        state.absoluteNearestGuardSeen = null;
+        state.absoluteNearestIntruderSeen = null;
+        state.relativeNearestTargetAreaSeen = null;
+        state.absoluteMarkerPositionsSeen = new HashMap<>();
+        state.relativeEdgeOfSomethingPosition = null;
+    }
+
+    private boolean isTimeForRotationUpdate(AntColonyBehaviourState state) {
+        if (state.nextRotationUpdate <= 0) {
+            state.nextRotationUpdate = state.rotationResetTime;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean canMoveTowards(Vector2 goal) {
+        return goal != null;
+    }
+
+    private void moveTowards(List<BehaviourComponent.BehaviourResponse> responses, AntColonyBehaviourState state, Vector2 goal) {
+        rotateTowards(responses, relativePositionOf(state, goal));
+    }
+
+    private void moveAwayFrom(List<BehaviourComponent.BehaviourResponse> responses, AntColonyBehaviourState state, Vector2 antiGoal) {
+        rotateTowards(responses, new Vector2(relativePositionOf(state, antiGoal)).cpy().scl(-1));
     }
 }

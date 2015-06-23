@@ -103,6 +103,7 @@ public class World implements ApplicationListener, InputProcessor {
 
 	@Getter private float t        = 0;
 	@Setter @Getter private         float timeFlow = 1f;
+	@Setter @Getter private         float fixedDelta = 0f;
 
 	private boolean stableOnly = false;
 
@@ -404,7 +405,12 @@ public class World implements ApplicationListener, InputProcessor {
 					}
 					stableOnly = false;
 				}
-				float delta = Gdx.graphics.getDeltaTime();
+				float delta;
+				if (fixedDelta != 0) {
+					delta = fixedDelta;
+				} else {
+					delta = Gdx.graphics.getDeltaTime();
+				}
 				float dt = delta * timeFlow;
 				t += dt;
 				update(dt);

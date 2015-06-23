@@ -55,7 +55,7 @@ import java.lang.ref.WeakReference;
 public class IntruderSpawnSystem
 		extends IntervalSystem {
 
-	private static final int INTRUDER_COUNT = 3;
+	private static final int INTRUDER_COUNT = 0;
 
 	transient private ComponentMapper<DimensionComponent> dimensions = ComponentMapper.getFor(DimensionComponent.class);
 	transient private ComponentMapper<TransformComponent> transforms = ComponentMapper.getFor(TransformComponent.class);
@@ -152,12 +152,14 @@ public class IntruderSpawnSystem
 										   .setFilter(lightFilter)
 										   .setDistance(7.5f));
 		newAgent.add(new VisionComponent());
-		newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(0, 7.5f, 45, 10, 18)));
+		newAgent.add(new ShapeRenderComponent().add(new VisionRangeDebugSystem.VisionRangeDebug(Color.RED, 0, 7.5f, 45, 10, 18)));
 		newAgent.add(new ListenerComponent());
 		newAgent.add(new NameComponent().setName("Intruder"));
+
 		//newAgent.add(new BehaviourComponent<AntColonyBehaviour.AntColonyBehaviourState>().setBehaviour(new AntColonyBehaviour()).setState(AntColonyBehaviour.getInitialState(AntColonyBehaviour.AgentType.INTRUDER, newAgent)));
 		//newAgent.add(new BehaviourComponent<MapCoverBehaviour.MapCoverBehaviourState>().setBehaviour(new MapCoverBehaviour()));
 		newAgent.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior(false)));
+
 		newAgent.add(new VelocityComponent());
 		newAgent.add(new AngularVelocityComponent());
 		newAgent.add(new AgentComponent().setBaseViewingDistance(7.5f));

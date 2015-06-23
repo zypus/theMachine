@@ -46,23 +46,30 @@ floor
   orig: 128, 128
   offset: 0, 0
   index: -1
-guard1
+guard
   rotate: false
   xy: 2, 2
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
-guard2
+guard1
   rotate: false
   xy: 908, 908
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
-guard3
+guard2
   rotate: false
   xy: 518, 778
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+guard3
+  rotate: false
+  xy: 392, 520
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
@@ -125,7 +132,7 @@ wall
   index: -1
 white
   rotate: false
-  xy: 392, 583
+  xy: 262, 323
   size: 1, 1
   orig: 1, 1
   offset: 0, 0

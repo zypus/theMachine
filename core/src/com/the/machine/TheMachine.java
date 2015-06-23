@@ -25,7 +25,7 @@ public class TheMachine extends ApplicationAdapter {
 		testMode = (i == 0);
 		Asset.initialize();
 		world = new World();
-		world.setTimeFlow(10);
+		world.setTimeFlow(15);
 		world.create();
 		world.buildScene(new MapEditorSceneBuilder());
 		Gdx.input.setInputProcessor(world.getInputMultiplexer());
@@ -74,6 +74,7 @@ public class TheMachine extends ApplicationAdapter {
 	@Override
 	public void render () {
 		if (testMode) {
+			world.setFixedDelta(0.1f);
 			while (true) {
 				world.render();
 				if (!loaded) {

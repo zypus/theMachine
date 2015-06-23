@@ -7,7 +7,6 @@ import com.the.machine.Constants;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.DiscreteMapComponent;
-import com.the.machine.debug.ValueMapDebugger;
 import com.the.machine.framework.utility.Utils;
 import com.the.machine.framework.utility.pathfinding.Vector2i;
 import com.the.machine.framework.utility.pathfinding.indexedAstar.TiledNode;
@@ -36,9 +35,10 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
 public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
-	static final float ALPHA = 0.7f;
-	static final float BETA = 0.04f;
-	static final float GAMMA = 0.15f;
+	static final float ALPHA = 1f;
+	static final float BETA = 0.7f;
+	static final float GAMMA = 0.04f;
+	static final float DELTA = 0.15f;
 
 	static final float DELTA_TIME = 20;
 
@@ -72,7 +72,7 @@ public class MapCoverBehaviour
 //			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
 
-			startPos = context.getPlacebo().getPos().cpy();
+			startPos = new Vector2(0,0);
 			mapper.init(context.getPlacebo().getPos(), context.getMoveDirection());
 //			MapperDebugWindow.debug(mapper, 1f);
 		}
@@ -168,7 +168,7 @@ public class MapCoverBehaviour
 				if (thickWalkable[x][y] == -1 || walkable[x][y] == -1) {
 					valueMap[x][y] = -1;
 				} else {
-					valueMap[x][y] = walkable[x][y] * (currentSituation[x][y] + ALPHA * futureSituation[x][y] + BETA * direction[x][y] + GAMMA * reachable[x][y]);
+					valueMap[x][y] = walkable[x][y] * (ALPHA * currentSituation[x][y] + BETA * futureSituation[x][y] + GAMMA * direction[x][y] + DELTA * reachable[x][y]);
 					Vector2i goal = new Vector2i(x, y);
 					if (valueMap[x][y] > max) {
 						max = valueMap[x][y];
@@ -372,12 +372,15 @@ public class MapCoverBehaviour
 			}
 		}
 		Vector2 currentPos = mapper.absolutePos(startPos);
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1) && valueMap[((int) currentPos.x)][((int) currentPos.y)] == -1) {
+			currentPos = mapper.absolutePos(mapper.getCurrentPosition());
+		}
 		List<Vector2> next = new ArrayList<>();
 		next.add(currentPos);
-		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1)) {
 			floodFill(valueMap, next, true);
 		}
-		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+		while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1)) {
 			floodFill(valueMap, next);
 		}
 		for (int x = 0; x < mapper.getWidth(); x++) {
@@ -431,9 +434,12 @@ public class MapCoverBehaviour
 			}
 		}
 				Vector2 currentPos = mapper.absolutePos(startPos);
+		if (Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1) && valueMap[((int) currentPos.x)][((int) currentPos.y)] == -1) {
+			currentPos = mapper.absolutePos(mapper.getCurrentPosition());
+		}
 				List<Vector2> next = new ArrayList<>();
 				next.add(currentPos);
-				while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length, valueMap[0].length)) {
+				while (!next.isEmpty() && Utils.isInbound(currentPos.x, currentPos.y, 0, 0, valueMap.length-1, valueMap[0].length-1)) {
 					floodFill(valueMap, next);
 				}
 				for (int x = 0; x < mapper.getWidth(); x++) {
@@ -581,7 +587,7 @@ public class MapCoverBehaviour
 		}
 		int width = maxX - minX;
 		int height = maxY - minY;
-		Vector2 offset = new Vector2(width / 2, height / 2);
+		Vector2 offset = new Vector2(-minX, -minY);
 		AreaComponent.AreaType[][] area = new AreaComponent.AreaType[width][height];
 		// clear the whole area, with the target type for now
 		for (int i = 0; i < width; i++) {
@@ -679,7 +685,7 @@ public class MapCoverBehaviour
 			x = (int) vector2.x;
 			y = (int) vector2.y;
 			// if this spot is a target area, mark it as visited
-			if (Utils.isInbound(x, y, 0, 0, area.length - 1, area[0].length) && area[x][y] == 1 || first) {
+			if (Utils.isInbound(x, y, 0, 0, area.length - 1, area[0].length-1) && (area[x][y] == 1 || first)) {
 				area[x][y] = 0.9f;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {
@@ -700,7 +706,7 @@ public class MapCoverBehaviour
 			x = (int) pair.getKey().x;
 			y = (int) pair.getKey().y;
 			// if this spot is a target area, mark it as visited
-			if (Utils.isInbound(x,y,0,0,area.length-1, area[0].length) && area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
+			if (Utils.isInbound(x,y,0,0,area.length-1, area[0].length-1) && area[x][y] != -1 && output[x][y] > pair.getValue() + 1) {
 				output[x][y] = pair.getValue()+1;
 				// flood continues on the adjacent fields
 				for (Vector2 dir : dirs) {

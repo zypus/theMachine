@@ -187,6 +187,7 @@ public class BehaviourSystem
 			}
 			turn *= agentComponent.getAngularSpeed();
 			angularVelocityComponent.setAngularVelocity(MathUtils.clamp(turn, -agentComponent.getMaxTurningSpeed(), agentComponent.getMaxTurningSpeed()));
+			velocityComponent.setDirty(true);
 
 			listenerComponent.getSoundDirections()
 							 .clear();
