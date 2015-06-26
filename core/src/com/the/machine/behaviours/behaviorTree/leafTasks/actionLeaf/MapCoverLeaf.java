@@ -15,8 +15,8 @@ public class MapCoverLeaf extends LeafTask<TreeContext>{
 	private MapCoverBehaviour mcb;
 	private MapCoverBehaviourState state;
 
-	public MapCoverLeaf(){
-		this.mcb = new MapCoverBehaviour();
+	public MapCoverLeaf(boolean intruder){
+		this.mcb = new MapCoverBehaviour(intruder);
 		this.state = null;
 	}
 

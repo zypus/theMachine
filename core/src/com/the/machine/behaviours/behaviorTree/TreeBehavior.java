@@ -16,7 +16,9 @@ import com.the.machine.behaviours.behaviorTree.leafTasks.subTrees.SubTrees;
 import com.the.machine.components.BehaviourComponent;
 import com.the.machine.components.BehaviourComponent.BehaviourContext;
 import com.the.machine.components.BehaviourComponent.BehaviourResponse;
+import com.the.machine.systems.ActionSystem;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +29,11 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 
 	//TODO: Do this properly!!!
 	private static Blackboard blackboard = new Blackboard();
+	@Getter boolean guard = false;
 
 	public TreeBehavior(boolean isGuard){
 		if(isGuard){
+			guard = true;
 			int time = 5;
 			float speed = 50;
 			this.tree = new BehaviorTree<TreeContext>();
@@ -45,8 +49,9 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 
 			List<Task<TreeContext>> list3 = new ArrayList<>();
 
-			
-			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf()));
+
+			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_CHASE.getSubtree(), new MapCoverLeaf(false)));
+//			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new UpdateBlackboardLeaf(), SubTrees.DIRECT_VISIBLE_CHASE.getSubtree());
 
 			tree.addChild(seq);
 			TreeContext treeContext = new TreeContext();
@@ -68,15 +73,15 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 			list2.add(new Invert(new WaitTurnMove(20)));
 
 			List<Task<TreeContext>> list3 = new ArrayList<>();
-			
-			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_FLEE.getSubtree(), SubTrees.GO_TO_TARGET.getSubtree(), new MapCoverLeaf()));
-			
+
+			Task<TreeContext> seq = new Sequence<TreeContext>(new OpenDoorLeaf(), new Selector<TreeContext>(SubTrees.DIRECT_VISIBLE_FLEE.getSubtree(), SubTrees.GO_TO_TARGET.getSubtree(), new MapCoverLeaf(true)));
+
 			tree.addChild(seq);
 			TreeContext treeContext = new TreeContext();
 			treeContext.setBlackboard(blackboard);
 			tree.setObject(treeContext);
 		}
-		
+
 	}
 
 	@Override
@@ -93,6 +98,7 @@ public class TreeBehavior implements BehaviourComponent.Behaviour<TreeBehavior.T
 		tree.step();
 		//treeContext.update();
 		responseList = tree.getObject().getResponseList();
+		responseList.add(new BehaviourResponse(ActionSystem.Action.TOWER_ENTER, null));
 		return responseList;
 	}
 

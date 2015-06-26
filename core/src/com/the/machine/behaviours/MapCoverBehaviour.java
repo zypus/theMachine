@@ -3,6 +3,7 @@ package com.the.machine.behaviours;
 import com.badlogic.gdx.ai.pfa.GraphPath;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 import com.the.machine.Constants;
 import com.the.machine.components.AreaComponent;
 import com.the.machine.components.BehaviourComponent;
@@ -35,8 +36,17 @@ import static com.the.machine.components.AreaComponent.AreaType.*;
 public class MapCoverBehaviour
 		implements BehaviourComponent.Behaviour<MapCoverBehaviour.MapCoverBehaviourState> {
 
+	boolean intruder = false;
+
+	public MapCoverBehaviour() {
+	}
+
+	public MapCoverBehaviour(boolean intruder) {
+		this.intruder = intruder;
+	}
+
 	static final float ALPHA = 1f;
-	static final float BETA = 0.7f;
+	static final float BETA  = 0.7f;
 	static final float GAMMA = 0.04f;
 	static final float DELTA = 0.15f;
 
@@ -48,12 +58,15 @@ public class MapCoverBehaviour
 	Mapper mapper = new Mapper();
 
 	List<AgentSighting> agentSightings = new ArrayList<>();
-	TiledPathFinder pathfinder = new TiledPathFinder();
+	TiledPathFinder     pathfinder     = new TiledPathFinder();
 
 	Vector2 lastPos;
 	float lastDistance = 0;
 
 	Vector2 startPos;
+
+	static boolean first = true;
+	boolean localFirst = false;
 
 	@Override
 	public List<BehaviourComponent.BehaviourResponse> evaluate(BehaviourComponent.BehaviourContext context, MapCoverBehaviourState state) {
@@ -66,30 +79,43 @@ public class MapCoverBehaviour
 		}
 		// if the state is null, that means that this is the first time the behaviour is evaluate, so lets construct the first state
 		if (state == null) {
-			lastPos = context.getPlacebo().getPos();
+			if (first && !intruder) {
+				localFirst = true;
+				first = false;
+			}
+			lastPos = context.getPlacebo()
+							 .getPos();
 			state = generateState(context);
 			//			sharedState = state; // comment this line to disable shared state
-//			MapDebugWindow.debug(state.coverage, 0.5f);
+			//			MapDebugWindow.debug(state.coverage, 0.5f);
 			// initialize the map builder
 
-			startPos = new Vector2(0,0);
-			mapper.init(context.getPlacebo().getPos(), context.getMoveDirection());
-//			MapperDebugWindow.debug(mapper, 1f);
+			startPos = new Vector2(0, 0);
+			mapper.init(context.getPlacebo()
+							   .getPos(), context.getMoveDirection());
+			//			MapperDebugWindow.debug(mapper, 1f);
 		}
 		// update the map builder
 		mapper.update(context);
 		updateCoverage(context, state);
 		updateCoverage2(context, state);
-		//		Vector2 goal = determineGlobalCenterOfGravitation(context, state);
-		//		Vector2 goal = closestMax(context, state, 10);
-		//		Vector2 pos = context.getPlacebo()
-		//							 .getPos();
-		//		Vector2 delta = goal.cpy()
-		//							.sub((int) pos.x, (int) pos.y);
+		Vector2 delta;
+		if (intruder || !localFirst) {
+			Vector2 goal;
+				goal = determineGlobalCenterOfGravitation(context, state);
+//				goal = closestMax(context, state, 10);
+					Vector2 pos = context.getPlacebo()
+										 .getPos();
+					delta = goal.cpy()
+										.sub((int) pos.x, (int) pos.y);
+		} else {
+			delta = executePolicy(context, state);
+		}
 
-		Vector2 delta = executePolicy(context, state);
-		lastDistance = lastPos.dst(context.getPlacebo().getPos());
-		lastPos = context.getPlacebo().getPos();
+		lastDistance = lastPos.dst(context.getPlacebo()
+										  .getPos());
+		lastPos = context.getPlacebo()
+						 .getPos();
 
 		// determine the rotation to the center of gravity, because we want to go there
 		float angle = context.getMoveDirection()
@@ -163,6 +189,7 @@ public class MapCoverBehaviour
 		float[][] valueMap = new float[mapper.getWidth()][mapper.getHeight()];
 		float max = 0;
 		Vector2 maxPos = new Vector2();
+		Array<Vector2> maxes = new Array<>();
 		for (int x = 0; x < mapper.getWidth(); x++) {
 			for (int y = 0; y < mapper.getHeight(); y++) {
 				if (thickWalkable[x][y] == -1 || walkable[x][y] == -1) {
@@ -170,13 +197,18 @@ public class MapCoverBehaviour
 				} else {
 					valueMap[x][y] = walkable[x][y] * (ALPHA * currentSituation[x][y] + BETA * futureSituation[x][y] + GAMMA * direction[x][y] + DELTA * reachable[x][y]);
 					Vector2i goal = new Vector2i(x, y);
-					if (valueMap[x][y] > max) {
+					if (valueMap[x][y] == max) {
 						max = valueMap[x][y];
-						maxPos.set(x, y);
+						maxes.add(new Vector2(x,y));
+					} else if (valueMap[x][y] > max) {
+						max = valueMap[x][y];
+						maxes.clear();
+						maxes.add(new Vector2(x, y));
 					}
 				}
 			}
 		}
+		maxPos = maxes.random();
 
 //		float[][] navMap = new float[mapper.getWidth()][mapper.getHeight()];
 //		for (int x = 0; x < mapper.getWidth(); x++) {
@@ -467,7 +499,7 @@ public class MapCoverBehaviour
 			for (int j = 0; j < coverage[0].length; j++) {
 				// ignores values which are 1, (values which are 2 and should be ignored anyway)
 				if (coverage[i][j] >= 0) {
-					coverage[i][j] += 0.001f * context.getPastTime() * ((sharedState != null)
+					coverage[i][j] += 0.000001f * context.getPastTime() * ((sharedState != null)
 																		? 1f / shareCount
 																		: 1); // compensate for additional agents
 					// makes sure the number is never bigger than 1

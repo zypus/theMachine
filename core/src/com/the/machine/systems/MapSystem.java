@@ -16,7 +16,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.utils.TimeUtils;
-import com.the.machine.behaviours.MapCoverBehaviour;
 import com.the.machine.behaviours.behaviorTree.TreeBehavior;
 import com.the.machine.components.AgentComponent;
 import com.the.machine.components.AgentSightComponent;
@@ -335,6 +334,8 @@ public class MapSystem
 								.setTint(Color.GREEN);
 						VisionRangeDebugSystem.VisionRangeDebug debug = ((VisionRangeDebugSystem.VisionRangeDebug) shapes.get(entity).getShapes()
 																					.get(0));
+						entity.remove(BehaviourComponent.class);
+						entity.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior(false)));
 						debug.setColor(Color.GREEN);
 
 					} else {
@@ -347,6 +348,8 @@ public class MapSystem
 						VisionRangeDebugSystem.VisionRangeDebug debug = ((VisionRangeDebugSystem.VisionRangeDebug) shapes.get(entity)
 																														 .getShapes()
 																														 .get(0));
+						entity.remove(BehaviourComponent.class);
+						entity.add(new BehaviourComponent<TreeBehavior.TreeBehaviorState>().setBehaviour(new TreeBehavior(false)));
 						debug.setColor(Color.RED);
 					}
 					// TODO agent / intruder

@@ -25,6 +25,7 @@ public class Mapper {
 	Vector2 currentDirection;
 	@Getter int width  = 0;
 	@Getter int height = 0;
+	@Getter boolean initialized;
 	int posXExpansion = 0;
 	int negXExpansion = 0;
 	int posYExpansion = 0;
@@ -53,6 +54,7 @@ public class Mapper {
 		map.add(spot);
 		currentDirection = direction.cpy()
 									.nor();
+		initialized = true;
 	}
 
 	/**
